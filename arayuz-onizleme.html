@@ -128,6 +128,37 @@
 
   .hint{position:absolute;top:12px;right:12px;font-size:11.5px;color:var(--muted);
         background:var(--panel);border:1px dashed var(--line);border-radius:8px;padding:6px 10px}
+
+  /* ─── UYUM PANOSU (v0.3) ─── */
+  .chiprow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 16px}
+  .hchip{text-align:left;border:1px solid var(--line);border-left-width:4px;border-radius:10px;
+         background:var(--panel);padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+  .hchip small{color:var(--muted);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+  .hchip b{font-size:15px}
+  .hchip.ok{border-left-color:var(--st-done)} .hchip.warn{border-left-color:var(--st-partial)}
+  .hchip.err{border-left-color:var(--err)}
+  .viosec{margin:0 16px}
+  .viotabs{display:flex;gap:14px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px}
+  .vt.on{color:var(--text);font-weight:700;border-bottom:2px solid var(--accent)}
+  .vio{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;
+       background:var(--panel);padding:9px 12px;margin-bottom:8px}
+  .vio.resolved{opacity:.65}
+  .sev{font-size:10.5px;font-weight:800;border-radius:6px;padding:3px 7px;flex:none}
+  .sev.err{background:#fee2e2;color:var(--err)} [data-theme="dark"] .sev.err{background:#3b0a0a}
+  .sev.warn{background:var(--st-partial-bg);color:var(--st-partial)}
+  .sev.ok{background:var(--st-done-bg);color:var(--st-done)}
+  .vbody{flex:1;font-size:12.5px}
+  .vrule{color:var(--muted);font-size:11.5px;margin-top:2px}
+  .spark{width:84px;height:24px;flex:none}
+  .conflict{margin:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+  .chead{padding:8px 14px;background:var(--st-partial-bg);color:var(--st-partial);font-weight:700;font-size:12.5px}
+  .cside{padding:10px 14px;border-top:1px solid var(--line);font-size:13px}
+  .cside small{color:var(--muted)} .cside.a{border-left:4px solid var(--accent)}
+  .cside.b{border-left:4px solid var(--st-partial)}
+  .cact{display:flex;gap:8px;padding:10px 14px}
+  .chain{margin:0 16px 16px;padding:12px 14px;border:1px dashed var(--line);border-radius:var(--radius);font-size:12.5px}
+  .mv{margin-top:6px} .mv.up{color:var(--st-done)} .mv.dn{color:var(--st-partial)}
+  .mv em{color:var(--muted);font-style:normal}
 </style>
 </head>
 <body>
@@ -188,6 +219,7 @@
       <button class="tab on" id="tab-map"     onclick="show('map')"><span data-i18n="tabMap">Harita</span></button>
       <button class="tab"   id="tab-timeline" onclick="show('timeline')"><span data-i18n="tabTime">Zaman Çizgisi</span></button>
       <button class="tab"   id="tab-delta"    onclick="show('delta')"><span data-i18n="tabDelta">Delta</span></button>
+      <button class="tab"   id="tab-uyum"     onclick="show('uyum')">⚖️ <span data-i18n="tabUyum">Uyum</span></button>
     </nav>
 
     <!-- ─── HARİTA ─── -->
@@ -276,7 +308,72 @@
           <li><code>literature.merge.test.ts</code> — güncellenecek</li>
         </ul>
       </div>
+    <!-- ─── UYUM PANOSU (v0.3) ─── -->
+    <div class="viewwrap" id="view-uyum" hidden>
+      <!-- L1: sağlık çipleri -->
+      <div class="chiprow">
+        <button class="hchip ok"><small data-i18n="hcPhase">FAZ SAĞLIĞI</small><b>🟢 6 · 🟡 3</b><small>/9 faz</small></button>
+        <button class="hchip warn"><small data-i18n="hcSync">DEFTER SENKRONU</small><b>%78</b><small>✅ · 2 ⚠ bayat</small></button>
+        <button class="hchip err"><small data-i18n="hcViol">AÇIK İHLAL</small><b>🔴1 🟠4</b><small data-i18n="hcFric">friction↑ sıralı</small></button>
+        <button class="hchip warn"><small data-i18n="hcConf">ÇELİŞKİ</small><b>⚖️ 1</b><small>D5 ↔ §5.7</small></button>
+      </div>
+
+      <!-- L2: ihlal kuyruğu -->
+      <div class="viosec">
+        <div class="viotabs">
+          <span class="vt on" data-i18n="qNew">Yeni (1)</span>
+          <span class="vt" data-i18n="qRegress">Regress (0)</span>
+          <span class="vt" data-i18n="qRising">Yükselen (3)</span>
+          <span class="vt" data-i18n="qClosed">Gerekçeyle kapalı (2)</span>
+        </div>
+
+        <div class="vio">
+          <span class="sev err">ERR</span>
+          <div class="vbody">
+            <b>sahte-kapı</b> · <code>kokpit/ui/InviteButton.tsx:12</code>
+            <div class="vrule" data-i18n="vRule">Kural: D2#4 — capability yokken yüzey çizilmez</div>
+          </div>
+          <svg class="spark" viewBox="0 0 84 24"><polyline points="0,18 12,20 24,16 36,19 48,15 60,12 72,8 84,4" fill="none" stroke="#dc2626" stroke-width="2"/></svg>
+        </div>
+
+        <div class="vio">
+          <span class="sev warn">WARN</span>
+          <div class="vbody">
+            <b>bayat-kutu</b> · <code>ROADMAP §5.7 "Preflight göçü"</code>
+            <div class="vrule" data-i18n="vRule2">Near-miss: kutu açık ama App.css silinmiş (2026-08-20) — satır güncellenmemiş</div>
+          </div>
+          <svg class="spark" viewBox="0 0 84 24"><polyline points="0,6 12,8 24,7 36,10 48,9 60,11 72,10 84,12" fill="none" stroke="#f59e0b" stroke-width="2"/></svg>
+        </div>
+
+        <div class="vio resolved">
+          <span class="sev ok">OK</span>
+          <div class="vbody">
+            <b style="text-decoration:line-through;opacity:.7">hex-in-component</b>
+            <code>PaperCard.tsx</code>
+            <div class="vrule">✔ düzeltme: <code>a1b2c3d</code> — gerekçe kayıtlı</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- L2: çelişki kartı -->
+      <div class="conflict">
+        <div class="chead">⚖️ ÇELİŞKİ #7 · <span data-i18n="cOpen">AÇIK</span></div>
+        <div class="cside a"><small>A · ROADMAP §2.2/#16 — 2026-08-04</small><br>"Crossref ikinci retraksiyon kaynağı yok"</div>
+        <div class="cside b"><small>B · S1I-D0 kaydı — 2026-08-17</small><br>"RW küratörlü kaynak + sertlik merdiveni eklendi"</div>
+        <div class="cact">
+          <button class="btn" data-i18n="cFix">A'ya superseded-notu düş</button>
+          <button class="btn" data-i18n="cKeep">Çelişki olarak kabul et (gerekçe zorunlu)</button>
+        </div>
+      </div>
+
+      <!-- karar zinciri örneği -->
+      <div class="chain">
+        <b data-i18n="chainT">Karar zinciri (TechRadar deseni — silinmez):</b>
+        <div class="mv up">● CORPUS_FROM_YEAR — 2026-08-22 · Adopt (+1) <em>"kod zaten açık"</em></div>
+        <div class="mv dn">● Preflight göçü — 2026-08-20 · Hold (-1) <em>"App.css silindi, satır bayat"</em></div>
+      </div>
     </div>
+
   </section>
 
   <!-- ═══════════ SAĞ ÇEKMECE ═══════════ -->
@@ -299,7 +396,7 @@
 <script>
 /* ── DİL SÖZLÜĞÜ (labels.ts ile aynı disiplin) ── */
 const DICT = {
- tr:{tabMap:"Harita",tabTime:"Zaman Çizgisi",tabDelta:"Delta",
+ tr:{tabMap:"Harita",tabTime:"Zaman Çizgisi",tabDelta:"Delta",tabUyum:"Uyum",
      sDone:"Kodlandı",sPart:"Sürüyor",sOpen:"Planlandı",sAdd:"Eklenecek",sTouch:"Değişecek",
      lgDone:"Kodlandı / Done",lgPart:"Sürüyor / In progress",lgOpen:"Planlandı / Planned",
      lgGo:"GO bekliyor / Awaiting GO",lgAdd:"Eklenecek (delta)",
@@ -307,8 +404,14 @@ const DICT = {
      drawerHint:"◀ Haritada bir düğüme tıklayın.",
      affTests:"Etkilenecek test dosyaları:",deltaNote:'⚖️ Seçili plan maddesi: <b>"Kartopu (snowballing)"</b> — bu dilim kodlandığında haritada aşağıdaki değişiklikler oluşacaktır (henüz kodlanmadı).',
      genAt:"üretilme",stale:"🕐 Veri bayat — CLI'yı yeniden koşun",
-     dStatus:"Durum",dPath:"Yol",dPhase:"İlgili faz maddesi",dSrc:"Kaynağı aç ↗"},
- en:{tabMap:"Map",tabTime:"Timeline",tabDelta:"Delta",
+     dStatus:"Durum",dPath:"Yol",dPhase:"İlgili faz maddesi",dSrc:"Kaynağı aç ↗",
+     hcPhase:"FAZ SAĞLIĞI",hcSync:"DEFTER SENKRONU",hcViol:"AÇIK İHLAL",hcFric:"friction↑ sıralı",
+     hcConf:"ÇELİŞKİ",qNew:"Yeni (1)",qRegress:"Regress (0)",qRising:"Yükselen (3)",
+     qClosed:"Gerekçeyle kapalı (2)",vRule:"Kural: D2#4 — capability yokken yüzey çizilmez",
+     vRule2:"Near-miss: kutu açık ama App.css silinmiş (2026-08-20) — satır güncellenmemiş",
+     cOpen:"AÇIK",cFix:"A'ya superseded-notu düş",cKeep:"Çelişki olarak kabul et (gerekçe zorunlu)",
+     chainT:"Karar zinciri (TechRadar deseni — silinmez):"},
+ en:{tabMap:"Map",tabTime:"Timeline",tabDelta:"Delta",tabUyum:"Compliance",
      sDone:"Done",sPart:"In progress",sOpen:"Planned",sAdd:"Will add",sTouch:"Will change",
      lgDone:"Done",lgPart:"In progress",lgOpen:"Planned",
      lgGo:"Awaiting GO",lgAdd:"Will add (delta)",
@@ -316,7 +419,13 @@ const DICT = {
      drawerHint:"◀ Click a node on the map.",
      affTests:"Affected test files:",deltaNote:'⚖️ Selected plan item: <b>"Snowballing"</b> — once implemented, these changes will appear on the map (not coded yet).',
      genAt:"generated",stale:"🕐 Data stale — rerun the CLI",
-     dStatus:"Status",dPath:"Path",dPhase:"Related phase item",dSrc:"Open source ↗"}
+     dStatus:"Status",dPath:"Path",dPhase:"Related phase item",dSrc:"Open source ↗",
+     hcPhase:"PHASE HEALTH",hcSync:"LEDGER SYNC",hcViol:"OPEN VIOLATIONS",hcFric:"friction↑ sorted",
+     hcConf:"CONFLICTS",qNew:"New (1)",qRegress:"Regressed (0)",qRising:"Rising (3)",
+     qClosed:"Closed with reason (2)",vRule:"Rule: D2#4 — no surface without capability",
+     vRule2:"Near-miss: box open but App.css deleted (2026-08-20) — line not updated",
+     cOpen:"OPEN",cFix:"Mark A as superseded",cKeep:"Accept as conflict (reason required)",
+     chainT:"Decision chain (TechRadar pattern — never deleted)"}
 };
 let LANG='tr';
 
@@ -338,7 +447,7 @@ function toggleTheme(){
 
 /* ── SEKMELER ── */
 function show(v){
-  ['map','timeline','delta'].forEach(k=>{
+  ['map','timeline','delta','uyum'].forEach(k=>{
     document.getElementById('view-'+k).hidden = k!==v;
     document.getElementById('tab-'+k).classList.toggle('on',k===v);
   });

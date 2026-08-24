@@ -1,9 +1,10 @@
 # KokpitPro — Arayüz Sözleşmesi (UI-SPEC)
 
-> **Durum:** 🟡 TASLAK v0.2.1 — **Patron onayı bekliyor** (görsel dil §3 +
-> vibecoding-dostu sunum). Onay verilirse BAĞLAYICI olur.
-> **Canlı önizleme:** `arayuz-onizleme.html` — tarayıcıda çift tıkla açın;
-> TR/EN ve açık/koyu düğmeleri çalışır.
+> **Durum:** 🟡 TASLAK v0.3 — **Patron onayı bekliyor** (yeni: §10 Uyum &
+> Süreç Telemetrisi katmanı). Onay verilirse BAĞLAYICI olur.
+> **Canlı önizleme:** `arayuz-onizleme.html` — 4 sekme (Harita / Zaman /
+> Delta / **Uyum**), TR/EN, açık-koyu tema.
+> Üst sözleşmeler: `DESIGN.md` D1–D5.
 
 ## §0 · Nasıl Okunur — vibecoding dostu kılavuz
 
@@ -238,3 +239,110 @@ mobil-özel tasarım (duyarlı ama masaüstü öncelik).
 ---
 **Onay bloğu:** Patron onayı: ⬜ (onaylanırsa durum BAĞLAYICI'ya çevrilir ve
 Dilim 2 bu sözleşmeye göre kodlanır.)
+
+---
+
+## §10 · Uyum & Süreç Telemetrisi — Komuta Merkezi Katmanı (v0.3 EKLENTİSİ)
+
+> **Patron gereksinimi (2026-08-24):** Kokpit yalnız "ne kodlandı"yı değil,
+> **sürecin bütünlüğünü** gösterecek: hangi defterler dolduruldu/doldurulmadı,
+> kurallar nerede aşıldı, yeni yön kararları doğru işlendi mi, çelişkili
+> kararlar neler? Hepsi **karmaşasız**: L1 özet → L2 liste → L3 kanıt.
+>
+> Desen kaynakları: GitHub Security (ihlal şeması), Sentry (triage kuyruğu +
+> sparkline), Linear (drill-through), Grafana (eşik-tile), Nx (near-miss),
+> CodeScene (öncelik matrisi), Backstage TechRadar (karar timeline'ı).
+
+### §10.1 Dört Veri Akışı
+
+| Akış | Soru | Kaynak | Durum dili |
+|---|---|---|---|
+| **A. Faz** | Ne kodlandı? | ROADMAP + faz dosyaları | 🟢🟡⚪ (mevcut §3) |
+| **B. Defter Senkronu** | Kodlandıktan sonra defter dolduruldu mu? | git log × faz dosyaları × handoff'lar | ✅ güncel · ⚠ bayat · ❌ yazılmadı · ◐ kısmi |
+| **C. Kural İhlali** | Kurallar nerede aşıldı? | AGENTS/DESIGN kurallarının denetlenebilir hâlleri | Error / Warning / Note + bağlam puanı |
+| **D. Karar Bütünlüğü** | Çelişki var mı? Yön değişimi işlendi mi? | karar-defteri + ROADMAP + faz dosyaları çaprazı | açık çelişki / superseded-zinciri / temiz |
+
+### §10.2 Uyum Panosu (L1) — üst şeride sağlık çipleri
+
+Harita görünümünün üst şeridine ikinci satır eklenir; her çip tıklanabilir
+ve **drill-through** yapar (Linear deseni):
+
+```
+┌ FAZ SAĞLIĞI ──┐ ┌ DEFTER SENKRONU ─┐ ┌ AÇIK İHLAL ──┐ ┌ ÇELİŞKİ ─────┐
+│  🟢 6 / 🟡 3  │ │  %78 ✅ · 2 ⚠    │ │  🔴 1 🟠 4   │ │  ⚖️ 1 çift   │
+│  /9 faz       │ │  son koşum: 2sa  │ │  (friction↑) │ │  D5↔§5.7     │
+└───────────────┘ └──────────────────┘ └──────────────┘ └──────────────┘
+```
+
+- Çip rengi = eşik hükümüdür (Grafana): yeşil/amber/kırmızı sayıdan üretilir.
+- Tıklama → o akışın **filtreli listesine** iner (L2).
+
+### §10.3 Defter Senkronu (Akış B)
+
+Her kod dilimi için üçlü kontrol:
+
+| Kontrol | Nasıl | Sonuç |
+|---|---|---|
+| Faz dosyası güncellendi mi? | dilim commit'i SONRASI ilgili `.agents/phases/*.md` mtime/değişiklik | ✅/❌ |
+| ROADMAP kutusu işaretlendi mi? | checkbox durumu ↔ commit varlığı çaprazı | ✅/⚠ bayat/❌ |
+| Handoff/devir notu düştü mü? | `handoff-*`/`next-session-*` değişimi | ✅/◐ |
+
+**Near-miss (Nx deseni):** ❌ durumunda NEDEN kırılır: *tarih farkı mı,
+içerik-hash mi, sürüm alanı mı* — tek satır açıklama zorunlu.
+
+### §10.4 Kural İhali Kuyruğu (Akış C — Sentry/GitHub şeması)
+
+Her ihlal kaydı:
+
+```
+[🔴 ERR] sahte-kapı        · kokpit/ui/InviteButton.tsx:12   ▁▃▂▁▂▄▆ (14g)
+  Kural: DESIGN.md D2#4 — capability yokken yüzey çizilmez
+  Bağlam ciddiyeti: YÜKSEK (bu yol 14 günde 6 kez değişti — friction ↑)
+  İlk görülme: 2026-08-12 · Durum: YENİ
+  [Düzeltme ↗]  [Gerekçeyle kapat…]          ← kapatma = zorunlu gerekçe + kim/zaman
+```
+
+Kurallar:
+1. **İki ayrı ciddiyet:** kural ciddiyeti (Error/Warning/Note) ≠ bağlam
+   ciddiyeti (o bölgedeki değişim yoğunluğu — CodeScene friction deseni).
+   Sıralama friction×severity'dir.
+2. **Triage sekmeleri:** Yeni · Regress (çözülüp geri gelen!) · Yükselen ·
+   Gerekçeyle kapalı. Kapatma **gerekçesiz olamaz**; gerekçe audit'e yazılır.
+3. **Alert ↔ fix bağlantısı:** ihlal kartında "düzelten commit/PR" alanı;
+   çözülmeyenler için fix önerisi metni.
+4. Başlangıç kural seti (denetlenebilir → otomatik): `koşumsuz-commit`
+   · `hardcode-metin` · `hex-in-component` · `sahte-kapı` · `bayat-kutu`
+   · `ks-band-delinmesi`. Set genişletilebilir (`kokpit/check/rules/`).
+
+### §10.5 Karar Bütünlüğü (Akış D — TechRadar deseni)
+
+Kararlar asla silinmez; **moved zinciriyle** taşınır:
+
+```
+⚖️ ÇELİŞKİ #7 · AÇIK
+  A: ROADMAP §2.2/#16 "Crossref ikinci kaynak yok"      (2026-08-04)
+  B: S1I-D0 kaydı "RW küratörlü kaynak eklendi"          (2026-08-17)
+  Öneri: A satırına superseded-notu düşülmalı → [Düzelt…][Çelişki olarak kabul et…]
+────────────────────────────────────────────────────────
+D5 Dağıtım Yolu   ● 2026-08-24 Adopt (+1)  "yerel-önce"
+CORPUS_FROM_YEAR  ● 2026-08-22 Hold (-1)   "kod zaten açık"
+```
+
+- Çelişki tespiti: aynı konuda iki otorite farklı söylüyorsa (anahtar-kelime
+  + tarih sırası sezgisel başlar; v1'de yarım-otomatik, onaylı).
+- Yön-değişimi doğrulaması: yeni karar geldiğinde etkilenen belgelerin
+  güncellenip güncellenmediği Akış B ile çaprazlanır.
+
+### §10.6 IR Şeması Genişlemesi (v0.2)
+
+`KokpitIr`'e eklenir: `sync[{sliceId,phaseFile,roadmapBox,handoff,nearMiss?}]`,
+`violations[]`, `conflicts[]`, `health{phaseDone,partial,open,syncPct,vioErr,vioWarn,conflicts}`.
+Tümü Zod'lu; UI hesaplama yapmaz.
+
+### §10.7 Kabul (Uyum katmanı)
+
+1. MethodLogos verisinde pano, gerçek 1 ERR ihlal (örn. bilinen bayat kutu)
+   ve ≥1 çelişkiyi yakalar.
+2. Her çipten drill-through ≤2 tıklama.
+3. Kapatılan her ihlalde gerekçe+kim+zaman audit kaydı oluşur.
+4. TR/EN paritesi yeni metinlerde de bozulmaz.
