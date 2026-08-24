@@ -10,12 +10,40 @@
 
 ## Dilim 0 · Motoru ayağa kaldırma (Windows terminalinde)
 
-- [ ] `cd gitdiagram && npm install`
-- [ ] `.env.example` → `.env` kopyala; OpenRouter/OpenAI anahtarı gir
-      *(anahtar istenmiyorsa MOCK yolu var mı kontrol edilecek)*
-- [ ] `npm run dev` → `localhost:3000` açılır, örnek repo diyagramı üretilir
-- **Kabul:** herhangi bir public repo için interaktif Mermaid haritası
-  görüntüleniyor; tıklanınca GitHub dosyasına gidiliyor.
+> **Koşum notu 2026-08-24:** `npm run dev` Windows CMD'de kırık (betik bash +
+> Bun istiyor). Doğru yollar aşağıda.
+
+- [ ] `gitdiagram/` içinde bağımlılıklar: **Tercihen** Bun kur
+      (`powershell -c "irm bun.sh/install.ps1 | iex"`) → `bun install` ·
+      Alternatif: `npm install`
+- [ ] `.env.example` → `.env` kopyala; `OPENAI_API_KEY` (+ opsiyonel
+      `GITHUB_TOKEN`) gir
+- [ ] Dev sunucu — üç yol:
+      1. Bun kurulduysa: `bun run --bun next dev --turbo`
+      2. Node yolu: `npx next dev --turbo`
+      3. Git Bash varsa: `"C:\Program Files\Git\bin\bash.exe" scripts/dev-turbo.sh`
+- **Kabul:** `localhost:3000` açılır, örnek repo diyagramı üretilir;
+  tıklanınca GitHub dosyasına gidiliyor.
+- **Durum:** ❌ henüz koşulmadı (yukarıdaki komutlar kullanıcıda).
+
+## Dilim 0.1 · Parser kabul koşumu
+
+- [x] Fixture klasör adı `__fixtures__/` olarak eşitlendi (ENOENT giderildi)
+- [x] **CLI gerçek-veri koşusu YEŞİL:** MethodLogos ROADMAP → 9 faz grubu /
+      62 madde (5.7+P0..P5); phases dizini → 27 dosya tarandı, sinyaller üretildi
+- [ ] `npm run test` yeniden koşulacak (labels 3/3 yeşildi; parser süitleri
+      klasör düzeltmesinden sonra yeşil beklenir)
+
+### v0.1 parlatma listesi (kabul sonrası)
+
+1. **phaseFiles hassasiyeti:** "Güvenlik Düzeltmeleri", "Terim düzeltmesi",
+   "plan değildir", "Plan — dilimler" gibi başlıklar yanlış-pozitif üretiyor →
+   olumsuzlama koruması (`değildir` öncesi token yasak) + yapısal başlık
+   istisnası ("Runtime açma kapısı") + Düzeltme için ✅/🔧 emoji veya tarih şartı
+2. Çok satıra yayılan bold başlıklar (`**...**\n devam**`) başlığı kırpıyor →
+   blok-bazlı bold çözümleme
+3. `madde-N` kimlikleri dosya-geneli sayaçtan geliyor; faza-göre sıfırlama
+   değerlendirilecek
 
 ## Dilim 1 · Faz-Belge Ayrıştırıcı v0
 
