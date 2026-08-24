@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+*.log
+# referans motor — kendi .git'i var, bu repoya girmez
+gitdiagram/
