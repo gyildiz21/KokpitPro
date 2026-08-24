@@ -61,6 +61,30 @@ describe('kenar durumlar', () => {
         expect(scan.groups).toHaveLength(0);
     });
 
+    it('## Dilim N tarzı düz faz dosyaları ayrı gruplara ayrılır (dış denetim bulgusu)', () => {
+        const scan = scanRoadmapText(
+            [
+                '# Plan',
+                '',
+                '## Dilim 0',
+                '',
+                '- [ ] a işi',
+                '',
+                '## Dilim 1',
+                '',
+                '- [x] **B:** yapıldı — **Tamamlandı 2026-01-02**',
+                '',
+            ].join('\n'),
+        );
+        // Hata geçmişi: ## başlıklar yalnız ilk grupta sınır sayılıyor,
+        // Dilim 1–4 maddeleri Dilim 0'a yığılıyordu.
+        expect(scan.groups.map((g) => g.heading)).toEqual(['Dilim 0', 'Dilim 1']);
+        expect(scan.groups[0]?.items).toHaveLength(1);
+        expect(scan.groups[0]?.items[0]?.status).toBe('open');
+        expect(scan.groups[1]?.items[0]?.status).toBe('done');
+        expect(scan.groups[1]?.items[0]?.completedAt).toBe('2026-01-02');
+    });
+
     it('## başlığıyla başlayan dosya ## altına toplar', () => {
         const scan = scanRoadmapText('## Üst\n\n- [x] **A:** yapıldı — **Tamamlandı 2026-01-01**\n');
         expect(scan.groups).toHaveLength(1);

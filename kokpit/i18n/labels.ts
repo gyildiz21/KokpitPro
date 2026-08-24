@@ -33,7 +33,10 @@ const tr = {
         noData: 'Bu bölüm için veri yok.',
         noPhases: 'Faz belgesi bulunamadı — girdi yolunu denetleyin.',
     },
-} as const;
+};
+// Bilinçli olarak `as const` YOK: literal tipler Dict'i İngilizce değerlerle
+// eşleşmez kılardı (dış tip denetimi bunu yakaladı). Sözlük değerleri `string`
+// genişliğinde; anahtar yapısı yine de derleme anında zorlanır.
 
 type Dict = typeof tr;
 

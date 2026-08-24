@@ -45,6 +45,25 @@
 3. `madde-N` kimlikleri dosya-geneli sayaçtan geliyor; faza-göre sıfırlama
    değerlendirilecek
 
+## Dilim 0.2 · Dış denetim yanıtı (2026-08-24)
+
+> Bağımsız kol (Windows terminali) KokpitPro'yu değerlendirdi: **1.5/5 PoC**.
+> Bulgular ve durumları:
+
+| # | Bulgu | Durum |
+|---|---|---|
+| 1 | Parser testleri fixture yolu bulamıyor (`fixtures` vs `__fixtures__`) | ✅ Zaten onarılmıştı (`c0b1136`, denetim eski HEAD'e bakmış) |
+| 2 | **Faz-gruplama hatası:** PLAN.md tarzı `## Dilim N` dosyalarında Dilim 1–4 maddeleri Dilim 0'a yığılıyor | ✅ **Onarıldı:** her başlık artık grup sınırı; boş gruplar filtreleniyor; nöbetçi test eklendi |
+| 3 | **17 TS hatası:** i18n literal tip daralması + roadmap.ts undefined riskleri | ✅ **Onarıldı:** `as const` kaldırıldı (Dict string genişliğinde), regex yakalama erişimlerine `??` fallback |
+| 4 | CLI kendi PLAN.md'sini yanlış grupluyor | ✅ Madde 2 ile aynı kök neden |
+| 5 | GitDiagram tam yolculuk çöküyor: `Missing R2_PUBLIC_BUCKET`, healthz 503 (config/provider/storage×2/redis) | ⬜ **Karar bekliyor:** (A) Cloudflare R2 + Upstash free-tier hesap açılıp `.env` doldurulur · (B) "storage'sız lite" dalı: artefakt kalıcılığı olmadan sadece üretim+görüntüleme — Dilim 2 UI'sını besleyecek minimum bu. Önerilen: önce B, ürünleşmede A |
+| 6 | Turbopack yanlış workspace-root çökmesi | ⬜ gitdiagram dizininden çalıştırma kuralı (kök değil) + gerekirse `next dev --turbo` yerine düz `next dev` |
+| 7 | Redis entegrasyon testi timeout | ⬜ Madde 5B ile düşer |
+
+**Kapı:** Bu onarımlardan sonra kapıları **Windows kolu** koşar
+(`npm run test && npm run typecheck`); yeşil teyidi gelmeden Dilim 1
+KAPANMIŞ sayılmaz (koşum disiplini).
+
 ## Dilim 1 · Faz-Belge Ayrıştırıcı v0
 
 - [x] `kokpit/parser/roadmap.ts` — checkbox satırlarını oku:

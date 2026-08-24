@@ -30,12 +30,13 @@ function statusOf(marker: string): ItemStatus {
 /** Başlıktan kimlik çıkarır: `#1 Konsensüs...` → `#1`; yoksa boş döner. */
 function extractId(title: string): string | null {
     const m = ID_RE.exec(title);
-    return m ? `#${m[1]}` : null;
+    const captured = m?.[1];
+    return captured ? `#${captured}` : null;
 }
 
 function extractTitle(rest: string): string {
     const bold = BOLD_TITLE_RE.exec(rest);
-    let title = bold ? bold[1] : rest;
+    let title = (bold?.[1] as string | undefined) ?? rest;
     // Bold içindeki sondaki iki nokta ve fazladan boşluklar temizlenir.
     title = title.replace(/\s*:\s*$/, '').trim();
     // Bold'suz satırlarda ilk cümleyi başlık kabul et (nokta/iki nokta üstünde kes).
@@ -80,13 +81,12 @@ export function scanRoadmapText(text: string, sourceFile = 'inline'): RoadmapSca
 
         const headingMatch = HEADING_RE.exec(line);
         if (headingMatch) {
-            const level = headingMatch[1]?.length ?? 1;
-            // Grup başlığı olarak ### öncelikli; yoksa ## da kabul.
-            if (level === 3 || (level === 2 && currentGroup === null)) {
-                currentHeading = headingMatch[2]?.trim() ?? '';
-                currentGroup = { heading: currentHeading, items: [] };
-                groups.push(currentGroup);
-            }
+            // HER başlık yeni grup sınırıdır (Dış denetim bulgusu: `## Dilim N`
+            // tarzı düz faz dosyalarında maddeler ilk gruba yığılıyordu).
+            // Maddesiz başlıklar sonda filtrelenir — gürültü üretmez.
+            currentHeading = headingMatch[2]?.trim() ?? '';
+            currentGroup = { heading: currentHeading, items: [] };
+            groups.push(currentGroup);
             continue;
         }
 
