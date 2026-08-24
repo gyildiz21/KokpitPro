@@ -34,10 +34,12 @@
 ## Dilim 0.1 · Parser kabul koşumu
 
 - [x] Fixture klasör adı `__fixtures__/` olarak eşitlendi (ENOENT giderildi)
-- [x] **CLI gerçek-veri koşusu YEŞİL:** MethodLogos ROADMAP → 9 faz grubu /
-      62 madde (5.7+P0..P5); phases dizini → 27 dosya tarandı, sinyaller üretildi
-- [ ] `npm run test` yeniden koşulacak (labels 3/3 yeşildi; parser süitleri
-      klasör düzeltmesinden sonra yeşil beklenir)
+- [x] **CLI gerçek-veri koşusu YEŞİL:** MethodLogos ROADMAP → 8 checkbox grubu /
+      62 madde (5.7+P0..P5); phases dizini → 27 dosya tarandı, sinyaller üretildi.
+      Bu sayı ürünün kanonik Faz 1–9 sayısı değildir; kanonik faz adaptörü
+      Dilim 2 kapsamında ayrıca bağlanacaktır.
+- [x] **Windows kabul koşumu YEŞİL (2026-08-24):** `npm test` → 3 dosya,
+      18/18 test; `npm run typecheck` → hata yok
 
 ### v0.1 parlatma listesi (kabul sonrası)
 
@@ -84,8 +86,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 - [x] **CLI kabul aracı:** `kokpit/cli.ts` —
       `npx tsx kokpit/cli.ts --roadmap <yol> [--phases <dizin>] [--pretty]`;
       JSON anahtarları İngilizce sabit (makine sözleşmesi, bkz. DESIGN.md D1)
-- ⚠️ **Kod yazıldı; koşum Windows terminalinde** (`npm install && npm run test`)
-  — koşulmadan dilim kapanmış sayılmaz.
+- ✅ **Windows kabul koşumu tamamlandı (2026-08-24):** `npm test` → 18/18;
+  `npm run typecheck` → hata yok.
 - **Kabul:** MethodLogos_Pro ROADMAP'ine CLI ile bakıldığında P0–P5 ve S1I
   D0–D4 durumları doğru çıkar.
 
@@ -98,6 +100,48 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 - [ ] AST düğümü ↔ dizin eşlemesi → faz dilimi bağlama
 - [ ] Renk sözlüğü: kodlandı(yeşil) / sürüyor(amber) / planda(gri) / GO bekliyor(mavi)
 - **Kabul:** kendi reposunun haritasında en az 3 durum aynı anda görünür.
+
+## Dilim 2.1 · Proje Merkezi + Repo Bağlantı Yaşam Döngüsü
+
+> **UI sözleşmesi:** `UI-SPEC.md` v0.8 §12. Ana HTML artık aynı-köken Node
+> servisine bağlıdır; proje kayıtları ve son başarılı indeks makbuzları
+> `.kokpit/data/projects.json` içinde kalıcıdır.
+
+- [x] **Proje Merkezi:** kayıtlı projeler; kaynak, dal,
+      plan dosyası, bağlantı ve son indeks alanları; seçili proje bağlam paneli.
+- [x] **Dört adımlı bağlantı:** Kaynak → Doğrula → İndeksle →
+      Hazır; Yerel ve GitHub seçenekleri; geri/iptal/hata/başarı durumları.
+- [x] **Proje seçici + bağlam izolasyonu:** KokpitPro, MethodLogos ve PageBlitz
+      kalıcı indeksleri aynı çalışma alanında karıştırılmaz; değişimde
+      faz/düğüm/denetçi sıfırlanır.
+- [x] **Dinamik zaman çizgisi + tam-yükseklik kabuk:** etkin projenin tüm
+      izlenebilir plan maddeleri üretilir; sabit 4 örnek satır ve alt boş bant yok.
+- [x] **Karşılaştırma:** en az iki proje ayrı satırda; bilinmeyen
+      değerler `—/ölçülemiyor`; tek birleşik sağlık yüzdesi yok.
+- [x] **`ProjectRecord` kayıt defteri:** projectId, yerel kök/GitHub kimliği,
+      dal, plan kaynakları, bağlantı durumu ve son indeks makbuzunu kalıcı tut.
+- [x] **Yerel repo yardımcısı:** yazılan kökü `realpath` ile sınırlar;
+      `.git`/dal/commit/plan doğrular; kök dışı plan yolu ve 2 MiB üstü planı reddeder.
+- [~] **GitHub App / GitHub Contents:** seçili repolar + `Contents: read` token
+      üretimi sunucuda kodlandı; anonim halka açık repo kabulü gerçek API ile
+      doğrulandı. Özel `gyildiz21` repoları için App ID/installation/private-key
+      dış kurulumu henüz yok; PAT/parola formu yok ve sır ön yüze gitmez.
+- [x] **Proje-bazlı gerçek indeks:** IR `projectId/repoRoot/branch/commit`
+      alanları; başarısız yeni koşumda son başarılı IR bayat etiketiyle korunur.
+- [x] **Gerçek karşılaştırma adaptörü:** proje özetleri aynı ölçüm sözleşmesinden
+      gelmiyorsa ölçülemez; proje satırı etkin bağlama drill-through yapar.
+- [~] **E2E kabul:** yerel ekle, halka açık GitHub doğrula, özel GitHub yetki
+      hatası, proje değişimi, yeniden yükleme kalıcılığı ve veri
+      sızıntısı nöbetçisi, 1440/1024/768 taşma ve klavye/odak senaryoları.
+- [x] **2026-08-24 canlı kanıt:** 3 kalıcı yerel repo; KokpitPro `7/31`,
+      MethodLogos `8/62` ham checkbox grubu, PageBlitz kanıt-defteri adaptörü
+      `51/1057` ham belge grubu (kanonik ürün fazı sayılmaz); halka
+      açık GitHub doğrula+kalıcı kaydet+yeniden yükle+temizle akışı; `26/26`
+      test, typecheck, HTML sözdizimi ve aynı-köken API health yeşil.
+- **Kabul:** kullanıcı en az bir yerel ve bir GitHub projesini kaydeder; proje
+  değişiminde tüm analiz yüzeyleri aynı projectId'ye geçer; KokpitPro ve
+  MethodLogos verisi aynı plan/harita/zaman/kanıt yüzeyinde birleşmez; bağlantı
+  ve indeks kanıtı yoksa UI bunu hazır ürün olarak sunmaz.
 
 ## Dilim 3 · Delta Ön-Görünümü
 

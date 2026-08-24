@@ -1,417 +1,1365 @@
 <!doctype html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>🟢 KokpitPro — Komuta Merkezi v0.3</title>
-<style>
-/* ═══ TOKENLAR (UI-SPEC §3 + Grafana tile dili) ═══ */
-:root{
-  --bg:#f1f5f9; --panel:#ffffff; --panel2:#f8fafc; --text:#0f172a; --muted:#64748b;
-  --line:#e2e8f0; --accent:#2563eb;
-  --st-done:#10b981; --st-done-bg:#ecfdf5;
-  --st-partial:#f59e0b; --st-partial-bg:#fffbeb;
-  --st-open:#cbd5e1; --st-open-text:#64748b;
-  --go:#0ea5e9; --err:#dc2626;
-  --radius:10px; --shadow:0 1px 2px rgb(15 23 42/.06),0 4px 12px rgb(15 23 42/.05);
-}
-[data-theme="dark"]{
-  --bg:#0a101c; --panel:#111a2c; --panel2:#0d1524; --text:#e2e8f0; --muted:#94a3b8; --line:#1e293b;
-  --st-done-bg:#06281e; --st-partial-bg:#2a1f05; --st-open-text:#94a3b8;
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);
-     color:var(--text);font-size:13.5px;line-height:1.45;font-variant-numeric:tabular-nums}
-button{font:inherit}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="KokpitPro arayüz sözleşmesi için etkileşimli ürün önizlemesi">
+  <meta name="color-scheme" content="dark light">
+  <title>KokpitPro — Çalışma alanı önizlemesi</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230b0e14'/%3E%3Cpath d='M18 16h9v13l12-13h11L36 31l15 17H39L27 34v14h-9z' fill='%237dd3fc'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #090d14;
+      --bg-elevated: #0d121b;
+      --surface: #111720;
+      --surface-2: #151d28;
+      --surface-3: #1a2330;
+      --text: #edf3f8;
+      --text-2: #a8b4c3;
+      --text-3: #718096;
+      --line: #222d3b;
+      --line-strong: #324154;
+      --accent: #7dd3fc;
+      --accent-soft: rgba(125, 211, 252, .12);
+      --done: #53c99b;
+      --done-soft: rgba(83, 201, 155, .11);
+      --progress: #e3b65a;
+      --progress-soft: rgba(227, 182, 90, .12);
+      --planned: #8290a4;
+      --danger: #ee7b78;
+      --focus: #a5e2ff;
+      --shadow-float: 0 24px 70px rgba(2, 7, 13, .42), 0 2px 10px rgba(2, 7, 13, .28);
+      --radius-control: 8px;
+      --topbar-h: 62px;
+    }
+    html[data-theme="light"] {
+      --bg: #eef2f5;
+      --bg-elevated: #f6f8fa;
+      --surface: #ffffff;
+      --surface-2: #f5f7f9;
+      --surface-3: #eaf0f4;
+      --text: #14202d;
+      --text-2: #506174;
+      --text-3: #7c8998;
+      --line: #dce3e9;
+      --line-strong: #c7d1da;
+      --accent: #036c91;
+      --accent-soft: rgba(3, 108, 145, .09);
+      --done: #187c5b;
+      --done-soft: rgba(24, 124, 91, .09);
+      --progress: #9a6b0f;
+      --progress-soft: rgba(154, 107, 15, .09);
+      --planned: #68778a;
+      --danger: #b63d3a;
+      --focus: #036c91;
+      --shadow-float: 0 24px 70px rgba(39, 58, 73, .17), 0 2px 10px rgba(39, 58, 73, .09);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      background: radial-gradient(circle at 70% -15%, rgba(125, 211, 252, .07), transparent 32rem), var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI Variable", "Aptos", "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+      font-variant-numeric: tabular-nums;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    [hidden] { display: none !important; }
+    .icon { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .skip-link { position: fixed; top: 10px; left: 10px; z-index: 100; transform: translateY(-140%); padding: 9px 13px; border-radius: 8px; background: var(--text); color: var(--bg); font-weight: 650; text-decoration: none; }
+    .skip-link:focus { transform: translateY(0); }
+    .app-shell { display: flex; min-height: 100dvh; flex-direction: column; }
 
-/* ═══ RIBBON ═══ */
-.ribbon{background:repeating-linear-gradient(45deg,#fef3c7,#fef3c7 12px,#fde68a 12px,#fde68a 24px);
-        color:#78350f;text-align:center;padding:3px;font-weight:600;font-size:11.5px}
-[data-theme="dark"] .ribbon{background:#33290a;color:#fde68a}
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(260px, 440px) minmax(260px, 1fr);
+      align-items: center;
+      min-height: var(--topbar-h);
+      padding: 9px clamp(14px, 2vw, 28px);
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+      backdrop-filter: blur(18px) saturate(125%);
+    }
+    .brand-group, .top-actions, .repo-context, .language-toggle, .view-tabs, .view-meta, .signal-links, .view-actions, .map-tools, .inspector-actions, .status-meta { display: flex; align-items: center; }
+    .brand-group { min-width: 0; gap: 11px; }
+    .project-switcher { position: relative; display: flex; align-items: center; min-width: 0; max-width: 300px; padding: 4px 8px 4px 4px; border: 1px solid transparent; border-radius: 10px; background: transparent; cursor: pointer; text-align: left; transition: background 180ms ease, border-color 180ms ease; }
+    .project-switcher:hover, .project-switcher[aria-expanded="true"] { border-color: var(--line); background: var(--surface); }
+    .project-switcher .brand-copy { margin-left: 10px; }
+    .project-switcher > .icon { width: 15px; height: 15px; margin-left: 8px; color: var(--text-3); }
+    .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 9px; background: var(--accent-soft); color: var(--accent); font-family: "Segoe UI Variable Display", "Aptos Display", sans-serif; font-size: 16px; font-weight: 760; letter-spacing: -.04em; }
+    .brand-copy { min-width: 0; }
+    .brand-name { font-family: "Segoe UI Variable Display", "Aptos Display", sans-serif; font-size: 14px; font-weight: 720; letter-spacing: -.015em; }
+    .repo-context { gap: 6px; min-width: 0; color: var(--text-2); font-size: 12px; }
+    .repo-context span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .command-trigger { justify-self: center; display: flex; align-items: center; width: min(100%, 440px); min-height: 38px; padding: 0 10px 0 12px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); color: var(--text-3); cursor: pointer; transition: border-color 180ms ease, background 180ms ease, color 180ms ease; }
+    .command-trigger:hover { border-color: var(--line-strong); background: var(--surface-2); color: var(--text-2); }
+    .command-trigger .icon { width: 16px; height: 16px; }
+    .command-trigger span { margin-left: 8px; }
+    .keycap { margin-left: auto !important; padding: 2px 6px; border: 1px solid var(--line); border-bottom-color: var(--line-strong); border-radius: 5px; background: var(--bg-elevated); color: var(--text-3); font-family: ui-monospace, "Cascadia Code", monospace; font-size: 10px; }
+    .top-actions { justify-content: flex-end; gap: 7px; }
+    .mode-badge { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--progress) 35%, var(--line)); border-radius: 7px; background: var(--progress-soft); color: var(--progress); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .mode-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 14%, transparent); }
+    .language-toggle { padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+    .language-toggle button { min-width: 34px; min-height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--text-3); cursor: pointer; font-size: 11px; font-weight: 680; }
+    .language-toggle button[aria-pressed="true"] { background: var(--surface-3); color: var(--text); }
+    .icon-button, .text-button { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); color: var(--text-2); cursor: pointer; transition: background 180ms ease, border-color 180ms ease, color 180ms ease; }
+    .icon-button:hover, .text-button:hover { border-color: var(--line-strong); background: var(--surface-2); color: var(--text); }
+    .text-button { gap: 7px; padding: 0 11px; font-size: 12px; font-weight: 620; }
+    .text-button.primary { border-color: color-mix(in srgb, var(--accent) 38%, var(--line)); background: var(--accent-soft); color: var(--accent); }
 
-/* ═══ ÜST ŞERİT (Vercel: durum her yerde) ═══ */
-.topbar{display:flex;align-items:center;gap:10px;background:var(--panel);
-        border-bottom:1px solid var(--line);padding:7px 14px;position:sticky;top:0;z-index:30}
-.logo{width:13px;height:13px;border-radius:4px;background:linear-gradient(135deg,var(--accent),var(--st-done))}
-.brand{font-weight:800;letter-spacing:.2px;font-size:14px}
-.pill{border:1px solid var(--line);border-radius:999px;padding:3px 11px;color:var(--muted);font-size:11.5px}
-.sp{flex:1}
-.btn{border:1px solid var(--line);background:var(--bg);color:var(--text);
-     border-radius:8px;padding:4px 11px;cursor:pointer;font-size:12px}
-.btn.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+    .project-menu { position: fixed; z-index: 80; top: 56px; left: clamp(14px, 2vw, 28px); width: min(360px, calc(100vw - 28px)); padding: 8px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-float); }
+    .project-menu-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 8px 9px; color: var(--text-3); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+    .project-menu-list { display: grid; gap: 3px; }
+    .project-menu-item { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 9px; width: 100%; min-height: 52px; padding: 6px 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; text-align: left; }
+    .project-menu-item:hover { border-color: var(--line); background: var(--surface-2); }
+    .project-menu-item[aria-current="true"] { border-color: color-mix(in srgb, var(--accent) 28%, var(--line)); background: var(--accent-soft); }
+    .project-mini-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--surface-3); color: var(--text-2); font-size: 11px; font-weight: 720; }
+    .project-menu-copy strong, .project-menu-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .project-menu-copy strong { color: var(--text); font-size: 11.5px; font-weight: 650; }
+    .project-menu-copy span { margin-top: 2px; color: var(--text-3); font-size: 9.5px; }
+    .project-menu-state { color: var(--text-3); font-size: 9px; }
+    .project-menu-add { width: 100%; margin-top: 7px; border-color: var(--line); background: var(--surface-2); }
 
-/* ═══ SAĞLIK ÇİPLERİ — L1 KOMUTA SATIRI (Grafana stat-tile deseni) ═══ */
-.chiprow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 14px;max-width:1400px;margin:auto}
-.hchip{text-align:left;border:1px solid var(--line);border-left-width:4px;border-radius:var(--radius);
-       background:var(--panel);padding:7px 12px;cursor:pointer;display:flex;flex-direction:column;gap:1px;
-       box-shadow:var(--shadow);transition:.15s}
-.hchip:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgb(15 23 42/.12)}
-.hchip small{color:var(--muted);font-size:10px;letter-spacing:.07em;text-transform:uppercase;font-weight:700}
-.hchip b{font-size:16px;line-height:1.2}
-.hchip small.sub{color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
-.hchip.ok{border-left-color:var(--st-done)} .hchip.warn{border-left-color:var(--st-partial)}
-.hchip.err{border-left-color:var(--err)}
+    .primary-nav { display: flex; align-items: center; min-height: 48px; padding: 5px clamp(14px, 2vw, 28px); border-bottom: 1px solid var(--line); background: var(--bg-elevated); }
+    .primary-nav-list { display: flex; align-items: center; gap: 3px; }
+    .primary-nav-button { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 11px; border: 0; border-radius: 7px; background: transparent; color: var(--text-3); cursor: pointer; font-size: 12px; font-weight: 600; }
+    .primary-nav-button:hover { background: var(--surface); color: var(--text-2); }
+    .primary-nav-button[aria-current="page"] { background: var(--surface-2); color: var(--text); }
+    .primary-nav-button[aria-current="page"]::after { content: ""; position: absolute; right: 11px; bottom: -6px; left: 11px; height: 2px; border-radius: 2px; background: var(--accent); }
+    .primary-nav-button .icon { width: 16px; height: 16px; }
+    .primary-nav-meta { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--text-3); font-size: 10.5px; }
+    .source-state { display: inline-flex; align-items: center; gap: 6px; padding: 4px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text-2); font-size: 9.5px; font-weight: 650; }
+    .source-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--done); }
+    .source-state.preview::before { background: var(--progress); }
+    .source-state.locked::before { background: var(--danger); }
 
-/* ═══ ANA IZGARA ═══ */
-.grid{display:grid;grid-template-columns:232px 1fr 300px;gap:10px;padding:0 14px 14px;max-width:1400px;margin:auto}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-.sect{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700;margin:0 0 8px}
+    .product-screen { flex: 1; min-height: 0; background: var(--bg); }
+    .screen-shell { width: min(100% - 36px, 1460px); margin: 0 auto; padding: clamp(28px, 4vw, 54px) 0 58px; }
+    .screen-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+    .screen-head-copy { max-width: 760px; }
+    .screen-head h1 { margin: 0; font-family: "Segoe UI Variable Display", "Aptos Display", sans-serif; font-size: clamp(28px, 4vw, 46px); font-weight: 735; line-height: 1.02; letter-spacing: -.045em; text-wrap: balance; }
+    .screen-head p { max-width: 66ch; margin: 11px 0 0; color: var(--text-3); font-size: 13px; line-height: 1.65; text-wrap: pretty; }
+    .screen-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+    .project-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(310px, .7fr); gap: 22px; align-items: start; }
+    .project-catalog, .project-context-panel, .compare-table-wrap { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 0 18px 54px rgba(2, 7, 13, .12); }
+    .catalog-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 58px; padding: 11px 15px; border-bottom: 1px solid var(--line); }
+    .catalog-toolbar strong { font-size: 12px; font-weight: 660; }
+    .catalog-toolbar span { color: var(--text-3); font-size: 10.5px; }
+    .project-list { display: grid; }
+    .project-row { display: grid; grid-template-columns: minmax(190px, 1.2fr) minmax(130px, .72fr) minmax(120px, .65fr) minmax(120px, .68fr) auto; align-items: center; gap: 14px; min-height: 88px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .project-row:last-child { border-bottom: 0; }
+    .project-row:hover { background: color-mix(in srgb, var(--surface-2) 72%, transparent); }
+    .project-identity { display: flex; align-items: center; min-width: 0; gap: 11px; }
+    .project-avatar { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--text-2); font-size: 12px; font-weight: 730; }
+    .project-primary, .project-secondary { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .project-primary { color: var(--text); font-size: 12.5px; font-weight: 660; }
+    .project-secondary { margin-top: 3px; color: var(--text-3); font-family: ui-monospace, "Cascadia Code", monospace; font-size: 9.5px; }
+    .project-field span { display: block; color: var(--text-3); font-size: 9px; letter-spacing: .05em; text-transform: uppercase; }
+    .project-field strong { display: block; margin-top: 4px; overflow: hidden; color: var(--text-2); font-size: 10.5px; font-weight: 610; text-overflow: ellipsis; white-space: nowrap; }
+    .project-row-actions { display: flex; gap: 6px; }
+    .project-row-actions .text-button { min-height: 34px; white-space: nowrap; }
+    .project-context-panel { position: sticky; top: 130px; padding: 22px; }
+    .project-context-panel h2 { margin: 0; font-family: "Segoe UI Variable Display", sans-serif; font-size: 20px; font-weight: 690; letter-spacing: -.03em; }
+    .project-context-panel > p { margin: 8px 0 0; color: var(--text-3); font-size: 11.5px; line-height: 1.6; }
+    .context-facts { display: grid; gap: 0; margin: 20px 0 0; }
+    .context-fact { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+    .context-fact dt { color: var(--text-3); font-size: 10px; }
+    .context-fact dd { margin: 0; overflow-wrap: anywhere; color: var(--text-2); font-size: 10.5px; }
+    .journey-list { display: grid; gap: 9px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .journey-step { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 9px; align-items: start; }
+    .journey-index { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--text-3); font: 650 9px/1 ui-monospace, monospace; }
+    .journey-step strong { display: block; color: var(--text-2); font-size: 10.5px; }
+    .journey-step span { display: block; margin-top: 2px; color: var(--text-3); font-size: 9.5px; line-height: 1.5; }
 
-/* SOL PANEL */
-.side{padding:12px;height:fit-content;position:sticky;top:96px}
-.phase{margin-bottom:9px;cursor:pointer;border-radius:8px;padding:4px 6px;margin-left:-6px}
-.phase:hover,.phase.on{background:var(--bg)}
-.phase .head{display:flex;justify-content:space-between;font-weight:600;font-size:12.5px}
-.bar{height:5px;border-radius:99px;background:var(--line);margin:4px 0 5px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--st-done)}
-.item{display:flex;gap:6px;align-items:center;padding:2px 0 2px 8px;font-size:12px;color:var(--muted)}
-.dot{width:9px;height:9px;border-radius:50%;flex:none}
-.d-done{background:var(--st-done)} .d-part{background:var(--st-partial)}
-.d-open{border:1.5px solid var(--st-open);width:7px;height:7px}
+    .compare-controls { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+    .compare-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--text-3); cursor: pointer; font-size: 10.5px; }
+    .compare-chip[aria-pressed="true"] { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); background: var(--accent-soft); color: var(--text); }
+    .compare-table-wrap { overflow-x: auto; }
+    .compare-table { width: 100%; min-width: 820px; border-collapse: collapse; }
+    .compare-table th, .compare-table td { padding: 15px 17px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .compare-table th { background: var(--surface-2); color: var(--text-3); font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .compare-table td { color: var(--text-2); font-size: 11px; }
+    .compare-table tbody tr:last-child td { border-bottom: 0; }
+    .compare-project-cell strong { display: block; color: var(--text); font-size: 12px; }
+    .compare-project-cell span { display: block; margin-top: 3px; color: var(--text-3); font-size: 9.5px; }
+    .compare-note { margin-top: 13px; color: var(--text-3); font-size: 10.5px; }
 
-.legend{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;font-size:12px}
-.legend .row{display:flex;align-items:center;gap:8px;margin:4px 0}
-.sw{width:15px;height:15px;border-radius:5px;flex:none}
-.sw.done{background:var(--st-done)} .sw.part{background:var(--st-partial)}
-.sw.open{border:2px solid var(--st-open)}
-.sw.go{background:var(--st-done);outline:2px solid var(--go);outline-offset:2px}
-.sw.add{background:transparent;border:2px dashed var(--st-done)}
+    .workspace-screen { display: flex; flex: 1; min-height: 0; flex-direction: column; }
 
-/* SAHNE */
-.stage{min-height:540px;display:flex;flex-direction:column}
-.tabs{display:flex;gap:2px;padding:8px 10px 0;border-bottom:1px solid var(--line)}
-.tab{padding:6px 16px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-size:13px;border:none;background:none}
-.tab.on{color:var(--text);font-weight:700;background:var(--bg);box-shadow:inset 0 -2px 0 var(--accent)}
-.viewwrap{flex:1;background:var(--bg);border-radius:0 0 var(--radius) var(--radius);position:relative;overflow:hidden}
+    .viewbar { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 6px clamp(14px, 2vw, 28px); border-bottom: 1px solid var(--line); background: var(--bg-elevated); }
+    .view-tabs { gap: 2px; }
+    .view-tab { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: var(--text-3); cursor: pointer; font-size: 12.5px; font-weight: 590; transition: color 160ms ease, background 160ms ease; }
+    .view-tab:hover { background: var(--surface); color: var(--text-2); }
+    .view-tab[aria-selected="true"] { background: var(--surface-2); color: var(--text); }
+    .view-tab[aria-selected="true"]::after { content: ""; position: absolute; right: 11px; bottom: -7px; left: 11px; height: 2px; border-radius: 2px; background: var(--accent); }
+    .view-meta { gap: 9px; color: var(--text-3); font-size: 11.5px; }
+    .view-meta strong { color: var(--text-2); font-weight: 600; }
 
-/* HARİTA */
-.canvas{position:relative;height:500px}
-.wires{position:absolute;inset:0;width:100%;height:100%}
-.node{position:absolute;width:150px;padding:9px 11px;border-radius:var(--radius);
-      background:var(--panel);box-shadow:var(--shadow);cursor:pointer;
-      border:1.5px solid var(--line);transition:.15s}
-.node:hover{transform:translateY(-2px);border-color:var(--accent)}
-.node.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgb(37 99 235/.18)}
-.node.dim{opacity:.28}
-.node .t{font-weight:700;font-size:12.5px}
-.node .p{font-size:10.5px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;margin:2px 0 6px}
-.chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px}
-.chip.done{background:var(--st-done-bg);color:var(--st-done)}
-.chip.part{background:var(--st-partial-bg);color:var(--st-partial)}
-.chip.open{color:var(--st-open-text);border:1px solid var(--st-open)}
-.node.done{border-color:var(--st-done)}
-.node.part{border-style:dashed;border-color:var(--st-partial);background:var(--st-partial-bg)}
-.node.open{background:transparent}
-.node.goring{outline:2px solid var(--go);outline-offset:3px}
-.zoom{position:absolute;left:10px;bottom:10px;display:flex;flex-direction:column;gap:4px}
-.zoom button{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
+    .signal-strip { display: grid; grid-template-columns: minmax(280px, 1.3fr) minmax(420px, 1fr); gap: 18px; align-items: center; min-height: 62px; padding: 8px clamp(14px, 2vw, 28px); border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 74%, var(--bg)); }
+    .signal-message { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .signal-symbol { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: var(--progress); box-shadow: 0 0 0 5px var(--progress-soft); }
+    .signal-copy { min-width: 0; }
+    .signal-copy strong { display: block; overflow: hidden; color: var(--text); font-size: 12.5px; font-weight: 640; text-overflow: ellipsis; white-space: nowrap; }
+    .signal-copy span { color: var(--text-3); font-size: 11.5px; }
+    .signal-links { justify-content: flex-end; gap: 6px; }
+    .signal-link { display: grid; grid-template-columns: auto auto; gap: 0 9px; align-items: center; min-width: 132px; min-height: 42px; padding: 5px 9px; border: 1px solid transparent; border-radius: 8px; background: transparent; text-align: left; cursor: pointer; transition: background 160ms ease, border-color 160ms ease; }
+    .signal-link:hover { border-color: var(--line); background: var(--surface-2); }
+    .signal-link span { color: var(--text-3); font-size: 10.5px; }
+    .signal-link strong { grid-row: 1 / span 2; grid-column: 2; color: var(--text-2); font-size: 12px; font-weight: 610; }
+    .signal-link small { color: var(--text-3); font-size: 10px; }
 
-/* ÇEKMECE */
-.drawer{padding:12px;height:fit-content;position:sticky;top:96px}
-.field{margin:8px 0;font-size:12.5px}
-.field b{display:block;font-size:10.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.07em}
-.srcbtn{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:8px;background:var(--accent);
-        color:#fff;text-decoration:none;font-size:12px;font-weight:700}
+    .workspace { display: grid; grid-template-columns: 244px minmax(0, 1fr) 336px; width: min(100%, 1720px); min-height: 0; flex: 1; margin: 0 auto; border-right: 1px solid var(--line); border-left: 1px solid var(--line); background: var(--surface); }
+    body.inspector-collapsed .workspace { grid-template-columns: 244px minmax(0, 1fr); }
+    .phase-rail, .inspector { min-width: 0; background: var(--bg-elevated); }
+    .phase-rail { min-height: 0; padding: 18px 12px; overflow-y: auto; border-right: 1px solid var(--line); }
+    .rail-header, .inspector-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 0 5px 14px; }
+    .eyebrow { margin: 0 0 4px; color: var(--text-3); font-size: 10px; font-weight: 720; letter-spacing: .09em; text-transform: uppercase; }
+    .rail-header h2, .inspector-header h2 { margin: 0; font-family: "Segoe UI Variable Display", "Aptos Display", sans-serif; font-size: 14px; font-weight: 690; letter-spacing: -.01em; }
+    .rail-subtitle { display: block; margin-top: 3px; color: var(--text-3); font-size: 11px; }
+    .rail-source { display: inline-flex; align-items: center; gap: 6px; margin-top: 9px; color: var(--done); font-size: 10px; font-weight: 660; }
+    .rail-source::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, var(--done) 14%, transparent); }
+    .rail-source.is-snapshot { color: var(--progress); }
+    .phase-list { display: grid; gap: 3px; }
+    .phase-filter { width: 100%; min-width: 0; min-height: 50px; padding: 7px 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; text-align: left; transition: background 160ms ease, border-color 160ms ease; }
+    .phase-filter:hover { background: var(--surface-2); }
+    .phase-filter[aria-pressed="true"] { border-color: var(--line); background: var(--surface-2); box-shadow: inset 2px 0 0 var(--accent); }
+    .phase-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+    .phase-name { min-width: 0; overflow: hidden; color: var(--text-2); font-size: 12px; font-weight: 610; text-overflow: ellipsis; white-space: nowrap; }
+    .phase-filter[aria-pressed="true"] .phase-name { color: var(--text); }
+    .phase-count { color: var(--text-3); font-size: 10.5px; }
+    .phase-count, .phase-stat strong, .phase-summary-count { font-variant-numeric: tabular-nums; }
+    .phase-filter-meta { display: flex; align-items: center; gap: 9px; margin-top: 5px; color: var(--text-3); font-size: 9.5px; }
+    .phase-filter-meta span { display: inline-flex; align-items: center; gap: 4px; }
+    .phase-progress { display: block; width: 100%; height: 3px; margin-top: 7px; overflow: hidden; border: 0; border-radius: 99px; background: var(--surface-3); appearance: none; }
+    .phase-progress::-webkit-progress-bar { border-radius: 99px; background: var(--surface-3); }
+    .phase-progress::-webkit-progress-value { border-radius: 99px; background: var(--done); }
+    .phase-progress::-moz-progress-bar { border-radius: 99px; background: var(--done); }
+    .phase-loading { display: grid; gap: 8px; padding: 4px 1px; }
+    .phase-skeleton { height: 50px; border-radius: 8px; background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 220% 100%; animation: phase-shimmer 1.4s ease infinite; }
+    .phase-load-error { padding: 12px; border: 1px solid color-mix(in srgb, var(--danger) 32%, var(--line)); border-radius: 8px; background: color-mix(in srgb, var(--danger) 7%, var(--surface-2)); color: var(--text-2); font-size: 11px; line-height: 1.55; }
+    @keyframes phase-shimmer { to { background-position: -220% 0; } }
+    .progress-track { display: block; height: 3px; margin-top: 7px; overflow: hidden; border-radius: 99px; background: var(--surface-3); }
+    .progress-value { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--done); }
+    .progress-100 { width: 100%; } .progress-57 { width: 57%; } .progress-33 { width: 33%; } .progress-25 { width: 25%; } .progress-14 { width: 14%; }
+    .rail-legend { margin-top: 20px; padding: 15px 5px 0; border-top: 1px solid var(--line); }
+    .legend-list { display: grid; gap: 9px; margin: 10px 0 0; padding: 0; list-style: none; }
+    .legend-item { display: flex; align-items: center; gap: 9px; color: var(--text-3); font-size: 11.5px; }
+    .status-mark { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; }
+    .status-mark.done { background: var(--done); }
+    .status-mark.progress { background: var(--progress); box-shadow: 0 0 0 3px var(--progress-soft); }
+    .status-mark.planned { border: 1.5px solid var(--planned); background: transparent; }
+    .status-mark.blocked { background: var(--danger); }
 
-/* UYUM */
-.chiprow.inview{padding:12px 14px 0}
-.viosec{margin:0 16px}
-.viotabs{display:flex;gap:16px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);
-         padding-bottom:5px;margin:6px 0 10px}
-.vt.on{color:var(--text);font-weight:700;box-shadow:inset 0 -2px 0 var(--accent)}
-.vio{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;
-     background:var(--panel);padding:8px 12px;margin-bottom:7px}
-.vio.resolved{opacity:.6}
-.sev{font-size:10px;font-weight:800;border-radius:6px;padding:3px 7px;flex:none}
-.sev.err{background:#fee2e2;color:var(--err)} [data-theme="dark"] .sev.err{background:#3b0a0a}
-.sev.warn{background:var(--st-partial-bg);color:var(--st-partial)}
-.sev.ok{background:var(--st-done-bg);color:var(--st-done)}
-.vbody{flex:1;font-size:12.5px}
-.vrule{color:var(--muted);font-size:11px;margin-top:2px}
-.spark{width:84px;height:22px;flex:none}
-.conflict{margin:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
-.chead{padding:7px 14px;background:var(--st-partial-bg);color:var(--st-partial);font-weight:700;font-size:12px}
-.cside{padding:9px 14px;border-top:1px solid var(--line);font-size:12.5px}
-.cside small{color:var(--muted)} .cside.a{border-left:4px solid var(--accent)}
-.cside.b{border-left:4px solid var(--st-partial)}
-.cact{display:flex;gap:8px;padding:9px 14px}
-.chain{margin:0 16px 16px;padding:11px 14px;border:1px dashed var(--line);border-radius:var(--radius);font-size:12px}
-.mv{margin-top:5px} .mv.up{color:var(--st-done)} .mv.dn{color:var(--st-partial)}
-.mv em{color:var(--muted);font-style:normal}
+    .content-surface { min-width: 0; min-height: 0; overflow-y: auto; background: var(--surface); }
+    .view-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; min-height: 80px; padding: 17px 20px 15px; border-bottom: 1px solid var(--line); }
+    .view-title-wrap { min-width: 0; }
+    .view-title-wrap h1 { margin: 0; font-family: "Segoe UI Variable Display", "Aptos Display", sans-serif; font-size: clamp(19px, 1.8vw, 24px); font-weight: 710; line-height: 1.15; letter-spacing: -.035em; text-wrap: balance; }
+    .view-title-wrap p { max-width: 68ch; margin: 6px 0 0; color: var(--text-3); font-size: 12px; text-wrap: pretty; }
+    .view-actions { flex: 0 0 auto; gap: 7px; }
+    .view-panel { min-height: 560px; }
+    .map-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 6px 10px 6px 16px; border-bottom: 1px solid var(--line); background: var(--bg-elevated); color: var(--text-3); font-size: 11px; }
+    .map-tools { gap: 4px; }
+    .map-tools .icon-button { min-width: 30px; min-height: 30px; border-color: transparent; background: transparent; }
+    .map-tools .icon-button:hover { border-color: var(--line); background: var(--surface-2); }
+    .graph-viewport { position: relative; min-height: 518px; overflow: auto; background-color: var(--surface); background-image: radial-gradient(circle, color-mix(in srgb, var(--line-strong) 45%, transparent) 1px, transparent 1px); background-size: 20px 20px; }
+    .graph-layer { position: relative; width: max(100%, 680px); height: 518px; transform: scale(1); transform-origin: 50% 50%; transition: transform 180ms ease; }
+    .wires { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--line-strong); pointer-events: none; }
+    .wires path { fill: none; stroke: currentColor; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+    .wires path.planned { stroke-dasharray: 5 6; opacity: .65; }
+    .map-node { position: absolute; width: 174px; min-height: 78px; padding: 11px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: color-mix(in srgb, var(--surface-2) 92%, transparent); box-shadow: 0 12px 30px rgba(1, 7, 13, .16); cursor: pointer; text-align: left; transition: border-color 180ms ease, background 180ms ease, opacity 180ms ease, transform 180ms ease; }
+    .map-node:hover { z-index: 2; transform: translateY(-2px); border-color: var(--accent); background: var(--surface-3); }
+    .map-node[aria-pressed="true"] { z-index: 3; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), 0 18px 40px rgba(1, 7, 13, .24); }
+    .map-node.is-dimmed { opacity: .18; }
+    .node-pos-1 { left: 56%; top: 10%; } .node-pos-2 { left: 10%; top: 12%; } .node-pos-3 { left: 32%; top: 39%; } .node-pos-4 { left: 62%; top: 42%; } .node-pos-5 { left: 17%; top: 72%; }
+    .node-title { display: block; color: var(--text); font-size: 12.5px; font-weight: 670; letter-spacing: -.01em; }
+    .node-path { display: block; margin-top: 2px; overflow: hidden; color: var(--text-3); font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+    .node-state { display: flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--text-2); font-size: 10.5px; font-weight: 600; }
+    .graph-help { position: absolute; right: 14px; bottom: 12px; display: inline-flex; align-items: center; gap: 7px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: color-mix(in srgb, var(--bg-elevated) 92%, transparent); color: var(--text-3); font-size: 10.5px; pointer-events: none; }
 
-/* ZAMAN ÇİZGİSİ / DELTA / DURUM ÇUBUĞU */
-.tl{padding:16px}.tlrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-.tlname{width:170px;font-weight:600;font-size:12.5px}
-.tlbar{height:7px;border-radius:99px;background:var(--line);flex:1;min-width:110px;overflow:hidden}
-.tlbar i{display:block;height:100%;background:var(--st-done)}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-.tchip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:11.5px;background:var(--panel)}
-.delta-note{margin:14px 16px;padding:9px 14px;border-left:4px solid var(--accent);background:var(--panel);border-radius:8px;font-size:12.5px}
-.affected{margin:0 16px 16px;padding:11px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
-code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;
-     font-family:ui-monospace,Consolas,monospace;font-size:11.5px}
-.statusbar{display:flex;gap:14px;align-items:center;padding:5px 16px;font-size:11.5px;
-           color:var(--muted);border-top:1px solid var(--line);background:var(--panel)}
-.stale{color:var(--st-partial);font-weight:600}
-.hint{position:absolute;top:10px;right:10px;font-size:11px;color:var(--muted);
-      background:var(--panel);border:1px dashed var(--line);border-radius:8px;padding:5px 10px}
-[hidden]{display:none!important}
-</style>
+    .timeline { padding: 8px 20px 30px; }
+    .preview-note { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 8px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--progress) 30%, var(--line)); border-radius: 9px; background: var(--progress-soft); color: var(--text-2); font-size: 11.5px; }
+    .timeline-group { padding: 16px 0; border-bottom: 1px solid var(--line); }
+    .timeline-group:last-child { border-bottom: 0; }
+    .timeline-head { display: grid; grid-template-columns: 180px minmax(120px, 1fr) 52px; align-items: center; gap: 16px; }
+    .timeline-name { color: var(--text); font-size: 12px; font-weight: 640; }
+    .timeline-count { color: var(--text-3); font-size: 10.5px; text-align: right; }
+    .timeline-items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+    .timeline-item { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg-elevated); color: var(--text-2); cursor: pointer; font-size: 11px; }
+    .timeline-item:hover { border-color: var(--line-strong); background: var(--surface-2); color: var(--text); }
+
+    .delta-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 38%); min-height: 560px; }
+    .delta-empty { display: grid; place-items: center; padding: 42px; border-right: 1px solid var(--line); text-align: center; }
+    .empty-state { max-width: 440px; }
+    .empty-icon { display: grid; place-items: center; width: 48px; height: 48px; margin: 0 auto 18px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface-2); color: var(--text-3); }
+    .empty-state h2 { margin: 0; font-family: "Segoe UI Variable Display", "Aptos Display", sans-serif; font-size: 20px; font-weight: 680; letter-spacing: -.025em; }
+    .empty-state p { margin: 9px auto 0; color: var(--text-3); font-size: 12px; line-height: 1.6; text-wrap: pretty; }
+    .delta-receipt { padding: 28px 24px; background: var(--bg-elevated); }
+    .receipt-block { margin-top: 20px; }
+    .receipt-label { display: block; margin-bottom: 6px; color: var(--text-3); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .receipt-value { color: var(--text-2); font-size: 12px; }
+    code { padding: 2px 5px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface-2); color: var(--text-2); font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .92em; }
+
+    .compliance { padding: 0 20px 28px; }
+    .compliance-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 56px; border-bottom: 1px solid var(--line); }
+    .queue-filters { display: flex; gap: 3px; overflow-x: auto; }
+    .queue-filter { min-height: 32px; padding: 0 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text-3); cursor: pointer; font-size: 11px; white-space: nowrap; }
+    .queue-filter:hover { background: var(--surface-2); color: var(--text-2); }
+    .queue-filter[aria-pressed="true"] { border-color: var(--line); background: var(--surface-2); color: var(--text); }
+    .engine-state { display: inline-flex; align-items: center; gap: 7px; color: var(--text-3); font-size: 10.5px; white-space: nowrap; }
+    .engine-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--planned); }
+    .issue-list { display: grid; }
+    .issue-row { display: grid; grid-template-columns: 84px minmax(180px, 1.2fr) minmax(220px, 1.6fr) 110px 28px; align-items: center; gap: 14px; min-height: 66px; padding: 9px 7px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; transition: background 160ms ease; }
+    .issue-row:hover { background: var(--surface-2); }
+    .issue-row.is-filtered { display: none; }
+    .sample-label { display: inline-flex; align-items: center; justify-content: center; width: fit-content; min-height: 22px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--text-3); font-size: 9px; font-weight: 740; letter-spacing: .07em; text-transform: uppercase; }
+    .issue-title { display: block; color: var(--text); font-size: 11.5px; font-weight: 640; }
+    .issue-path { display: block; margin-top: 3px; overflow: hidden; color: var(--text-3); font-family: ui-monospace, monospace; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+    .issue-rule { color: var(--text-2); font-size: 11px; }
+    .severity { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 10.5px; }
+    .severity::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--planned); }
+    .severity.error::before { background: var(--danger); } .severity.warning::before { background: var(--progress); } .severity.note::before { background: var(--accent); }
+    .issue-chevron { color: var(--text-3); }
+
+    .inspector { position: relative; min-height: 0; padding: 18px 16px; overflow-y: auto; border-left: 1px solid var(--line); }
+    body.inspector-collapsed .inspector { display: none; }
+    .inspector-header { padding-inline: 1px; }
+    .inspector-actions { gap: 5px; }
+    .inspector-actions .icon-button { min-width: 30px; min-height: 30px; border-color: transparent; background: transparent; }
+    .inspector-body { padding-top: 4px; }
+    .inspector-empty { padding: 34px 8px; text-align: center; }
+    .inspector-empty .empty-icon { width: 42px; height: 42px; margin-bottom: 14px; }
+    .inspector-empty strong { display: block; font-size: 12.5px; font-weight: 650; }
+    .inspector-empty p { margin: 7px 0 0; color: var(--text-3); font-size: 11px; line-height: 1.55; }
+    .detail-title { margin: 1px 0 2px; font-family: "Segoe UI Variable Display", sans-serif; font-size: 18px; font-weight: 690; letter-spacing: -.025em; }
+    .detail-path { color: var(--text-3); font-family: ui-monospace, monospace; font-size: 10px; }
+    .detail-status { display: flex; align-items: center; gap: 7px; margin-top: 13px; color: var(--text-2); font-size: 11px; }
+    .detail-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .detail-section h3 { margin: 0 0 8px; color: var(--text-3); font-size: 10px; font-weight: 720; letter-spacing: .08em; text-transform: uppercase; }
+    .detail-section p { margin: 0 0 6px; color: var(--text-2); font-size: 11.5px; line-height: 1.6; }
+    .source-disabled { width: 100%; margin-top: 18px; }
+    .phase-detail-kicker { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+    .source-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid color-mix(in srgb, var(--done) 26%, var(--line)); border-radius: 5px; background: color-mix(in srgb, var(--done) 7%, transparent); color: var(--done); font-size: 9px; font-weight: 680; }
+    .source-chip.snapshot { border-color: color-mix(in srgb, var(--progress) 30%, var(--line)); background: var(--progress-soft); color: var(--progress); }
+    .phase-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-top: 14px; }
+    .phase-stat { min-width: 0; padding: 8px 6px 7px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); }
+    .phase-stat strong { display: block; color: var(--text); font-size: 14px; font-weight: 690; }
+    .phase-stat span { display: block; margin-top: 2px; overflow: hidden; color: var(--text-3); font-size: 8.5px; text-overflow: ellipsis; white-space: nowrap; }
+    .phase-truth-note { margin: 13px 0 0; padding: 9px 10px; border-left: 2px solid var(--progress); background: var(--progress-soft); color: var(--text-2); font-size: 10.5px; line-height: 1.5; }
+    .phase-acceptance { margin-top: 15px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+    .phase-acceptance strong { display: block; margin-bottom: 5px; color: var(--text-3); font-size: 9px; font-weight: 720; letter-spacing: .07em; text-transform: uppercase; }
+    .phase-acceptance p { margin: 0; color: var(--text-2); font-size: 10.5px; line-height: 1.55; }
+    .phase-items-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 19px 0 8px; }
+    .phase-items-heading h3 { margin: 0; font-size: 11px; font-weight: 680; }
+    .phase-items-heading span { color: var(--text-3); font-size: 9.5px; }
+    .phase-items { display: grid; gap: 5px; }
+    .phase-item { border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); transition: border-color 160ms ease, background 160ms ease; }
+    .phase-item:hover { border-color: var(--line-strong); }
+    .phase-item[open] { border-color: color-mix(in srgb, var(--accent) 34%, var(--line)); background: var(--surface-3); }
+    .phase-item summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 8px; min-height: 44px; padding: 7px 9px; cursor: pointer; list-style: none; }
+    .phase-item summary::-webkit-details-marker { display: none; }
+    .phase-item-title { overflow: hidden; color: var(--text-2); font-size: 10.5px; font-weight: 620; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+    .phase-item[open] .phase-item-title { color: var(--text); white-space: normal; }
+    .phase-item-state { color: var(--text-3); font-size: 8.5px; white-space: nowrap; }
+    .phase-item-chevron { width: 12px; height: 12px; color: var(--text-3); transition: transform 160ms ease; }
+    .phase-item[open] .phase-item-chevron { transform: rotate(90deg); }
+    .phase-item-body { padding: 0 10px 11px 27px; }
+    .phase-fact { padding: 8px 0; border-top: 1px solid var(--line); }
+    .phase-fact:first-child { border-top: 0; }
+    .phase-fact dt { margin-bottom: 3px; color: var(--text-3); font-size: 8.5px; font-weight: 720; letter-spacing: .06em; text-transform: uppercase; }
+    .phase-fact dd { margin: 0; color: var(--text-2); font-size: 10px; line-height: 1.55; overflow-wrap: anywhere; }
+    .phase-source-link { width: 100%; margin-top: 10px; text-decoration: none; }
+    .phase-overview-list { display: grid; gap: 5px; margin-top: 15px; }
+    .phase-overview-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; align-items: center; width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); cursor: pointer; text-align: left; transition: border-color 160ms ease, background 160ms ease; }
+    .phase-overview-row:hover { border-color: var(--accent); background: var(--surface-3); }
+    .phase-overview-row strong { color: var(--text-2); font-size: 10.5px; }
+    .phase-overview-row span { color: var(--text-3); font-size: 9.5px; font-variant-numeric: tabular-nums; }
+    .inspector-scrim { display: none; }
+
+    .statusbar { display: flex; align-items: center; gap: 16px; min-height: 38px; padding: 6px clamp(14px, 2vw, 28px); border-top: 1px solid var(--line); background: var(--bg-elevated); color: var(--text-3); font-size: 10.5px; }
+    .status-meta { gap: 6px; }
+    .status-meta .icon { width: 14px; height: 14px; }
+    .statusbar .build-label { margin-left: auto; }
+
+    dialog { width: min(560px, calc(100vw - 28px)); padding: 0; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: var(--shadow-float); }
+    dialog::backdrop { background: rgba(2, 7, 13, .66); backdrop-filter: blur(4px); }
+    .command-head { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-bottom: 1px solid var(--line); }
+    .command-head input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 14px; }
+    .command-head input::placeholder { color: var(--text-3); }
+    .command-list { display: grid; gap: 2px; max-height: 360px; padding: 8px; overflow: auto; }
+    .command-item { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; min-height: 46px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; text-align: left; cursor: pointer; }
+    .command-item:hover, .command-item:focus-visible { background: var(--surface-2); }
+    .command-item .icon { color: var(--text-3); }
+    .command-item strong { color: var(--text-2); font-size: 12px; font-weight: 620; }
+    .command-item small { color: var(--text-3); font-size: 9.5px; }
+    .command-empty { padding: 30px; color: var(--text-3); text-align: center; font-size: 12px; }
+    .command-foot { display: flex; align-items: center; gap: 12px; padding: 9px 14px; border-top: 1px solid var(--line); color: var(--text-3); font-size: 9.5px; }
+    .connect-dialog { width: min(760px, calc(100vw - 28px)); }
+    .connect-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 20px 22px 17px; border-bottom: 1px solid var(--line); }
+    .connect-head h2 { margin: 0; font-family: "Segoe UI Variable Display", sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -.03em; }
+    .connect-head p { max-width: 58ch; margin: 6px 0 0; color: var(--text-3); font-size: 11px; line-height: 1.55; }
+    .connect-steps { display: grid; grid-template-columns: repeat(4, 1fr); padding: 0 22px; border-bottom: 1px solid var(--line); background: var(--bg-elevated); }
+    .connect-step { position: relative; padding: 13px 6px 12px; color: var(--text-3); font-size: 9.5px; text-align: center; }
+    .connect-step::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: transparent; }
+    .connect-step.is-current { color: var(--text); font-weight: 680; }
+    .connect-step.is-current::after { background: var(--accent); }
+    .connect-step.is-complete { color: var(--done); }
+    .connect-body { min-height: 330px; padding: 24px 22px 26px; }
+    .connect-intro { margin: 0 0 16px; color: var(--text-2); font-size: 12px; }
+    .source-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .source-option { min-height: 154px; padding: 18px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-2); cursor: pointer; text-align: left; transition: border-color 180ms ease, transform 180ms ease, background 180ms ease; }
+    .source-option:hover { transform: translateY(-2px); border-color: var(--accent); background: var(--surface-3); }
+    .source-option .source-icon { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--accent); }
+    .source-option strong { display: block; margin-top: 15px; color: var(--text); font-size: 13px; }
+    .source-option span { display: block; margin-top: 5px; color: var(--text-3); font-size: 10.5px; line-height: 1.55; }
+    .connect-form { display: grid; gap: 15px; }
+    .form-field { display: grid; gap: 6px; }
+    .form-field label { color: var(--text-2); font-size: 10.5px; font-weight: 650; }
+    .form-field input, .form-field select { width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; outline: 0; background: var(--bg-elevated); color: var(--text); font: 11px/1.3 "Segoe UI Variable", sans-serif; }
+    .form-field input:focus, .form-field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .form-help { color: var(--text-3); font-size: 9.5px; line-height: 1.5; }
+    .permission-note { display: flex; gap: 10px; padding: 11px 12px; border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line)); border-radius: 8px; background: var(--accent-soft); color: var(--text-2); font-size: 10.5px; line-height: 1.5; }
+    .permission-note .icon { color: var(--accent); }
+    .scan-result { display: grid; gap: 7px; }
+    .scan-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 9px; min-height: 44px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+    .scan-row .icon { width: 16px; height: 16px; color: var(--done); }
+    .scan-row strong { display: block; color: var(--text-2); font-size: 10.5px; }
+    .scan-row span { display: block; margin-top: 2px; color: var(--text-3); font-size: 9px; }
+    .scan-row small { color: var(--text-3); font-size: 9px; }
+    .connect-success { display: grid; place-items: center; min-height: 270px; text-align: center; }
+    .success-mark { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid color-mix(in srgb, var(--done) 36%, var(--line)); border-radius: 15px; background: var(--done-soft); color: var(--done); }
+    .connect-success h3 { margin: 16px 0 0; font-size: 18px; font-weight: 680; letter-spacing: -.025em; }
+    .connect-success p { max-width: 52ch; margin: 8px 0 0; color: var(--text-3); font-size: 10.5px; line-height: 1.6; }
+    .connect-error { min-height: 20px; color: var(--danger); font-size: 10px; }
+    .connect-foot { display: flex; align-items: center; gap: 8px; padding: 12px 22px; border-top: 1px solid var(--line); background: var(--bg-elevated); }
+    .connect-foot .connect-cancel { margin-right: auto; }
+    .toast { position: fixed; right: 18px; bottom: 18px; z-index: 90; max-width: 360px; padding: 10px 13px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface-2); color: var(--text-2); box-shadow: var(--shadow-float); font-size: 11.5px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
+    .toast.is-visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1199px) {
+      .topbar { grid-template-columns: 1fr minmax(240px, 380px) auto; }
+      .mode-badge { display: none; }
+      .project-layout { grid-template-columns: minmax(0, 1fr) 300px; }
+      .project-row { grid-template-columns: minmax(180px, 1fr) minmax(110px, .65fr) minmax(110px, .58fr) auto; }
+      .project-row .project-field:nth-of-type(3) { display: none; }
+      .workspace, body.inspector-collapsed .workspace { grid-template-columns: 220px minmax(0, 1fr); }
+      .inspector { position: fixed; z-index: 70; top: 0; right: 0; bottom: 0; display: block !important; width: min(360px, 92vw); overflow: auto; border-left: 1px solid var(--line-strong); box-shadow: var(--shadow-float); transform: translateX(105%); transition: transform 200ms ease; }
+      body.inspector-open .inspector { transform: translateX(0); }
+      .inspector-scrim { position: fixed; inset: 0; z-index: 65; display: block; border: 0; background: rgba(2, 7, 13, .55); opacity: 0; pointer-events: none; transition: opacity 180ms ease; }
+      body.inspector-open .inspector-scrim { opacity: 1; pointer-events: auto; }
+      .signal-strip { grid-template-columns: 1fr; gap: 7px; }
+      .signal-links { justify-content: flex-start; }
+    }
+    @media (max-width: 899px) {
+      .topbar { grid-template-columns: 1fr auto; padding-bottom: 10px; }
+      .command-trigger { grid-column: 1 / -1; grid-row: 2; width: 100%; margin-top: 7px; }
+      .brand-copy .repo-context { max-width: 170px; }
+      .primary-nav { overflow-x: auto; }
+      .primary-nav-meta { display: none; }
+      .screen-shell { width: min(100% - 24px, 1460px); padding-top: 32px; }
+      .screen-head { align-items: flex-start; flex-direction: column; }
+      .project-layout { grid-template-columns: 1fr; }
+      .project-context-panel { position: static; }
+      .project-row { grid-template-columns: minmax(180px, 1fr) minmax(110px, .7fr) auto; }
+      .project-row .project-field:nth-of-type(2), .project-row .project-field:nth-of-type(3) { display: none; }
+      .viewbar { align-items: flex-start; gap: 8px; overflow-x: auto; }
+      .view-meta { display: none; }
+      .signal-links { overflow-x: auto; }
+      .signal-link { min-width: 128px; }
+      .workspace, body.inspector-collapsed .workspace { grid-template-columns: minmax(0, 1fr); border: 0; }
+      .phase-rail { position: relative; max-height: none; padding: 12px; overflow-y: visible; border-right: 0; border-bottom: 1px solid var(--line); }
+      .rail-header { padding-bottom: 9px; }
+      .phase-list { grid-auto-columns: minmax(158px, 1fr); grid-auto-flow: column; overflow-x: auto; padding-bottom: 4px; }
+      .phase-filter { min-width: 158px; }
+      .rail-legend { display: none; }
+      .view-header { min-height: 74px; padding-inline: 15px; }
+      .timeline { padding-inline: 15px; }
+      .delta-layout { grid-template-columns: 1fr; }
+      .delta-empty { min-height: 340px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .issue-row { grid-template-columns: 74px minmax(150px, 1fr) 100px 22px; }
+      .issue-rule { display: none; }
+      .statusbar { flex-wrap: wrap; }
+      .statusbar .build-label { margin-left: 0; }
+    }
+    @media (max-width: 620px) {
+      .top-actions .language-toggle { display: none; }
+      .project-switcher { max-width: 230px; }
+      .primary-nav-button { padding-inline: 9px; }
+      .primary-nav-button .icon { display: none; }
+      .screen-head h1 { font-size: 31px; }
+      .screen-actions { width: 100%; }
+      .screen-actions .text-button { flex: 1; }
+      .project-row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+      .project-row .project-field { display: grid !important; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; }
+      .project-row-actions { justify-content: flex-start; }
+      .compare-table { min-width: 0; }
+      .compare-table thead { display: none; }
+      .compare-table, .compare-table tbody, .compare-table tr, .compare-table td { display: block; width: 100%; }
+      .compare-table tr { padding: 10px 0; border-bottom: 1px solid var(--line); }
+      .compare-table tbody tr:last-child { border-bottom: 0; }
+      .compare-table td { display: grid; grid-template-columns: 98px minmax(0, 1fr); gap: 10px; padding: 7px 13px; border-bottom: 0; overflow-wrap: anywhere; }
+      .compare-table td::before { content: attr(data-label); color: var(--text-3); font-size: 8.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+      .source-options { grid-template-columns: 1fr; }
+      .connect-steps { padding-inline: 10px; }
+      .connect-step { font-size: 8.5px; }
+      .connect-body { padding-inline: 16px; }
+      .connect-head, .connect-foot { padding-inline: 16px; }
+      .connect-foot { flex-wrap: wrap; }
+      .connect-foot .connect-cancel { width: 100%; margin-right: 0; }
+      .view-tab { padding-inline: 9px; }
+      .view-tab .icon { display: none; }
+      .signal-copy strong { white-space: normal; }
+      .signal-links { display: grid; grid-template-columns: repeat(3, minmax(118px, 1fr)); }
+      .view-actions .text-button span { display: none; }
+      .view-title-wrap p { display: none; }
+      .timeline-head { grid-template-columns: 130px 1fr 42px; gap: 9px; }
+      .issue-row { grid-template-columns: 68px minmax(120px, 1fr) 20px; }
+      .severity { display: none; }
+      .delta-empty { padding: 28px 18px; }
+      .statusbar { gap: 8px 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+  </style>
 </head>
 <body>
+  <a class="skip-link" id="skipLink" href="#projectsScreen" data-i18n="skip">Ana içeriğe geç</a>
+  <svg class="sr-only" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"></path><path d="M9 3v15M15 6v15"></path></symbol>
+    <symbol id="i-timeline" viewBox="0 0 24 24"><path d="M5 5v14M5 8h6M5 16h10"></path><circle cx="13" cy="8" r="2"></circle><circle cx="17" cy="16" r="2"></circle></symbol>
+    <symbol id="i-delta" viewBox="0 0 24 24"><path d="M8 5H5v3M5 5l5 5M16 19h3v-3M19 19l-5-5M16 5h3v3M19 5l-4 4M8 19H5v-3M5 19l4-4"></path></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3 7.8 7.5 9.5 4.5-1.7 7.5-5 7.5-9.5V6z"></path><path d="m9 12 2 2 4-4"></path></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5z"></path></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"></path></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"></path></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v5h5"></path></symbol>
+    <symbol id="i-branch" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"></circle><circle cx="18" cy="7" r="2"></circle><circle cx="6" cy="19" r="2"></circle><path d="M6 7v10M8 9c5 0 5-2 8-2"></path></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6.5h7l2 2h9v9.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M3 10h18"></path></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></symbol>
+    <symbol id="i-compare" viewBox="0 0 24 24"><path d="M8 4 4 8l4 4"></path><path d="M4 8h12a4 4 0 0 1 4 4"></path><path d="m16 20 4-4-4-4"></path><path d="M20 16H8a4 4 0 0 1-4-4"></path></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 2.8a9.2 9.2 0 0 0-2.9 17.9c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .8.1-.7.4-1.1.7-1.3-2.3-.3-4.7-1.1-4.7-5.1 0-1.1.4-2.1 1.1-2.8-.1-.3-.5-1.3.1-2.7 0 0 .9-.3 2.9 1.1a10 10 0 0 1 5.3 0c2-1.4 2.9-1.1 2.9-1.1.6 1.4.2 2.4.1 2.7.7.7 1.1 1.7 1.1 2.8 0 4-2.4 4.8-4.7 5.1.4.3.7 1 .7 2v2.9c0 .3.2.6.7.5A9.2 9.2 0 0 0 12 2.8z"></path></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5"></path><path d="M4 17v-5h5"></path><path d="M6.1 8a7 7 0 0 1 11.6-1L20 12M4 12l2.3 5a7 7 0 0 0 11.6-1"></path></symbol>
+  </svg>
 
-<div class="ribbon">KOMUTA MERKEZİ v0.3 · UI-SPEC §10 önizlemesi · desenler: Linear · Grafana · Sentry · GitHub Security · Nx · TechRadar</div>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="project-switcher" id="projectSwitcher" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="projectMenu"><span class="brand-mark" aria-hidden="true">K</span><span class="brand-copy"><span class="brand-name" id="activeProjectName">KokpitPro</span><span class="repo-context"><svg class="icon" aria-hidden="true"><use href="#i-branch"></use></svg><span id="activeProjectMeta">Yerel · master</span></span></span><svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
+      <button class="command-trigger" id="commandTrigger" type="button" aria-haspopup="dialog" aria-controls="commandDialog"><svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><span data-i18n="search">Faz, dosya veya madde ara</span><span class="keycap">Ctrl K</span></button>
+      <div class="top-actions"><span class="mode-badge" id="modeBadge">Canlı plan</span><div class="language-toggle" aria-label="Dil / Language"><button id="langTr" type="button" aria-pressed="true">TR</button><button id="langEn" type="button" aria-pressed="false">EN</button></div><button class="icon-button" id="themeToggle" type="button" data-i18n-aria="themeDark" aria-label="Açık temaya geç"><svg class="icon theme-icon" aria-hidden="true"><use href="#i-sun"></use></svg></button></div>
+    </header>
 
-<header class="topbar">
-  <span class="logo"></span><span class="brand">KokpitPro</span>
-  <span class="pill">📁 MethodLogos_Pro</span>
-  <span class="sp"></span>
-  <span class="pill" title="Vercel deseni: durum başlıkta">🟢 senkron</span>
-  <button class="btn on" id="langTr" onclick="setLang('tr')">TR</button>
-  <button class="btn" id="langEn" onclick="setLang('en')">EN</button>
-  <button class="btn" onclick="toggleTheme()" title="Açık/Koyu">🌗</button>
-</header>
+    <div class="project-menu" id="projectMenu" role="listbox" aria-label="Proje seç" hidden><div class="project-menu-head"><span data-i18n="recentProjects">Son projeler</span><span id="projectMenuCount">3</span></div><div class="project-menu-list" id="projectMenuList"></div><button class="text-button project-menu-add" id="projectMenuAdd" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg><span data-i18n="addProject">Proje ekle</span></button></div>
 
-<!-- ═══ L1 KOMUTA SATIRI — her çip drill-through yapar (Linear #2) ═══ -->
-<div class="chiprow">
-  <button class="hchip ok"><small data-i18n="hcPhase">FAZ SAĞLIĞI</small><b>🟢 6 · 🟡 3 · ⚪ 2</b><small class="sub" data-i18n="hcPhaseSub">/ 9 faz · tıkla → filtrele</small></button>
-  <button class="hchip warn" onclick="show('uyum')"><small data-i18n="hcSync">DEFTER SENKRONU</small><b>%78</b><small class="sub" data-i18n="hcSyncSub">✅ güncel · ⚠ 2 bayat · near-miss 1</small></button>
-  <button class="hchip err" onclick="show('uyum')"><small data-i18n="hcViol">AÇIK İHLAL</small><b>🔴 1 · 🟠 4</b><small class="sub" data-i18n="hcViolSub">friction↑ sıralı · Yeni: 1</small></button>
-  <button class="hchip warn" onclick="show('uyum')"><small data-i18n="hcConf">KARAR BÜTÜNLÜĞÜ</small><b>⚖️ 1 çelişki</b><small class="sub">D5 ↔ ROADMAP §5.7 · zincir: 2 hareket</small></button>
-</div>
+    <nav class="primary-nav" aria-label="Ürün bölümleri"><div class="primary-nav-list"><button class="primary-nav-button" type="button" data-section="projects" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#i-grid"></use></svg><span data-i18n="projectsNav">Projeler</span></button><button class="primary-nav-button" type="button" data-section="workspace"><svg class="icon" aria-hidden="true"><use href="#i-map"></use></svg><span data-i18n="workspaceNav">Çalışma alanı</span></button><button class="primary-nav-button" type="button" data-section="compare"><svg class="icon" aria-hidden="true"><use href="#i-compare"></use></svg><span data-i18n="compareNav">Karşılaştır</span></button></div><div class="primary-nav-meta"><span id="activeSourceLabel">KokpitPro · PLAN.md</span><span class="source-state" id="activeSourceState">Canlı</span></div></nav>
 
-<main class="grid">
-
-  <!-- ═══ SOL PANEL ═══ -->
-  <aside class="side card">
-    <p class="sect" data-i18n="lPhases">FAZ AĞACI — tıkla → haritada filtrele</p>
-
-    <div class="phase" onclick="filterPhase('P0',this)"><div class="head"><span>P0 · Güven</span><span>9/9</span></div>
-      <div class="bar"><i style="width:100%"></i></div></div>
-    <div class="phase" onclick="filterPhase('P1',this)"><div class="head"><span>P1 · Altyapı</span><span>4/7</span></div>
-      <div class="bar"><i style="width:57%"></i></div></div>
-    <div class="phase" onclick="filterPhase('P2',this)"><div class="head"><span>P2 · Analiz</span><span>2/6</span></div>
-      <div class="bar"><i style="width:33%"></i></div></div>
-
-    <div class="legend">
-      <p class="sect" data-i18n="lLegend">LEJANT</p>
-      <div class="row"><span class="sw done"></span><span data-i18n="lgDone">🟢 Kodlandı / Done</span></div>
-      <div class="row"><span class="sw part"></span><span data-i18n="lgPart">🟡 Sürüyor / In progress</span></div>
-      <div class="row"><span class="sw open"></span><span data-i18n="lgOpen">⚪ Planlandı / Planned</span></div>
-      <div class="row"><span class="sw go"></span><span data-i18n="lgGo">🔵 GO bekliyor</span></div>
-      <div class="row"><span class="sw add"></span><span data-i18n="lgAdd">⬚ Delta eklenecek</span></div>
-    </div>
-  </aside>
-
-  <!-- ═══ MERKEZ ═══ -->
-  <section class="stage card">
-    <nav class="tabs">
-      <button class="tab on" id="tab-map"     onclick="show('map')"><span data-i18n="tabMap">🗺 Harita</span></button>
-      <button class="tab"   id="tab-timeline" onclick="show('timeline')"><span data-i18n="tabTime">📅 Zaman Çizgisi</span></button>
-      <button class="tab"   id="tab-delta"    onclick="show('delta')"><span data-i18n="tabDelta">⬚ Delta</span></button>
-      <button class="tab"   id="tab-uyum"     onclick="show('uyum')">⚖️ <span data-i18n="tabUyum">Uyum</span></button>
-    </nav>
-
-    <!-- HARİTA -->
-    <div class="viewwrap" id="view-map">
-      <div class="canvas">
-        <svg class="wires" viewBox="0 0 900 500" preserveAspectRatio="none">
-          <defs><marker id="arw" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="7" markerHeight="7" orient="auto">
-            <path d="M0,0 L8,4 L0,8 z" fill="#94a3b8"/></marker></defs>
-          <path d="M250,75 H430" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)" fill="none"/>
-          <path d="M160,105 V205 H210" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)" fill="none"/>
-          <path d="M340,240 H470" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)" fill="none"/>
-          <path d="M600,215 V355 H585" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)" fill="none"/>
-          <path d="M330,255 C280,320 260,330 245,345" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="5 5" fill="none"/>
-        </svg>
-
-        <div class="node done goring" style="left:430px;top:38px"  data-ph="P0" onclick="pick(this,'handlers/')">
-          <div class="t">handlers/</div><div class="p">functions/src/handlers</div>
-          <span class="chip done">🟢 <span data-i18n="sDone">Kodlandı</span></span></div>
-        <div class="node part" style="left:60px;top:40px"   data-ph="P2" onclick="pick(this,'frontend/')">
-          <div class="t">frontend/</div><div class="p">components,literature</div>
-          <span class="chip part">🟡 <span data-i18n="sPart">Sürüyor</span></span></div>
-        <div class="node done" style="left:470px;top:178px" data-ph="P2" onclick="pick(this,'services/')">
-          <div class="t">services/</div><div class="p">ai · literature · graph</div>
-          <span class="chip done">🟢 <span data-i18n="sDone">Kodlandı</span></span></div>
-        <div class="node open" style="left:85px;top:345px"  data-ph="P1" onclick="pick(this,'kokpit/snowball')">
-          <div class="t">snowball/</div><div class="p">(planlanan dilim)</div>
-          <span class="chip open">⚪ <span data-i18n="sOpen">Planlandı</span></span></div>
-        <div class="node part" style="left:210px;top:205px" data-ph="P2" onclick="pick(this,'literature.ts')">
-          <div class="t">literature.ts</div><div class="p">2.064 satır</div>
-          <span class="chip part">🟡 <span data-i18n="sPart">Sürüyor</span></span></div>
-
-        <div class="hint" data-i18n="hintMap">💡 Düğüm → çekmece · Faz ağacına tıkla → filtrele</div>
-        <div class="zoom"><button title="+">＋</button><button title="−">－</button><button title="Sığdır" onclick="alert('Harita sıfırlandı')">⤢</button></div>
-      </div>
-    </div>
-
-    <!-- ZAMAN ÇİZGİSİ -->
-    <div class="viewwrap" id="view-timeline" hidden>
-      <div class="tl">
-        <div class="tlrow"><span class="tlname">P0 · Güven</span><div class="tlbar"><i style="width:100%"></i></div></div>
-        <div class="chips"><span class="tchip">🟢 #1 Konsensüs</span><span class="tchip">🟢 Embedding</span><span class="tchip">🟢 SDK göçü</span><span class="tchip">🟢 Hijyen</span></div>
-        <div class="tlrow" style="margin-top:16px"><span class="tlname">P1 · Altyapı</span><div class="tlbar"><i style="width:57%"></i></div></div>
-        <div class="chips"><span class="tchip">🟢 Eser modeli</span><span class="tchip">🟡 Bağlayıcılar</span><span class="tchip">🟡 Boru hattı</span><span class="tchip">⚪ Kartopu</span><span class="tchip">⚪ Filtreler</span></div>
-        <div class="tlrow" style="margin-top:16px"><span class="tlname">P3 · İş Akışı</span><div class="tlbar"><i style="width:14%"></i></div></div>
-        <div class="chips"><span class="tchip">🟢 Kanıt Matrisi</span><span class="tchip">⚪ Tarama modu</span><span class="tchip">⚪ Sentez Notları</span></div>
-      </div>
-    </div>
-
-    <!-- DELTA -->
-    <div class="viewwrap" id="view-delta" hidden>
-      <div class="delta-note" data-i18n="deltaNote">⚖️ Seçili plan maddesi: <b>"Kartopu (snowballing)"</b> — kodlandığında haritada şu değişiklikler oluşacak (henüz kodlanmadı):</div>
-      <div class="canvas" style="height:290px">
-        <div class="node ghost" style="left:120px;top:80px;border:2px dashed var(--st-done);opacity:.55;background:repeating-linear-gradient(45deg,transparent,transparent 6px,var(--st-done-bg) 6px,var(--st-done-bg) 12px)">
-          <div class="t">snowball/</div><div class="p">yeni modül</div>
-          <span class="chip done" style="opacity:.65">⬚ <span data-i18n="sAdd">Eklenecek</span></span></div>
-        <div class="node done" style="left:420px;top:80px">
-          <div class="t">literature.ts</div><div class="p">değişecek •</div>
-          <span class="chip part">🟡 <span data-i18n="sTouch">Değişecek</span></span></div>
-      </div>
-      <div class="affected">
-        <b data-i18n="affTests">Etkilenecek test dosyaları:</b>
-        <ul><li><code>snowball.test.ts</code> — <em>yeni</em></li><li><code>literature.merge.test.ts</code> — güncellenecek</li></ul>
-      </div>
-    </div>
-
-    <!-- ═══ UYUM (Sentry kuyruk + GitHub şema + Nx near-miss + TechRadar zincir) ═══ -->
-    <div class="viewwrap" id="view-uyum" hidden>
-      <div class="chiprow inview">
-        <button class="hchip warn"><small data-i18n="hsSync">SENKRON HUNİSİ</small><b>62 → 51 → 48</b><small class="sub" data-i18n="hsSyncSub">madde → defter yazılan → kutu işlenen</small></button>
-        <button class="hchip ok"><small data-i18n="hsFresh">TAZELİK SKORU</small><b>%83 ort.</b><small class="sub">Swimm deseni · en düşük: %41 (§5.7)</small></button>
-      </div>
-      <div class="viosec">
-        <div class="viotabs">
-          <span class="vt on" data-i18n="qNew">Yeni (1)</span><span class="vt" data-i18n="qRegress">Regress (0)</span>
-          <span class="vt" data-i18n="qRising">Yükselen (3)</span><span class="vt" data-i18n="qClosed">Gerekçeyle kapalı (2)</span>
-        </div>
-        <div class="vio">
-          <span class="sev err">ERR</span>
-          <div class="vbody"><b>sahte-kapı</b> · <code>kokpit/ui/InviteButton.tsx:12</code>
-            <div class="vrule" data-i18n="vRule">Kural: D2#4 — capability yokken yüzey çizilmez · friction ↑↑ (14 günde 6 değişim)</div></div>
-          <svg class="spark" viewBox="0 0 84 24"><polyline points="0,18 12,20 24,16 36,19 48,15 60,12 72,8 84,4" fill="none" stroke="#dc2626" stroke-width="2"/></svg>
-        </div>
-        <div class="vio">
-          <span class="sev warn">WARN</span>
-          <div class="vbody"><b>bayat-kutu</b> · <code>ROADMAP §5.7 "Preflight göçü"</code>
-            <div class="vrule" data-i18n="vRule2">Near-miss: kutu açık ama App.css silinmiş (2026-08-20) — satır güncellenmemiş</div></div>
-          <svg class="spark" viewBox="0 0 84 24"><polyline points="0,6 12,8 24,7 36,10 48,9 60,11 72,10 84,12" fill="none" stroke="#f59e0b" stroke-width="2"/></svg>
-        </div>
-        <div class="vio resolved">
-          <span class="sev ok">OK</span>
-          <div class="vbody"><b style="text-decoration:line-through">hex-in-component</b> · <code>PaperCard.tsx</code>
-            <div class="vrule">✔ düzeltme <code>a1b2c3d</code> — gerekçe kayıtlı (audit)</div></div>
+    <section class="product-screen" id="projectsScreen">
+      <div class="screen-shell">
+        <header class="screen-head"><div class="screen-head-copy"><p class="eyebrow" data-i18n="projectHubLabel">Proje merkezi</p><h1 data-i18n="projectHubTitle">Tüm repolar, tek güvenilir bağlam.</h1><p data-i18n="projectHubBody">Yerel ve GitHub projelerini kaydedin; hangi dalın, plan kaynağının ve indeks sonucunun açık olduğunu proje değiştirmeden önce görün.</p></div><div class="screen-actions"><button class="text-button" id="refreshCatalog" type="button"><svg class="icon" aria-hidden="true"><use href="#i-refresh"></use></svg><span data-i18n="refresh">Yenile</span></button><button class="text-button primary" id="addProject" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg><span data-i18n="addProject">Proje ekle</span></button></div></header>
+        <div class="project-layout">
+          <section class="project-catalog" aria-labelledby="catalogHeading"><div class="catalog-toolbar"><div><strong id="catalogHeading" data-i18n="registeredProjects">Kayıtlı projeler</strong><span id="catalogCount"> · yükleniyor</span></div><span data-i18n="previewRecords">Kayıtlar diskte kalıcıdır</span></div><div class="project-list" id="projectList" aria-live="polite"></div></section>
+          <aside class="project-context-panel" aria-labelledby="projectContextTitle"><p class="eyebrow" data-i18n="activeContext">Etkin bağlam</p><h2 id="projectContextTitle">KokpitPro</h2><p id="projectContextDescription">Bu checkout canlı PLAN.md kaynağını kullanır. GitHub remote henüz tanımlı değildir.</p><dl class="context-facts"><div class="context-fact"><dt data-i18n="sourceType">Kaynak türü</dt><dd id="contextSource">Yerel</dd></div><div class="context-fact"><dt data-i18n="branch">Dal</dt><dd id="contextBranch">master</dd></div><div class="context-fact"><dt data-i18n="planSource">Plan kaynağı</dt><dd id="contextPlan">PLAN.md · canlı</dd></div><div class="context-fact"><dt data-i18n="lastIndex">Son indeks</dt><dd id="contextIndex">Önizleme · gerçek indeks yok</dd></div></dl><div class="journey-list" aria-label="Repo bağlama adımları"><div class="journey-step"><span class="journey-index">01</span><span><strong data-i18n="sourceStep">Kaynağı seç</strong><span data-i18n="sourceStepBody">Yerel klasör veya GitHub reposu.</span></span></div><div class="journey-step"><span class="journey-index">02</span><span><strong data-i18n="verifyStep">Doğrula</strong><span data-i18n="verifyStepBody">Repo kökü, dal ve erişim sınırı.</span></span></div><div class="journey-step"><span class="journey-index">03</span><span><strong data-i18n="indexStep">İndeksle</strong><span data-i18n="indexStepBody">PLAN/ROADMAP, faz ve kod yüzeyi.</span></span></div><div class="journey-step"><span class="journey-index">04</span><span><strong data-i18n="readyStep">Hazır</strong><span data-i18n="readyStepBody">Projeyi tek bağlamda çalışma alanına aç.</span></span></div></div></aside>
         </div>
       </div>
-      <div class="conflict">
-        <div class="chead">⚖️ ÇELİŞKİ #7 · <span data-i18n="cOpen">AÇIK</span></div>
-        <div class="cside a"><small>A · ROADMAP §2.2/#16 — 2026-08-04</small><br>"Crossref ikinci retraksiyon kaynağı yok"</div>
-        <div class="cside b"><small>B · S1I-D0 kaydı — 2026-08-17</small><br>"RW küratörlü kaynak + sertlik merdiveni eklendi"</div>
-        <div class="cact">
-          <button class="btn" data-i18n="cFix">A'ya superseded-notu düş</button>
-          <button class="btn" data-i18n="cKeep">Çelişki olarak kabul et (gerekçe zorunlu)</button>
-        </div>
-      </div>
-      <div class="chain">
-        <b data-i18n="chainT">Karar zinciri — TechRadar deseni, silinmez:</b>
-        <div class="mv up">● CORPUS_FROM_YEAR — 2026-08-22 · Adopt (+1) <em>"kod zaten açık"</em></div>
-        <div class="mv dn">● Preflight göçü — 2026-08-20 · Hold (-1) <em>"App.css silindi, satır bayat"</em></div>
-        <div class="mv up">● D5 Dağıtım Yolu — 2026-08-24 · Adopt (+1) <em>"yerel-önce; SaaS/açık-kaynağa hazır"</em></div>
-      </div>
+    </section>
+
+    <section class="workspace-screen" id="workspaceScreen" hidden>
+
+    <div class="viewbar">
+      <nav class="view-tabs" role="tablist" aria-label="Kokpit görünümleri" data-i18n-aria="viewTabs">
+        <button class="view-tab" id="tab-map" type="button" role="tab" aria-selected="true" aria-controls="view-map" data-view="map"><svg class="icon" aria-hidden="true"><use href="#i-map"></use></svg><span data-i18n="tabMap">Harita</span></button>
+        <button class="view-tab" id="tab-timeline" type="button" role="tab" aria-selected="false" aria-controls="view-timeline" data-view="timeline" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-timeline"></use></svg><span data-i18n="tabTimeline">Zaman</span></button>
+        <button class="view-tab" id="tab-delta" type="button" role="tab" aria-selected="false" aria-controls="view-delta" data-view="delta" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-delta"></use></svg><span data-i18n="tabDelta">Delta</span></button>
+        <button class="view-tab" id="tab-compliance" type="button" role="tab" aria-selected="false" aria-controls="view-compliance" data-view="compliance" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-shield"></use></svg><span data-i18n="tabCompliance">Uyum</span></button>
+      </nav>
+      <div class="view-meta"><span data-i18n="planHeaderLabel">PLAN.md kapsamı</span><strong id="planHeaderScope">—</strong></div>
     </div>
-  </section>
 
-  <!-- ═══ ÇEKMECE ═══ -->
-  <aside class="drawer card" id="drawer">
-    <p class="sect" data-i18n="lDetail">DETAY PANELİ</p>
-    <div id="drawerBody"><p style="color:var(--muted)" data-i18n="drawerHint">◀ Haritada bir düğüme tıklayın.</p></div>
-    <div style="margin-top:14px;border-top:1px dashed var(--line);padding-top:10px">
-      <p class="sect" data-i18n="lSync">BU YOLUN DEFTER SENKRONU</p>
-      <div style="font-size:12.5px;color:var(--muted)">— seçim sonrası dolar —</div>
-    </div>
-  </aside>
-</main>
+    <section class="signal-strip" aria-label="Dikkat ve süreç sinyalleri" data-i18n-aria="signalRegion">
+      <div class="signal-message"><span class="signal-symbol" aria-hidden="true"></span><div class="signal-copy"><strong id="attentionTitle" data-i18n="attentionTitle">Faz planı canlı; harita örnek veri kullanıyor</strong><span id="attentionBody" data-i18n="attentionBody">Faz ayrıntıları PLAN.md'den okunur. Kod eşlemesi olmayan alanlarda tahmin gösterilmez.</span></div></div>
+      <div class="signal-links"><button class="signal-link" type="button" data-compliance-filter="sync"><span data-i18n="signalSync">Defter</span><small data-i18n="sampleResult">örnek sonuç</small><strong>—</strong></button><button class="signal-link" type="button" data-compliance-filter="violation"><span data-i18n="signalViolation">İhlal</span><small data-i18n="sampleResult">örnek sonuç</small><strong>—</strong></button><button class="signal-link" type="button" data-compliance-filter="decision"><span data-i18n="signalDecision">Karar</span><small data-i18n="sampleResult">örnek sonuç</small><strong>—</strong></button></div>
+    </section>
 
-<footer class="statusbar">
-  <span>📊 62 madde · 9 faz · 27 defter dosyası</span>
-  <span>🕒 <span data-i18n="genAt">üretilme</span>: 2026-08-24 07:51</span>
-  <span class="stale" data-i18n="stale">🕐 Veri bayat — CLI'yı yeniden koşun</span>
-  <span class="sp"></span><span>Komuta Merkezi v0.3</span>
-</footer>
+    <main class="workspace" id="workspace">
+      <aside class="phase-rail" aria-labelledby="phaseHeading">
+        <div class="rail-header"><div><p class="eyebrow" data-i18n="navigator">Gezinme</p><h2 id="phaseHeading" data-i18n="phases">Faz planları</h2><span class="rail-subtitle" data-i18n="phaseHint">Seçin; alt maddeler ve beklenen çıktı denetçide açılsın</span><span class="rail-source" id="planSourceLabel" data-i18n="livePlanSource">PLAN.md canlı kaynağı</span></div></div>
+        <nav class="phase-list" id="phaseList" aria-label="Faz planları" data-i18n-aria="phaseNav" aria-busy="true">
+          <div class="phase-loading" aria-hidden="true"><span class="phase-skeleton"></span><span class="phase-skeleton"></span><span class="phase-skeleton"></span><span class="phase-skeleton"></span></div>
+        </nav>
+        <div class="rail-legend"><p class="eyebrow" data-i18n="legend">Durum dili</p><ul class="legend-list"><li class="legend-item"><span class="status-mark done"></span><span data-i18n="done">Kodlandı</span></li><li class="legend-item"><span class="status-mark progress"></span><span data-i18n="inProgress">Sürüyor</span></li><li class="legend-item"><span class="status-mark planned"></span><span data-i18n="planned">Planlandı</span></li><li class="legend-item"><span class="status-mark blocked"></span><span data-i18n="blocked">Engel / hata</span></li></ul></div>
+      </aside>
 
-<script>
-const DICT={
- tr:{tabMap:"🗺 Harita",tabTime:"📅 Zaman Çizgisi",tabDelta:"⬚ Delta",tabUyum:"⚖️ Uyum",
-    sDone:"Kodlandı",sPart:"Sürüyor",sOpen:"Planlandı",sAdd:"Eklenecek",sTouch:"Değişecek",
-    lgDone:"🟢 Kodlandı / Done",lgPart:"🟡 Sürüyor / In progress",lgOpen:"⚪ Planlandı / Planned",
-    lgGo:"🔵 GO bekliyor / Awaiting GO",lgAdd:"⬚ Delta eklenecek",
-    hintMap:"💡 Düğüm → çekmece · Faz ağacına tıkla → filtrele",
-    lPhases:"FAZ AĞACI — tıkla → haritada filtrele",lLegend:"LEJANT",lDetail:"DETAY PANELİ",
-    lSync:"BU YOLUN DEFTER SENKRONU",
-    drawerHint:"◀ Haritada bir düğüme tıklayın.",
-    hcPhase:"FAZ SAĞLIĞI",hcPhaseSub:"/ 9 faz · tıkla → filtrele",
-    hcSync:"DEFTER SENKRONU",hcSyncSub:"✅ güncel · ⚠ 2 bayat · near-miss 1",
-    hcViol:"AÇIK İHLAL",hcViolSub:"friction↑ sıralı · Yeni: 1",hcConf:"KARAR BÜTÜNLÜĞÜ",
-    tabMap:"🗺 Harita",tabTime:"📅 Zaman Çizgisi",tabDelta:"⬚ Delta",tabUyum:"⚖️ Uyum",
-    deltaNote:'⚖️ Seçili plan maddesi: <b>"Kartopu (snowballing)"</b> — kodlandığında haritada şu değişiklikler oluşacak (henüz kodlanmadı):',
-    affTests:"Etkilenecek test dosyaları:",sAdd:"Eklenecek",sTouch:"Değişecek",
-    qNew:"Yeni (1)",qRegress:"Regress (0)",qRising:"Yükselen (3)",qClosed:"Gerekçeyle kapalı (2)",
-    vRule:"Kural: D2#4 — capability yokken yüzey çizilmez · friction ↑↑ (14 günde 6 değişim)",
-    vRule2:"Near-miss: kutu açık ama App.css silinmiş (2026-08-20) — satır güncellenmemiş",
-    cOpen:"AÇIK",cFix:"A'ya superseded-notu düş",cKeep:"Çelişki olarak kabul et (gerekçe zorunlu)",
-    chainT:"Karar zinciri — TechRadar deseni, silinmez:",
-    hsSync:"SENKRON HUNİSİ",hsSyncSub:"madde → defter yazılan → kutu işlenen",
-    hsFresh:"TAZELİK SKORU",genAt:"üretilme",stale:"🕐 Veri bayat — CLI'yı yeniden koşun"},
- en:{tabMap:"🗺 Map",tabTime:"📅 Timeline",tabDelta:"⬚ Delta",tabUyum:"⚖️ Compliance",
-    sDone:"Done",sPart:"In progress",sOpen:"Planned",sAdd:"Will add",sTouch:"Will change",
-    lgDone:"🟢 Done",lgPart:"🟡 In progress",lgOpen:"⚪ Planned",
-    lgGo:"🔵 Awaiting GO",lgAdd:"⬚ Delta will add",
-    hintMap:"💡 Click node → drawer · Click phase tree → filter",
-    lPhases:"PHASE TREE — click to filter map",lLegend:"LEGEND",lDetail:"DETAIL PANEL",
-    lSync:"LEDGER SYNC FOR THIS PATH",
-    drawerHint:"◀ Click a node on the map.",
-    hcPhase:"PHASE HEALTH",hcPhaseSub:"/ 9 phases · click to filter",
-    hcSync:"LEDGER SYNC",hcSyncSub:"✅ fresh · ⚠ 2 stale · near-miss 1",
-    hcViol:"OPEN VIOLATIONS",hcViolSub:"friction↑ sorted · New: 1",hcConf:"DECISION INTEGRITY",
-    tabMap:"🗺 Map",tabTime:"📅 Timeline",tabDelta:"⬚ Delta",tabUyum:"⚖️ Compliance",
-    deltaNote:'⚖️ Selected plan item: <b>"Snowballing"</b> — once coded, these changes appear on the map (not coded yet):',
-    affTests:"Affected test files:",sAdd:"Will add",sTouch:"Will change",
-    qNew:"New (1)",qRegress:"Regressed (0)",qRising:"Rising (3)",qClosed:"Closed w/ reason (2)",
-    vRule:"Rule: D2#4 — no surface without capability · friction ↑↑ (6 changes in 14d)",
-    vRule2:"Near-miss: box open but App.css deleted (2026-08-20) — line not updated",
-    cOpen:"OPEN",cFix:"Mark A superseded",cKeep:"Accept as conflict (reason required)",
-    chainT:"Decision chain — TechRadar pattern, never deleted:",
-    hsSync:"SYNC FUNNEL",hsSyncSub:"items → ledger-written → boxes ticked",
-    hsFresh:"FRESHNESS SCORE",genAt:"generated",stale:"🕐 Data stale — rerun the CLI"}
-};
-let LANG='tr';
-function setLang(l){LANG=l;document.documentElement.lang=l;
-  document.querySelectorAll('[data-i18n]').forEach(el=>{const v=DICT[l][el.dataset.i18n];if(v!==undefined)el.innerHTML=v});
-  document.getElementById('langTr').classList.toggle('on',l==='tr');
-  document.getElementById('langEn').classList.toggle('on',l==='en');}
-function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='dark'?'':'dark'}
-function show(v){['map','timeline','delta','uyum'].forEach(k=>{
-  document.getElementById('view-'+k).hidden=k!==v;
-  document.getElementById('tab-'+k).classList.toggle('on',k===v);});}
-function filterPhase(ph,el){
-  document.querySelectorAll('.phase').forEach(p=>p.classList.remove('on'));el.classList.add('on');
-  show('map');
-  document.querySelectorAll('.node').forEach(n=>n.classList.toggle('dim', n.dataset.ph!==ph));}
-const PHASE_OF={'handlers/':'P0 · Güvenlik hijyeni ✅','frontend/':'P2.5 · Öneri çipleri ✅','services/':'P2 · Atıf-bağlamı ✅','literature.ts':'P2 · Retraksiyon bayrakları 🟡','kokpit/snowball':'P1 · Kartopu ⚪'};
-const SYNC_OF={'handlers/':'✅ %100 — handoff-backend güncel','frontend/':'⚠ %70 — ux-11 notu eksik','services/':'✅ %95','literature.ts':'❌ %40 — ROADMAP §2.2 bayat','kokpit/snowball':'❌ yazılmadı (plan)'};
-function pick(el,path){
-  document.querySelectorAll('.node').forEach(n=>n.classList.remove('sel'));el.classList.add('sel');
-  const status=el.querySelector('.chip').innerText.trim();
-  document.getElementById('drawerBody').innerHTML=`
-    <div class="field"><b>${DICT[LANG].dStatus||'Durum'}</b> ${status}</div>
-    <div class="field"><b>${DICT[LANG].dPath||'Yol'}</b> <code>${path}</code></div>
-    <div class="field"><b>${DICT[LANG].dPhase||'Faz'}</b> ${PHASE_OF[path]||'—'}</div>
-    <a class="srcbtn" href="#" onclick="return false">${DICT[LANG].dSrc||'Kaynağı aç ↗'}</a>`;
-  const sy=document.getElementById('syncBody');
-  if(sy) sy.innerHTML=SYNC_OF[path]||'—';
-}
-setLang('tr');
-</script>
+      <section class="content-surface">
+        <header class="view-header"><div class="view-title-wrap"><p class="eyebrow" data-i18n="workspaceLabel">Çalışma alanı</p><h1 id="viewTitle">Mimari harita</h1><p id="viewDescription">Faz ile kod yüzeyini aynı bağlamda inceleyin; bir düğüm seçerek kanıta inin.</p></div><div class="view-actions"><button class="text-button" id="resetPhase" type="button" data-i18n-aria="resetFilter" aria-label="Filtreyi sıfırla"><svg class="icon" aria-hidden="true"><use href="#i-fit"></use></svg><span data-i18n="resetFilter">Filtreyi sıfırla</span></button><button class="text-button primary" id="inspectorToggle" type="button" aria-pressed="true" data-i18n-aria="inspector" aria-label="Denetçi"><svg class="icon" aria-hidden="true"><use href="#i-panel"></use></svg><span data-i18n="inspector">Denetçi</span></button></div></header>
+
+        <section class="view-panel" id="view-map" role="tabpanel" aria-labelledby="tab-map">
+          <div class="map-toolbar"><span id="mapCount" aria-live="polite">5 / 30 örnek düğüm</span><div class="map-tools"><button class="icon-button" id="zoomOut" type="button" data-i18n-aria="zoomOut" aria-label="Uzaklaştır"><svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button><button class="icon-button" id="zoomIn" type="button" data-i18n-aria="zoomIn" aria-label="Yakınlaştır"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button><button class="icon-button" id="zoomFit" type="button" data-i18n-aria="fit" aria-label="Haritayı sığdır"><svg class="icon" aria-hidden="true"><use href="#i-fit"></use></svg></button></div></div>
+          <div class="graph-viewport"><div class="graph-layer" id="graphLayer"><svg class="wires" viewBox="0 0 900 518" preserveAspectRatio="none" aria-hidden="true"><path d="M240 102 H500"></path><path d="M185 150 V245 H320"></path><path d="M465 280 H610"></path><path d="M700 318 V405 H330"></path><path class="planned" d="M410 335 C360 385 320 395 280 410"></path></svg>
+            <div id="graphNodes"></div>
+            <div class="graph-help"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="mapHelp">Düğümü seçin; kanıt sağdaki denetçide açılır.</span></div>
+          </div></div>
+        </section>
+
+        <section class="view-panel" id="view-timeline" role="tabpanel" aria-labelledby="tab-timeline" hidden><div class="timeline"><div class="preview-note"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="timelineProjectScoped">Zaman çizgisi yalnız etkin projenin izlenebilir faz maddelerinden üretilir.</span></div><div id="timelineContent"></div></div></section>
+
+        <section class="view-panel" id="view-delta" role="tabpanel" aria-labelledby="tab-delta" hidden><div class="delta-layout"><div class="delta-empty"><div class="empty-state"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-delta"></use></svg></div><p class="eyebrow" data-i18n="honestState">Dürüst boş durum</p><h2 data-i18n="noMapping">Bu madde için yol eşlemesi yok</h2><p data-i18n="noMappingBody">Kartopu maddesi seçildi; ancak doğrulanmış dosya veya test ilişkisi üretilmedi. Kokpit tahmin göstermeyecek.</p></div></div><aside class="delta-receipt"><p class="eyebrow" data-i18n="evidenceReceipt">Kanıt makbuzu</p><div class="receipt-block"><span class="receipt-label" data-i18n="selectedItem">Seçili madde</span><div class="receipt-value">P1 · <span data-i18n="snowballing">Kartopu</span> (snowballing)</div></div><div class="receipt-block"><span class="receipt-label" data-i18n="source">Kaynak</span><div class="receipt-value"><code>ROADMAP.md</code> · <span data-i18n="sampleRecord">örnek kayıt</span></div></div><div class="receipt-block"><span class="receipt-label" data-i18n="mapping">Yol eşlemesi</span><div class="receipt-value">— · <span data-i18n="unknown">bilinmiyor</span></div></div><div class="receipt-block"><button class="text-button" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span data-i18n="openSource">Kaynağı aç</span></button></div></aside></div></section>
+
+        <section class="view-panel" id="view-compliance" role="tabpanel" aria-labelledby="tab-compliance" hidden><div class="compliance"><div class="preview-note"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="compliancePreview">Uyum motoru bağlı değil. Aşağıdaki satırlar kuyruk, filtre ve denetçi davranışını gösteren örnek kayıtlardır.</span></div><div class="compliance-toolbar"><div class="queue-filters"><button class="queue-filter" type="button" data-queue-filter="all" aria-pressed="true" data-i18n="all">Tümü</button><button class="queue-filter" type="button" data-queue-filter="violation" aria-pressed="false" data-i18n="violations">İhlaller</button><button class="queue-filter" type="button" data-queue-filter="sync" aria-pressed="false" data-i18n="syncIssues">Defter senkronu</button><button class="queue-filter" type="button" data-queue-filter="decision" aria-pressed="false" data-i18n="decisions">Kararlar</button></div><span class="engine-state" data-i18n="engineOffline">Motor bağlı değil</span></div>
+          <div class="issue-list" aria-label="Örnek uyum kayıtları">
+            <button class="issue-row" type="button" data-issue="fake-gate" data-state="violation"><span class="sample-label" data-i18n="sample">Örnek</span><span><span class="issue-title">sahte-kapı</span><span class="issue-path">kokpit/ui/InviteButton.tsx</span></span><span class="issue-rule" data-i18n="fakeGateRule">D2#4 · capability olmadan yüzey çizilmez</span><span class="severity error" data-i18n="error">Hata</span><svg class="icon issue-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
+            <button class="issue-row" type="button" data-issue="stale-ledger" data-state="sync"><span class="sample-label" data-i18n="sample">Örnek</span><span><span class="issue-title">bayat-kutu</span><span class="issue-path">ROADMAP §5.7</span></span><span class="issue-rule" data-i18n="staleLedgerRule">Kod değişmiş, defter kaydı doğrulanmamış</span><span class="severity warning" data-i18n="warning">Uyarı</span><svg class="icon issue-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
+            <button class="issue-row" type="button" data-issue="decision-conflict" data-state="decision"><span class="sample-label" data-i18n="sample">Örnek</span><span><span class="issue-title">karar-çelişkisi</span><span class="issue-path">D5 ↔ ROADMAP §5.7</span></span><span class="issue-rule" data-i18n="decisionRule">İki otorite kaydı farklı yön bildiriyor</span><span class="severity note" data-i18n="review">İncele</span><svg class="icon issue-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
+          </div>
+        </div></section>
+      </section>
+
+      <aside class="inspector" id="inspector" aria-labelledby="inspectorHeading"><div class="inspector-header"><div><p class="eyebrow" data-i18n="context">Bağlam</p><h2 id="inspectorHeading" data-i18n="inspector">Denetçi</h2></div><div class="inspector-actions"><button class="icon-button" id="inspectorClose" type="button" data-i18n-aria="closeInspector" aria-label="Denetçiyi kapat"><svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg></button></div></div><div class="inspector-body" id="inspectorBody"><div class="inspector-empty"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-panel"></use></svg></div><strong data-i18n="nothingSelected">Henüz seçim yok</strong><p data-i18n="nothingSelectedBody">Haritada bir düğüm veya listede bir kayıt seçin. Kaynak, durum ve kanıt burada açılır.</p></div></div></aside>
+      <button class="inspector-scrim" id="inspectorScrim" type="button" aria-label="Denetçiyi kapat" tabindex="-1"></button>
+    </main>
+
+    <footer class="statusbar"><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span id="planScope" data-i18n="planLoading">PLAN.md yükleniyor</span></span><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span id="previewGenerated">Kalıcı proje indeksi yükleniyor</span></span><span class="build-label">UI-SPEC v0.8 · persistent</span></footer>
+    </section>
+
+    <section class="product-screen" id="compareScreen" hidden>
+      <div class="screen-shell">
+        <header class="screen-head"><div class="screen-head-copy"><p class="eyebrow" data-i18n="portfolioLabel">Portföy görünümü</p><h1 data-i18n="compareTitle">Projeleri karıştırmadan karşılaştırın.</h1><p data-i18n="compareBody">Kaynak, dal, güncellik ve plan kapsamı ayrı kalır. Bilinmeyen değerler sıfıra çevrilmez; tek bir yanıltıcı sağlık yüzdesi üretilmez.</p></div><div class="screen-actions"><button class="text-button primary" id="openActiveWorkspace" type="button"><svg class="icon" aria-hidden="true"><use href="#i-map"></use></svg><span data-i18n="openWorkspace">Etkin projeyi aç</span></button></div></header>
+        <div class="compare-controls" id="compareControls" aria-label="Karşılaştırılacak projeler"></div>
+        <div class="compare-table-wrap"><table class="compare-table"><thead><tr><th data-i18n="project">Proje</th><th data-i18n="sourceBranch">Kaynak / dal</th><th data-i18n="connection">Bağlantı</th><th data-i18n="planCoverage">Plan kapsamı</th><th data-i18n="lastIndex">Son indeks</th><th data-i18n="nextAction">Sonraki eylem</th></tr></thead><tbody id="compareBodyRows"></tbody></table></div>
+        <p class="compare-note" data-i18n="compareNote">Karşılaştırma yalnız özet düzeyindedir. Bir projeyi açtığınızda çalışma alanı o projectId için baştan yüklenir.</p>
+      </div>
+    </section>
+  </div>
+
+  <dialog id="commandDialog" aria-labelledby="commandTitle"><div class="command-head"><svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><label class="sr-only" for="commandInput" id="commandTitle" data-i18n="commandTitle">Komut ve arama</label><input id="commandInput" type="search" autocomplete="off" data-i18n-placeholder="commandPlaceholder" placeholder="Görünüm, proje veya faz ara…"><span class="keycap">Esc</span></div><div class="command-list"><button class="command-item" type="button" data-command="section:projects" data-search="projeler projects repo"><svg class="icon" aria-hidden="true"><use href="#i-grid"></use></svg><strong data-i18n="projectsNav">Projeler</strong><small>G</small></button><button class="command-item" type="button" data-command="section:compare" data-search="karşılaştır compare"><svg class="icon" aria-hidden="true"><use href="#i-compare"></use></svg><strong data-i18n="compareNav">Karşılaştır</strong><small>C</small></button><button class="command-item" type="button" data-command="view:map" data-search="harita map"><svg class="icon" aria-hidden="true"><use href="#i-map"></use></svg><strong data-i18n="commandMap">Haritayı aç</strong><small>1</small></button><button class="command-item" type="button" data-command="view:timeline" data-search="zaman timeline"><svg class="icon" aria-hidden="true"><use href="#i-timeline"></use></svg><strong data-i18n="commandTimeline">Zamanı aç</strong><small>2</small></button><button class="command-item" type="button" data-command="view:delta" data-search="delta"><svg class="icon" aria-hidden="true"><use href="#i-delta"></use></svg><strong data-i18n="commandDelta">Delta'yı aç</strong><small>3</small></button><button class="command-item" type="button" data-command="view:compliance" data-search="uyum compliance"><svg class="icon" aria-hidden="true"><use href="#i-shield"></use></svg><strong data-i18n="commandCompliance">Uyumu aç</strong><small>4</small></button></div><div class="command-empty" id="commandEmpty" hidden data-i18n="noResults">Sonuç bulunamadı</div><div class="command-foot"><span>↑↓ <span data-i18n="navigate">gezin</span></span><span>Enter <span data-i18n="open">aç</span></span><span>Esc <span data-i18n="close">kapat</span></span></div></dialog>
+  <dialog class="connect-dialog" id="connectDialog" aria-labelledby="connectTitle"><header class="connect-head"><div><p class="eyebrow" data-i18n="interactivePreview">Gerçek bağlantı</p><h2 id="connectTitle" data-i18n="connectTitle">Projeyi KokpitPro'ya ekle</h2><p data-i18n="connectIntro">Repo doğrulanır, plan kaynağı gerçek parser ile indekslenir ve kayıt diskte kalıcı tutulur.</p></div><button class="icon-button" id="connectClose" type="button" aria-label="Bağlantı akışını kapat"><svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg></button></header><div class="connect-steps" id="connectSteps"><span class="connect-step is-current" data-step="1" data-i18n="sourceStep">Kaynak</span><span class="connect-step" data-step="2" data-i18n="verifyStep">Doğrula</span><span class="connect-step" data-step="3" data-i18n="indexStep">İndeksle</span><span class="connect-step" data-step="4" data-i18n="readyStep">Hazır</span></div><div class="connect-body" id="connectBody"></div><div class="connect-foot"><button class="text-button connect-cancel" id="connectCancel" type="button" data-i18n="cancel">İptal</button><button class="text-button" id="connectBack" type="button" data-i18n="back" disabled>Geri</button><button class="text-button primary" id="connectNext" type="button" data-i18n="continue" disabled>Devam</button></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- file:// açılışında fetch yasaklanır. Bu gömülü kopya yalnız o durumda
+       kullanılır; HTTP önizlemesi her zaman kanonik PLAN.md dosyasını okur. -->
+  <script type="text/plain" id="planSnapshot">
+# KokpitPro — Uygulama Planı
+
+> Kaynak: `docs/arastirma/kokpit/05-senaryolar-ve-oneri.md` (MethodLogos_Pro).
+> Bu dosya kokpitin kendi faz defteridir — kokpit, kendisini de kendi
+> metodolojisiyle geliştirir.
+>
+> **Bağlayıcı tasarım sözleşmesi:** `DESIGN.md` (D1: TR/EN çift dil baştan ·
+> D2: UX barı "referanstan iyi" · D3: React Flow + Mermaid · D4: AGENTS.md
+> bağışı). UI kodu yazan her dilim bu sözleşmeye tabidir.
+
+## Dilim 0 · Motoru ayağa kaldırma — B YOLU KARARLI (storage'sız lite)
+
+> **Patron kararı 2026-08-24:** R2/Upstash hesap açılmayacak; referans motor
+> `lite` dalında storage'sız çalışır. Uretilen diyagram önbelleklenmez, her
+> ziyarette yeniden üretilir — Dilim 2 UI'sı için yeterli.
+
+- [x] **`lite` dalı hazır** (`gitdiagram`, commit `1e1e8e9`):
+      R2 okumaları "yapılandırılmamış = artefakt yok" sayar; Turbopack kökü
+      sabitlendi; persistence zaten fail-safe'ti (uyarı bandı normaldir)
+- [ ] `cd gitdiagram && git checkout lite`
+- [ ] `.env.example` → `.env`; zorunlu tek alan: **`OPENAI_API_KEY`**
+      *(alternatif: `AI_PROVIDER=openrouter` + `OPENROUTER_API_KEY`;
+      önerilir: `GITHUB_PAT` — GitHub API limitini yükseltir)*
+- [ ] Kurulum: `bun install` *(önerilen)* veya `npm install`
+- [ ] **Yalnız bu dizinden** çalıştır: `bun run --bun next dev --turbo`
+      *(veya Node ile `npx next dev --turbo`)*
+- **Lite modda NORMAL görünenler:** `/api/healthz` 503 · üretim sonrası
+  "could not be cached" uyarı bandı · artefakt önbelleği yok
+- **Kabul:** ana sayfadan örnek/gerçek repo girildiğinde akışkan üretim
+  çalışır, interaktif Mermaid haritası render edilir, düğüme tıklanınca
+  GitHub dosyası açılır.
+- **Durum:** ❌ koşulmadı — kullanıcı OPENAI_API_KEY girdikten sonra.
+
+## Dilim 0.1 · Parser kabul koşumu
+
+- [x] Fixture klasör adı `__fixtures__/` olarak eşitlendi (ENOENT giderildi)
+- [x] **CLI gerçek-veri koşusu YEŞİL:** MethodLogos ROADMAP → 8 checkbox grubu /
+      62 madde (5.7+P0..P5); phases dizini → 27 dosya tarandı, sinyaller üretildi.
+      Bu sayı ürünün kanonik Faz 1–9 sayısı değildir; kanonik faz adaptörü
+      Dilim 2 kapsamında ayrıca bağlanacaktır.
+- [x] **Windows kabul koşumu YEŞİL (2026-08-24):** `npm test` → 3 dosya,
+      18/18 test; `npm run typecheck` → hata yok
+
+### v0.1 parlatma listesi (kabul sonrası)
+
+1. **phaseFiles hassasiyeti:** "Güvenlik Düzeltmeleri", "Terim düzeltmesi",
+   "plan değildir", "Plan — dilimler" gibi başlıklar yanlış-pozitif üretiyor →
+   olumsuzlama koruması (`değildir` öncesi token yasak) + yapısal başlık
+   istisnası ("Runtime açma kapısı") + Düzeltme için ✅/🔧 emoji veya tarih şartı
+2. Çok satıra yayılan bold başlıklar (`**...**\n devam**`) başlığı kırpıyor →
+   blok-bazlı bold çözümleme
+3. `madde-N` kimlikleri dosya-geneli sayaçtan geliyor; faza-göre sıfırlama
+   değerlendirilecek
+
+## Dilim 0.2 · Dış denetim yanıtı (2026-08-24)
+
+> Bağımsız kol (Windows terminali) KokpitPro'yu değerlendirdi: **1.5/5 PoC**.
+> Bulgular ve durumları:
+
+| # | Bulgu | Durum |
+|---|---|---|
+| 1 | Parser testleri fixture yolu bulamıyor (`fixtures` vs `__fixtures__`) | ✅ Zaten onarılmıştı (`c0b1136`, denetim eski HEAD'e bakmış) |
+| 2 | **Faz-gruplama hatası:** PLAN.md tarzı `## Dilim N` dosyalarında Dilim 1–4 maddeleri Dilim 0'a yığılıyor | ✅ **Onarıldı:** her başlık artık grup sınırı; boş gruplar filtreleniyor; nöbetçi test eklendi |
+| 3 | **17 TS hatası:** i18n literal tip daralması + roadmap.ts undefined riskleri | ✅ **Onarıldı:** `as const` kaldırıldı (Dict string genişliğinde), regex yakalama erişimlerine `??` fallback |
+| 4 | CLI kendi PLAN.md'sini yanlış grupluyor | ✅ Madde 2 ile aynı kök neden |
+| 5 | GitDiagram tam yolculuk çöküyor: `Missing R2_PUBLIC_BUCKET`, healthz 503 (config/provider/storage×2/redis) | ⬜ **Karar bekliyor:** (A) Cloudflare R2 + Upstash free-tier hesap açılıp `.env` doldurulur · (B) "storage'sız lite" dalı: artefakt kalıcılığı olmadan sadece üretim+görüntüleme — Dilim 2 UI'sını besleyecek minimum bu. Önerilen: önce B, ürünleşmede A |
+| 6 | Turbopack yanlış workspace-root çökmesi | ⬜ gitdiagram dizininden çalıştırma kuralı (kök değil) + gerekirse `next dev --turbo` yerine düz `next dev` |
+| 7 | Redis entegrasyon testi timeout | ⬜ Madde 5B ile düşer |
+
+**Kapı:** Bu onarımlardan sonra kapıları **Windows kolu** koşar
+(`npm run test && npm run typecheck`); yeşil teyidi gelmeden Dilim 1
+KAPANMIŞ sayılmaz (koşum disiplini).
+
+## Dilim 1 · Faz-Belge Ayrıştırıcı v0
+
+- [x] `kokpit/parser/roadmap.ts` — checkbox satırlarını oku:
+      `- [x] **#1 ...**` → `{id, title, status, completedAt, line}` ·
+      `[~]` partial durumu dahil
+- [x] `kokpit/parser/phaseFiles.ts` — `.agents/phases/*.md` başlık sinyalleri:
+      UYGULANDI/KAPANDI/DOCS_LOCK/WAITING_HUMAN/GO… öncelik sıralı
+- [x] Çıktı sözleşmesi: `kokpit/parser/schema.ts` (Zod: PhaseItem, RoadmapScan,
+      FileSignal…) — Dilim 2–3 bu sözleşmeyi tüketir
+- [x] Nöbetçi testler: `__tests__/roadmap.test.ts` (gerçek MethodLogos kesiti,
+      3 durum + tarih + satır izlenebilirliği) · `phaseFiles.test.ts`
+      (S1I kesiti, öncelik sırası + durumsuz başlık atlanır)
+- [x] **CLI kabul aracı:** `kokpit/cli.ts` —
+      `npx tsx kokpit/cli.ts --roadmap <yol> [--phases <dizin>] [--pretty]`;
+      JSON anahtarları İngilizce sabit (makine sözleşmesi, bkz. DESIGN.md D1)
+- ✅ **Windows kabul koşumu tamamlandı (2026-08-24):** `npm test` → 18/18;
+  `npm run typecheck` → hata yok.
+- **Kabul:** MethodLogos_Pro ROADMAP'ine CLI ile bakıldığında P0–P5 ve S1I
+  D0–D4 durumları doğru çıkar.
+
+## Dilim 2 · Harita + Durum Boyaması
+
+> **D1 uygulaması bu dilimde başlar:** `kokpit/i18n/labels.ts` kuruldu
+> (tr/en parite nöbetçili); bileşen metinleri yalnız sözlükten gelir.
+
+- [ ] Import-grafı: `dependency-cruiser` ile TS/JS kenarları
+- [ ] AST düğümü ↔ dizin eşlemesi → faz dilimi bağlama
+- [ ] Renk sözlüğü: kodlandı(yeşil) / sürüyor(amber) / planda(gri) / GO bekliyor(mavi)
+- **Kabul:** kendi reposunun haritasında en az 3 durum aynı anda görünür.
+
+## Dilim 2.1 · Proje Merkezi + Repo Bağlantı Yaşam Döngüsü
+
+- [~] Proje Merkezi görünür önizlemesi
+- [~] Kaynak → Doğrula → İndeksle → Hazır bağlantı önizlemesi
+- [~] Proje seçici + bağlam izolasyonu önizlemesi
+- [~] Dinamik zaman çizgisi + tam-yükseklik kabuk
+- [~] Ayrık proje karşılaştırma önizlemesi
+- [ ] ProjectRecord kayıt defteri
+- [ ] Yerel repo izinli-kök yardımcısı
+- [ ] GitHub App · seçili repolar · Contents: read
+- [ ] Proje-bazlı gerçek indeks ve makbuz
+- [ ] Gerçek karşılaştırma adaptörü
+- [ ] E2E kabul ve veri-sızıntısı nöbetçisi
+- **Kabul:** en az bir yerel ve bir GitHub projesi kaydedilir; proje değişiminde
+  tüm analiz yüzeyleri aynı projectId'ye geçer; farklı projelerin plan, harita,
+  zaman ve kanıt kayıtları birleşmez.
+
+## Dilim 3 · Delta Ön-Görünümü
+
+- [ ] Seçilen plan-adımının `paths` alanı → harita vurgusu + etkilenen test listesi
+- [ ] "Bu dilim gelirse" kartı: yeni düğümler (kesikli), değişecek kenarlar
+- **Kabul:** bir plan adımı seçildiğinde ön-görünüm kartı ve harita vurgusu
+  birlikte çalışır.
+
+## Dilim 4 · Remap Önerileri (v2'ye ertelenebilir)
+
+- [ ] Büyük-dosya / ortak-import / eşleşmeyen-katman sezgileri
+- [ ] Öneri listesi UI paneli
+
+## Sabit kurallar (bu projede de geçerli)
+
+1. Sahte kapı yok: capability yoksa yüzey çizilmez.
+2. Her davranış değişikliği nöbetçi testle gelir.
+3. Defter güncel tutulur: her dilimin kapanışı tarih+kanıtla buraya yazılır.
+  </script>
+
+  <script>
+    const I18N = {
+      tr: {
+        skip: "Ana içeriğe geç", search: "Proje, faz, dosya veya madde ara", mixedMode: "Karma veri", themeDark: "Açık temaya geç", themeLight: "Koyu temaya geç",
+        tabMap: "Harita", tabTimeline: "Zaman", tabDelta: "Delta", tabCompliance: "Uyum", planHeaderLabel: "PLAN.md kapsamı · faz / madde / tamam", viewTabs: "Kokpit görünümleri", signalRegion: "Dikkat ve süreç sinyalleri", phaseNav: "Faz planları",
+        attentionTitle: "Faz planı canlı; harita örnek veri kullanıyor", attentionBody: "Faz ayrıntıları PLAN.md'den okunur. Kod eşlemesi olmayan alanlarda tahmin gösterilmez.", snapshotAttentionTitle: "Fazlar görünür; plan gömülü anlık görüntüden okunuyor", snapshotAttentionBody: "Dosya doğrudan açıldığı için canlı PLAN.md erişimi yok. Sunucu adresinde otomatik olarak güncel kaynağa geçilir.", signalSync: "Defter", signalViolation: "İhlal", signalDecision: "Karar", sampleResult: "örnek sonuç",
+        navigator: "Gezinme", phases: "Faz planları", phaseHint: "Seçin; alt maddeler ve beklenen çıktı denetçide açılsın", livePlanSource: "PLAN.md canlı kaynağı", snapshotPlanSource: "PLAN.md gömülü anlık görüntüsü", allPhases: "Tüm fazlar", p0: "Güven", p1: "Altyapı", p2: "Analiz", p25: "Öneriler", p3: "İş akışı", p4: "Yazım", p5: "Yayın",
+        legend: "Durum dili", done: "Kodlandı", inProgress: "Sürüyor", planned: "Planlandı", blocked: "Engel / hata", workspaceLabel: "Çalışma alanı", resetFilter: "Filtreyi sıfırla", inspector: "Denetçi", zoomOut: "Uzaklaştır", zoomIn: "Yakınlaştır", fit: "Haritayı sığdır", mapHelp: "Düğümü seçin; kanıt sağdaki denetçide açılır.", plannedModule: "önerilen modül",
+        consensusBlindness: "Konsensüs körlüğü", sourceHygiene: "Kaynak hijyeni", sdkMigration: "SDK göçü", canonicalArtifact: "Kanonik eser modeli", connectors: "Bağlayıcılar", snowballing: "Kartopu", citationContext: "Atıf bağlamı", retractionFlags: "Retraksiyon bayrakları", qualityLayer: "Kalite katmanı", evidenceMatrix: "Kanıt matrisi", screeningMode: "Tarama modu", synthesisNotes: "Sentez notları",
+        timelinePreview: "Bu görünüm etkin projenin PLAN.md kaynağında bulunan bütün faz ve maddeleri gösterir; kapsam proje değiştirildiğinde projectId ile birlikte yenilenir.", honestState: "Dürüst boş durum", noMapping: "Bu madde için yol eşlemesi yok", noMappingBody: "Kartopu maddesi seçildi; ancak doğrulanmış dosya veya test ilişkisi üretilmedi. Kokpit tahmin göstermeyecek.", evidenceReceipt: "Kanıt makbuzu", selectedItem: "Seçili madde", source: "Kaynak", sampleRecord: "örnek kayıt", mapping: "Yol eşlemesi", unknown: "bilinmiyor", openSource: "Kaynağı aç",
+        compliancePreview: "Uyum motoru bağlı değil. Aşağıdaki satırlar kuyruk, filtre ve denetçi davranışını gösteren örnek kayıtlardır.", all: "Tümü", violations: "İhlaller", syncIssues: "Defter senkronu", decisions: "Kararlar", engineOffline: "Motor bağlı değil", sample: "Örnek", error: "Hata", warning: "Uyarı", review: "İncele", fakeGateRule: "D2#4 · capability olmadan yüzey çizilmez", staleLedgerRule: "Kod değişmiş, defter kaydı doğrulanmamış", decisionRule: "İki otorite kaydı farklı yön bildiriyor", context: "Bağlam", closeInspector: "Denetçiyi kapat", nothingSelected: "Henüz seçim yok", nothingSelectedBody: "Haritada bir düğüm veya listede bir kayıt seçin. Kaynak, durum ve kanıt burada açılır.",
+        planLoading: "PLAN.md yükleniyor", previewGenerated: "Canlı plan · örnek harita", snapshotPreviewGenerated: "Plan anlık görüntüsü · örnek harita", commandTitle: "Komut ve arama", commandPlaceholder: "Görünüm veya düğüm ara…", commandMap: "Haritayı aç", commandTimeline: "Zamanı aç", commandDelta: "Delta'yı aç", commandCompliance: "Uyumu aç", noResults: "Sonuç bulunamadı", navigate: "gezin", open: "aç", close: "kapat", status: "Durum", phase: "Faz", evidence: "Kanıt", demoEvidence: "Bu bilgi demo veri setinden gelir; repo kanıtı değildir.", sourceUnavailable: "Demo modunda doğrulanmış kaynak yolu yok.", filterCleared: "Faz seçimi sıfırlandı",
+        planLoadError: "PLAN.md okunamadı ve gömülü anlık görüntü kullanılamadı.", planOverview: "Plan özeti", planItems: "Alt maddeler", planLive: "canlı", planSnapshot: "anlık görüntü", planTruthNote: "Sayaçlar PLAN.md işaretlerini özetler. ‘Tamamlandı’ kaydı tek başına kod kanıtı değildir; doğrulanmış dosya ve test eşlemesi ayrıca gösterilir.", planDone: "Tamamlandı", planPartial: "Kısmi", planOpen: "Açık", planBlocked: "Engelli", acceptance: "Beklenen kabul", currentRecord: "Mevcut kayıt", expectedOutput: "Beklenen çıktı", codeEvidence: "Kod kanıtı", noCodeMapping: "— Kod dosyası veya test eşlemesi henüz bağlı değil.", sourceLocation: "Kaynak konumu", openPlan: "PLAN.md dosyasını aç", planDoneRecord: "PLAN.md bu maddeyi tamamlandı olarak işaretliyor.", planPartialRecord: "PLAN.md bu madde için kısmi ilerleme bildiriyor.", planOpenRecord: "PLAN.md bu maddeyi açık bırakıyor; tamamlanma kaydı yok.", planBlockedRecord: "PLAN.md bu madde için engel bildiriyor.", expectedUnspecified: "Plan maddesi ayrı bir sonuç açıklaması vermiyor; başlıktaki işin tamamlanması bekleniyor.", noAcceptance: "Bu faz için ayrı bir kabul cümlesi bulunamadı.", planSourceLanguage: "Kaynak metin Türkçe kalır", planGroups: "faz", planItemCount: "madde", remaining: "bekleyen",
+        viewMapTitle: "Mimari harita", viewMapBody: "Faz ile kod yüzeyini aynı bağlamda inceleyin; bir düğüm seçerek kanıta inin.", viewTimelineTitle: "Faz zaman çizgisi", viewTimelineBody: "Yol haritası maddelerini faz ve durum bağlamında tarayın.", viewDeltaTitle: "Delta ön-görünümü", viewDeltaBody: "Plan maddesinin kod yüzeyinde doğrulanmış etkisi varsa görün; yoksa tahmin yerine boş durum alın.", viewComplianceTitle: "Uyum kuyruğu", viewComplianceBody: "Defter, kural ve karar kayıtlarını aynı kanıt hiyerarşisinde inceleyin.",
+        recentProjects: "Son projeler", addProject: "Proje ekle", projectsNav: "Projeler", workspaceNav: "Çalışma alanı", compareNav: "Karşılaştır", projectHubLabel: "Proje merkezi", projectHubTitle: "Tüm repolar, tek güvenilir bağlam.", projectHubBody: "Yerel ve GitHub projelerini kaydedin; hangi dalın, plan kaynağının ve indeks sonucunun açık olduğunu proje değiştirmeden önce görün.", refresh: "Yenile", registeredProjects: "Kayıtlı projeler", previewRecords: "Kayıtlar diskte kalıcıdır", activeContext: "Etkin bağlam", sourceType: "Kaynak türü", branch: "Dal", planSource: "Plan kaynağı", lastIndex: "Son indeks", sourceStep: "Kaynak", sourceStepBody: "Yerel klasör veya GitHub reposu.", verifyStep: "Doğrula", verifyStepBody: "Repo kökü, dal ve erişim sınırı.", indexStep: "İndeksle", indexStepBody: "PLAN/ROADMAP, faz ve kod yüzeyi.", readyStep: "Hazır", readyStepBody: "Projeyi tek bağlamda çalışma alanına aç.", portfolioLabel: "Portföy görünümü", compareTitle: "Projeleri karıştırmadan karşılaştırın.", compareBody: "Kaynak, dal, güncellik ve plan kapsamı ayrı kalır. Bilinmeyen değerler sıfıra çevrilmez; tek bir yanıltıcı sağlık yüzdesi üretilmez.", openWorkspace: "Etkin projeyi aç", project: "Proje", sourceBranch: "Kaynak / dal", connection: "Bağlantı", planCoverage: "Plan kapsamı", nextAction: "Sonraki eylem", compareNote: "Karşılaştırma yalnız özet düzeyindedir. Bir projeyi açtığınızda çalışma alanı o projectId için baştan yüklenir.", timelineProjectScoped: "Zaman çizgisi yalnız etkin projenin kalıcı indeks makbuzundan üretilir.", interactivePreview: "Gerçek bağlantı", connectTitle: "Projeyi KokpitPro'ya ekle", connectIntro: "Repo doğrulanır, plan kaynağı gerçek parser ile indekslenir ve kayıt diskte kalıcı tutulur.", cancel: "İptal", back: "Geri", continue: "Devam", localRepo: "Yerel repo", localRepoBody: "Bu bilgisayardaki izinli bir repo kökünü seçin; dosya erişimi yalnız o kökle sınırlanır.", githubRepo: "GitHub", githubRepoBody: "GitHub App ile yalnız seçtiğiniz repolara ve salt okunur içeriğe erişin.", verifyConnection: "Bağlantıyı doğrula", startIndex: "İndeksi kaydet", addPreviewRecord: "Kalıcı kaydı oluştur", finish: "Bitir", openProject: "Çalışma alanında aç", repairConnection: "Bağlantıyı onar", sourceLabel: "Kaynak", statusLabel: "Durum", planLabel: "Plan", noRealConnection: "Repo doğrulandı, indekslendi ve kalıcı kaydedildi."
+      },
+      en: {
+        skip: "Skip to main content", search: "Search projects, phases, files, or items", mixedMode: "Mixed data", themeDark: "Switch to light theme", themeLight: "Switch to dark theme",
+        tabMap: "Map", tabTimeline: "Timeline", tabDelta: "Delta", tabCompliance: "Compliance", planHeaderLabel: "PLAN.md scope · phases / items / complete", viewTabs: "Kokpit views", signalRegion: "Attention and process signals", phaseNav: "Phase plans",
+        attentionTitle: "Phase plan is live; the map uses sample data", attentionBody: "Phase details are read from PLAN.md. Areas without code mapping never show guesses.", snapshotAttentionTitle: "Phases are visible; the plan uses an embedded snapshot", snapshotAttentionBody: "Direct file access cannot read live PLAN.md. The server URL automatically switches to the current source.", signalSync: "Ledger", signalViolation: "Violation", signalDecision: "Decision", sampleResult: "sample result",
+        navigator: "Navigation", phases: "Phase plans", phaseHint: "Select one to inspect its items and expected outcome", livePlanSource: "Live PLAN.md source", snapshotPlanSource: "Embedded PLAN.md snapshot", allPhases: "All phases", p0: "Trust", p1: "Infrastructure", p2: "Analysis", p25: "Suggestions", p3: "Workflow", p4: "Writing", p5: "Publication",
+        legend: "Status language", done: "Done", inProgress: "In progress", planned: "Planned", blocked: "Blocker / error", workspaceLabel: "Workspace", resetFilter: "Reset filter", inspector: "Inspector", zoomOut: "Zoom out", zoomIn: "Zoom in", fit: "Fit map", mapHelp: "Select a node; evidence opens in the inspector.", plannedModule: "proposed module",
+        consensusBlindness: "Consensus blindness", sourceHygiene: "Source hygiene", sdkMigration: "SDK migration", canonicalArtifact: "Canonical artifact model", connectors: "Connectors", snowballing: "Snowballing", citationContext: "Citation context", retractionFlags: "Retraction flags", qualityLayer: "Quality layer", evidenceMatrix: "Evidence matrix", screeningMode: "Screening mode", synthesisNotes: "Synthesis notes",
+        timelinePreview: "This view shows every phase and item found in the active project's PLAN.md source; scope reloads with projectId when the project changes.", honestState: "Honest empty state", noMapping: "No path mapping for this item", noMappingBody: "The Snowballing item is selected, but no verified file or test relationship was produced. Kokpit will not guess.", evidenceReceipt: "Evidence receipt", selectedItem: "Selected item", source: "Source", sampleRecord: "sample record", mapping: "Path mapping", unknown: "unknown", openSource: "Open source",
+        compliancePreview: "The compliance engine is not connected. The rows below are samples for queue, filter, and inspector behavior.", all: "All", violations: "Violations", syncIssues: "Ledger sync", decisions: "Decisions", engineOffline: "Engine not connected", sample: "Sample", error: "Error", warning: "Warning", review: "Review", fakeGateRule: "D2#4 · do not draw a surface without capability", staleLedgerRule: "Code changed; the ledger entry is not verified", decisionRule: "Two authority records point in different directions", context: "Context", closeInspector: "Close inspector", nothingSelected: "Nothing selected", nothingSelectedBody: "Select a node on the map or a record in a list. Source, status, and evidence open here.",
+        planLoading: "Loading PLAN.md", previewGenerated: "Live plan · sample map", snapshotPreviewGenerated: "Plan snapshot · sample map", commandTitle: "Commands and search", commandPlaceholder: "Search views or nodes…", commandMap: "Open map", commandTimeline: "Open timeline", commandDelta: "Open delta", commandCompliance: "Open compliance", noResults: "No results found", navigate: "navigate", open: "open", close: "close", status: "Status", phase: "Phase", evidence: "Evidence", demoEvidence: "This information comes from the demo dataset; it is not repository evidence.", sourceUnavailable: "No verified source path is available in demo mode.", filterCleared: "Phase selection reset",
+        planLoadError: "PLAN.md could not be read and the embedded snapshot was unavailable.", planOverview: "Plan overview", planItems: "Sub-items", planLive: "live", planSnapshot: "snapshot", planTruthNote: "Counts summarize PLAN.md markers. A ‘complete’ record is not code evidence on its own; verified file and test mappings are shown separately.", planDone: "Complete", planPartial: "Partial", planOpen: "Open", planBlocked: "Blocked", acceptance: "Expected acceptance", currentRecord: "Current record", expectedOutput: "Expected outcome", codeEvidence: "Code evidence", noCodeMapping: "— Code file or test mapping is not connected yet.", sourceLocation: "Source location", openPlan: "Open PLAN.md", planDoneRecord: "PLAN.md marks this item as complete.", planPartialRecord: "PLAN.md reports partial progress for this item.", planOpenRecord: "PLAN.md leaves this item open; there is no completion record.", planBlockedRecord: "PLAN.md reports a blocker for this item.", expectedUnspecified: "The plan item has no separate outcome statement; the work named in the title is expected to be completed.", noAcceptance: "No separate acceptance statement was found for this phase.", planSourceLanguage: "Source content remains in Turkish", planGroups: "phases", planItemCount: "items", remaining: "remaining",
+        viewMapTitle: "Architecture map", viewMapBody: "Inspect phase and code surfaces in the same context, then select a node to reach its evidence.", viewTimelineTitle: "Phase timeline", viewTimelineBody: "Scan roadmap items in phase and status context.", viewDeltaTitle: "Delta preview", viewDeltaBody: "See a plan item's verified code impact when available; receive an honest empty state instead of a guess when it is not.", viewComplianceTitle: "Compliance queue", viewComplianceBody: "Review ledger, rule, and decision records in one evidence hierarchy.",
+        recentProjects: "Recent projects", addProject: "Add project", projectsNav: "Projects", workspaceNav: "Workspace", compareNav: "Compare", projectHubLabel: "Project hub", projectHubTitle: "Every repository, one reliable context.", projectHubBody: "Register local and GitHub projects, then verify the branch, plan source, and index state before switching context.", refresh: "Refresh", registeredProjects: "Registered projects", previewRecords: "Records persist on disk", activeContext: "Active context", sourceType: "Source type", branch: "Branch", planSource: "Plan source", lastIndex: "Last index", sourceStep: "Source", sourceStepBody: "A local folder or GitHub repository.", verifyStep: "Verify", verifyStepBody: "Repository root, branch, and access boundary.", indexStep: "Index", indexStepBody: "PLAN/ROADMAP, phases, and code surface.", readyStep: "Ready", readyStepBody: "Open the project in one isolated workspace.", portfolioLabel: "Portfolio view", compareTitle: "Compare projects without mixing them.", compareBody: "Source, branch, freshness, and plan scope remain separate. Unknown values do not become zero and no misleading health score is produced.", openWorkspace: "Open active project", project: "Project", sourceBranch: "Source / branch", connection: "Connection", planCoverage: "Plan coverage", nextAction: "Next action", compareNote: "Comparison stays at summary level. Opening a project reloads the workspace for that projectId.", timelineProjectScoped: "The timeline is generated from the active project's persistent index receipt only.", interactivePreview: "Live connection", connectTitle: "Add a project to KokpitPro", connectIntro: "The repository is verified, its plan is indexed by the real parser, and the record persists on disk.", cancel: "Cancel", back: "Back", continue: "Continue", localRepo: "Local repository", localRepoBody: "Choose an approved repository root on this computer; file access stays within that root.", githubRepo: "GitHub", githubRepoBody: "Use a GitHub App with read-only content access to repositories you select.", verifyConnection: "Verify connection", startIndex: "Save index", addPreviewRecord: "Create persistent record", finish: "Finish", openProject: "Open workspace", repairConnection: "Repair connection", sourceLabel: "Source", statusLabel: "Status", planLabel: "Plan", noRealConnection: "The repository was verified, indexed, and saved persistently."
+      }
+    };
+    let PROJECTS = {};
+    const ISSUE_DATA = {
+      "fake-gate": { title: "sahte-kapı", path: "kokpit/ui/InviteButton.tsx", phase: "D2#4", status: "blocked", description: { tr: "Capability olmadan yüzey çizilmez kuralı için örnek ihlal kaydı.", en: "Sample violation for the rule that no surface is shown without capability." } },
+      "stale-ledger": { title: "bayat-kutu", path: "ROADMAP §5.7", phase: "SYNC", phaseName: { tr: "Defter senkronu", en: "Ledger sync" }, status: "inProgress", description: { tr: "Kod değişimi ile defter kaydı arasındaki örnek near-miss.", en: "Sample near-miss between a code change and its ledger entry." } },
+      "decision-conflict": { title: "karar-çelişkisi", path: "D5 ↔ ROADMAP §5.7", phase: "DECISION", phaseName: { tr: "Karar bütünlüğü", en: "Decision integrity" }, status: "planned", description: { tr: "İki otorite kaydının farklı yön bildirdiği örnek inceleme kaydı.", en: "Sample review record where two authorities point in different directions." } }
+    };
+    const viewCopy = { map: ["viewMapTitle", "viewMapBody"], timeline: ["viewTimelineTitle", "viewTimelineBody"], delta: ["viewDeltaTitle", "viewDeltaBody"], compliance: ["viewComplianceTitle", "viewComplianceBody"] };
+    let language = localStorage.getItem("kokpit-language") || "tr";
+    let activeProjectId = null;
+    let activeSection = "projects";
+    let compareSelection = new Set();
+    let connectState = { step: 1, source: null, addedProjectId: null, input: {}, verified: null, busy: false, error: "" };
+    let activeView = "map";
+    let selectedNode = null;
+    let selectedPhase = "all";
+    let phaseGroups = [];
+    let planSourceMode = "live";
+    let zoomLevel = 1;
+    let toastTimer;
+    const $ = (selector, scope = document) => scope.querySelector(selector);
+    const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
+    const t = key => I18N[language][key] ?? key;
+    const activeProject = () => PROJECTS[activeProjectId];
+    const PHASE_NAMES_EN = { "D0": "Engine bootstrap", "D0.1": "Parser acceptance run", "D0.2": "External audit response", "D1": "Phase-document parser", "D2": "Map and status coloring", "D3": "Delta preview", "D4": "Remap suggestions" };
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]);
+    }
+    function stripMarkdown(value) {
+      return String(value || "")
+        .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+        .replace(/[*~`]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+    async function apiRequest(path, options = {}) {
+      const response = await fetch(path, { cache: "no-store", ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+      return payload;
+    }
+    function projectMark(name) {
+      const parts = String(name).split(/\s+/).filter(Boolean);
+      return (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : String(name).slice(0, 2)).toLocaleUpperCase("tr-TR");
+    }
+    function formatIndexDate(value) {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat(language === "tr" ? "tr-TR" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(date);
+    }
+    function normalizeProject(record, projectIndex) {
+      const local = record.source.type === "local";
+      const ready = record.connectionState === "ready";
+      const summary = record.index.summary;
+      const sourceLabel = local ? { tr: "Yerel", en: "Local" } : { tr: record.authMode === "github-app" ? "GitHub App" : record.authMode === "server-token" ? "GitHub · sunucu yetkisi" : "GitHub · halka açık", en: record.authMode === "github-app" ? "GitHub App" : record.authMode === "server-token" ? "GitHub · server auth" : "GitHub · public" };
+      const connection = ready ? { tr: "İndeks güncel", en: "Index current" } : record.connectionState === "stale" ? { tr: "Bayat indeks", en: "Stale index" } : { tr: "Bağlantı hatası", en: "Connection error" };
+      const location = local ? record.source.root : `${record.source.owner}/${record.source.repo}`;
+      const positions = ["node-pos-1", "node-pos-2", "node-pos-3", "node-pos-4", "node-pos-5"];
+      return {
+        id: record.id,
+        name: record.name,
+        mark: projectMark(record.name),
+        sourceMode: sourceLabel,
+        location,
+        branch: record.branch,
+        planFile: record.index.planPath,
+        planMode: ready ? "indexed" : "stale",
+        connection,
+        connectionState: record.connectionState,
+        planSummary: { tr: `${summary.phaseCount} faz · ${summary.itemCount} madde`, en: `${summary.phaseCount} phases · ${summary.itemCount} items` },
+        lastIndex: { tr: `${formatIndexDate(record.index.indexedAt)} · ${record.index.commit.slice(0, 8)}`, en: `${formatIndexDate(record.index.indexedAt)} · ${record.index.commit.slice(0, 8)}` },
+        nextAction: { tr: "Çalışma alanını aç", en: "Open workspace" },
+        description: { tr: `${local ? "Yerel Git kökü" : "GitHub reposu"} doğrulandı. Plan ve dosya düğümleri ${record.index.commit.slice(0, 8)} commit makbuzundan gelir.${record.lastError ? ` Son hata: ${record.lastError}` : ""}`, en: `${local ? "Local Git root" : "GitHub repository"} verified. Plan and file nodes come from commit receipt ${record.index.commit.slice(0, 8)}.${record.lastError ? ` Last error: ${record.lastError}` : ""}` },
+        locked: false,
+        planSnapshot: record.index.planMarkdown,
+        indexedGroups: record.index.groups || [],
+        record,
+        nodes: record.index.nodes.map((node, index) => ({ id: node.id, position: positions[index % positions.length], title: node.title, path: node.path, phase: "CODE", phaseName: { tr: "Doğrulanmış kod yüzeyi", en: "Verified code surface" }, status: node.status === "partial" ? "inProgress" : node.status === "open" ? "planned" : node.status, description: { tr: node.evidence, en: node.evidence } })),
+        sortIndex: projectIndex
+      };
+    }
+    async function loadProjectRegistry(options = {}) {
+      const registry = await apiRequest("/api/projects");
+      PROJECTS = Object.fromEntries(registry.projects.map((record, index) => { const project = normalizeProject(record, index); return [project.id, project]; }));
+      const ids = Object.keys(PROJECTS);
+      if (!ids.length) throw new Error(language === "tr" ? "Kayıtlı proje bulunamadı." : "No registered projects found.");
+      const preferred = options.preferredId && PROJECTS[options.preferredId] ? options.preferredId : registry.activeProjectId && PROJECTS[registry.activeProjectId] ? registry.activeProjectId : ids[0];
+      compareSelection = new Set([...compareSelection].filter(id => PROJECTS[id]));
+      ids.slice(0, 2).forEach(id => compareSelection.add(id));
+      await activateProject(preferred, { persist: false, openWorkspace: Boolean(options.openWorkspace) });
+      return registry;
+    }
+    function localized(value) { return value && typeof value === "object" ? value[language] : value; }
+    function sourceModeLabel(project) { return localized(project.sourceMode); }
+    function connectionLabel(project) { return localized(project.connection); }
+    function projectStateClass(project) { return project.connectionState === "ready" ? "" : project.connectionState === "error" ? "locked" : "preview"; }
+    function projectActionLabel() { return t("openProject"); }
+    function renderProjectMenu() {
+      const projects = Object.values(PROJECTS);
+      $('#projectMenuCount').textContent = String(projects.length);
+      $('#projectMenuList').innerHTML = projects.map(project => `<button class="project-menu-item" type="button" role="option" data-project-select="${escapeHtml(project.id)}" aria-current="${project.id === activeProjectId}"><span class="project-mini-mark">${escapeHtml(project.mark)}</span><span class="project-menu-copy"><strong>${escapeHtml(project.name)}</strong><span>${escapeHtml(sourceModeLabel(project))} · ${escapeHtml(project.branch)}</span></span><span class="project-menu-state">${escapeHtml(connectionLabel(project))}</span></button>`).join("");
+    }
+    function renderProjectCatalog() {
+      const projects = Object.values(PROJECTS);
+      $('#catalogCount').textContent = language === "tr" ? ` · ${projects.length} kayıt` : ` · ${projects.length} records`;
+      $('#projectList').innerHTML = projects.map(project => `<article class="project-row" data-project-row="${escapeHtml(project.id)}"><div class="project-identity"><span class="project-avatar">${escapeHtml(project.mark)}</span><span><strong class="project-primary">${escapeHtml(project.name)}</strong><span class="project-secondary">${escapeHtml(project.location)}</span></span></div><div class="project-field"><span>${t("sourceLabel")}</span><strong>${escapeHtml(sourceModeLabel(project))} · ${escapeHtml(project.branch)}</strong></div><div class="project-field"><span>${t("planLabel")}</span><strong>${escapeHtml(project.planFile)} · ${escapeHtml(localized(project.planSummary))}</strong></div><div class="project-field"><span>${t("statusLabel")}</span><strong><span class="source-state ${projectStateClass(project)}">${escapeHtml(connectionLabel(project))}</span></strong></div><div class="project-row-actions"><button class="text-button" type="button" data-project-reindex="${escapeHtml(project.id)}">${language === "tr" ? "Yeniden indeksle" : "Reindex"}</button><button class="text-button primary" type="button" data-project-open="${escapeHtml(project.id)}">${escapeHtml(projectActionLabel(project))}</button></div></article>`).join("");
+    }
+    function renderProjectContext() {
+      const project = activeProject();
+      $('#projectContextTitle').textContent = project.name;
+      $('#projectContextDescription').textContent = localized(project.description);
+      $('#contextSource').textContent = `${sourceModeLabel(project)} · ${project.location}`;
+      $('#contextBranch').textContent = project.branch;
+      $('#contextPlan').textContent = `${project.planFile} · ${connectionLabel(project)}`;
+      $('#contextIndex').textContent = localized(project.lastIndex);
+    }
+    function renderCompare() {
+      const projects = Object.values(PROJECTS);
+      $('#compareControls').innerHTML = projects.map(project => `<button class="compare-chip" type="button" data-compare-project="${escapeHtml(project.id)}" aria-pressed="${compareSelection.has(project.id)}"><span class="status-mark ${project.locked ? "blocked" : project.planMode === "live" ? "done" : "progress"}"></span>${escapeHtml(project.name)}</button>`).join("");
+      const selected = projects.filter(project => compareSelection.has(project.id));
+      $('#compareBodyRows').innerHTML = selected.length >= 2 ? selected.map(project => `<tr><td class="compare-project-cell" data-label="${t("project")}"><span><strong>${escapeHtml(project.name)}</strong><span>${escapeHtml(project.location)}</span></span></td><td data-label="${t("sourceBranch")}"><span>${escapeHtml(sourceModeLabel(project))}<br><code>${escapeHtml(project.branch)}</code></span></td><td data-label="${t("connection")}"><span><span class="source-state ${projectStateClass(project)}">${escapeHtml(connectionLabel(project))}</span></span></td><td data-label="${t("planCoverage")}"><span>${escapeHtml(localized(project.planSummary))}</span></td><td data-label="${t("lastIndex")}"><span>${escapeHtml(localized(project.lastIndex))}</span></td><td data-label="${t("nextAction")}"><span><button class="text-button" type="button" data-project-open="${escapeHtml(project.id)}">${escapeHtml(projectActionLabel(project))}</button></span></td></tr>`).join("") : `<tr><td colspan="6">${language === "tr" ? "Karşılaştırmak için en az iki proje seçin." : "Select at least two projects to compare."}</td></tr>`;
+    }
+    function renderProjectChrome() {
+      const project = activeProject();
+      $('#activeProjectName').textContent = project.name;
+      $('#activeProjectMeta').textContent = `${sourceModeLabel(project)} · ${project.branch}`;
+      $('#activeSourceLabel').textContent = `${project.name} · ${project.planFile}`;
+      $('#activeSourceState').textContent = connectionLabel(project);
+      $('#activeSourceState').className = `source-state ${projectStateClass(project)}`.trim();
+      $('#modeBadge').textContent = project.connectionState === "ready" ? (language === "tr" ? "Kalıcı indeks" : "Persistent index") : (language === "tr" ? "Bayat indeks" : "Stale index");
+    }
+    function renderGraph() {
+      const project = activeProject();
+      $('#graphNodes').innerHTML = project.nodes.map(node => `<button class="map-node ${escapeHtml(node.position)}" type="button" data-node="${escapeHtml(node.id)}" data-phase="${escapeHtml(node.phase)}" aria-pressed="false"><span class="node-title">${escapeHtml(node.title)}</span><span class="node-path">${escapeHtml(node.path)}</span><span class="node-state"><span class="status-mark ${statusClass(node.status)}"></span><span>${escapeHtml(statusLabel(node.status))}</span></span></button>`).join("");
+      updateMapCount();
+    }
+    function renderTimeline() {
+      if (!phaseGroups.length) { $('#timelineContent').innerHTML = `<div class="empty-state"><h2>${language === "tr" ? "İzlenebilir faz bulunamadı" : "No traceable phases found"}</h2><p>${language === "tr" ? "Bu proje için plan kaynağı doğrulanmadan zaman çizgisi üretilmez." : "A timeline is not produced until this project's plan source is verified."}</p></div>`; return; }
+      $('#timelineContent').innerHTML = phaseGroups.map(group => { const counts = phaseCounts(group.items); const items = group.items.map(item => `<button class="timeline-item" type="button" data-timeline-phase="${escapeHtml(group.id)}"><span class="status-mark ${statusClass(item.status)}"></span><span>${escapeHtml(item.title)}</span></button>`).join(""); return `<article class="timeline-group"><div class="timeline-head"><span class="timeline-name">${escapeHtml(phaseDisplayName(group))}</span><progress class="phase-progress" max="${Math.max(counts.total, 1)}" value="${counts.done}" aria-label="${escapeHtml(phaseDisplayName(group))}"></progress><span class="timeline-count">${counts.done} / ${counts.total}</span></div><div class="timeline-items">${items}</div></article>`; }).join("");
+    }
+    function showSection(section) {
+      if (section === "workspace" && activeProject().locked) { section = "projects"; showToast(language === "tr" ? "Bu proje için GitHub yetkisi doğrulanmadan çalışma alanı açılamaz." : "Verify GitHub access before opening this workspace."); }
+      activeSection = section;
+      $('#projectsScreen').hidden = section !== "projects";
+      $('#workspaceScreen').hidden = section !== "workspace";
+      $('#compareScreen').hidden = section !== "compare";
+      $('#skipLink').setAttribute("href", section === "projects" ? "#projectsScreen" : section === "compare" ? "#compareScreen" : "#workspace");
+      $$('.primary-nav-button').forEach(button => { if (button.dataset.section === section) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current"); });
+      if (section === "compare") renderCompare();
+      if (section === "workspace") { renderGraph(); showView(activeView); }
+    }
+    async function activateProject(projectId, options = {}) {
+      const project = PROJECTS[projectId];
+      if (!project) return;
+      if (options.persist !== false) {
+        try { await apiRequest("/api/projects/active", { method: "PUT", body: JSON.stringify({ projectId }) }); }
+        catch (error) { showToast(error.message); return; }
+      }
+      activeProjectId = projectId;
+      resetInspector();
+      selectedPhase = "all";
+      phaseGroups = [];
+      renderProjectChrome(); renderProjectMenu(); renderProjectCatalog(); renderProjectContext(); renderCompare();
+      $('#projectMenu').hidden = true; $('#projectSwitcher').setAttribute("aria-expanded", "false");
+      await loadPlanData();
+      renderGraph();
+      if (options.openWorkspace) showSection("workspace");
+    }
+    function phaseIdFromHeading(heading, index) {
+      const match = /^Dilim\s+([0-9]+(?:\.[0-9]+)?)/i.exec(heading);
+      if (match) return `D${match[1]}`;
+      const explicit = /\b([PDF]\d+(?:\.\d+)?)\b/i.exec(heading);
+      return explicit ? explicit[1].toLocaleUpperCase("en-US") : `F${index + 1}`;
+    }
+    function phaseShortTitle(heading) {
+      const withoutPrefix = heading.replace(/^Dilim\s+[0-9]+(?:\.[0-9]+)?\s*[·:-]?\s*/i, "");
+      return stripMarkdown(withoutPrefix.split(/\s+—\s+/)[0] || withoutPrefix);
+    }
+    function phaseDisplayName(group) {
+      const title = language === "en" && activeProject().name === "KokpitPro" ? (PHASE_NAMES_EN[group.id] || group.shortTitle) : group.shortTitle;
+      return `${group.id} · ${title}`;
+    }
+    function itemTitleAndDetail(raw, continuation) {
+      const bold = /^\*\*(.+?)\*\*\s*:?[;]?\s*(.*)$/.exec(raw);
+      if (bold) return { title: stripMarkdown(bold[1]), detail: stripMarkdown([bold[2], continuation].filter(Boolean).join(" ")) };
+      const plain = stripMarkdown(raw);
+      const separator = plain.search(/[:;]/);
+      if (separator > 0 && separator < 88) return { title: plain.slice(0, separator).trim(), detail: stripMarkdown(`${plain.slice(separator + 1)} ${continuation}`) };
+      return { title: plain, detail: stripMarkdown(continuation) };
+    }
+    function parsePlanMarkdown(markdown) {
+      const lines = markdown.split(/\r?\n/);
+      const hasCheckboxItems = lines.some(line => /^\s*-\s*\[( |x|X|~)\]\s+/.test(line));
+      const headings = [];
+      lines.forEach((line, index) => { const match = /^##\s+(.+)$/i.exec(line); if (match) headings.push({ index, heading: match[1].trim() }); });
+      return headings.map((entry, groupIndex) => {
+        const end = headings[groupIndex + 1]?.index ?? lines.length;
+        const items = [];
+        let acceptance = "";
+        for (let lineIndex = entry.index + 1; lineIndex < end; lineIndex += 1) {
+          const line = lines[lineIndex] || "";
+          const checkbox = /^\s*-\s*\[( |x|X|~)\]\s+(.+)$/.exec(line);
+          if (checkbox) {
+            const continuation = [];
+            for (let cursor = lineIndex + 1; cursor < end; cursor += 1) {
+              const next = lines[cursor] || "";
+              if (!next.trim() || /^\s*-\s*\[( |x|X|~)\]/.test(next) || /^#{1,6}\s+/.test(next)) break;
+              if (/^\s{2,}\S/.test(next)) continuation.push(next.trim()); else break;
+            }
+            const parsed = itemTitleAndDetail(checkbox[2], continuation.join(" "));
+            items.push({ id: `${phaseIdFromHeading(entry.heading, groupIndex)}-${items.length + 1}`, title: parsed.title, detail: parsed.detail, status: checkbox[1].toLowerCase() === "x" ? "done" : checkbox[1] === "~" ? "partial" : "open", line: lineIndex + 1 });
+            continue;
+          }
+          const ledgerBullet = !hasCheckboxItems ? /^\s*-\s+(?!\[[ xX~]\])(.+)$/.exec(line) : null;
+          if (ledgerBullet) {
+            const normalizedHeading = entry.heading.toLocaleUpperCase("en-US");
+            const status = /BLOCKED|LOCKED|WITHHELD|PREFLIGHT/.test(normalizedHeading) ? "partial" : /RUNTIME CLOSED|HISTORICAL|KAPANDI|KAPALI|\bCLOSED\b/.test(normalizedHeading) ? "done" : "open";
+            const parsed = itemTitleAndDetail(ledgerBullet[1], "");
+            items.push({ id: `${phaseIdFromHeading(entry.heading, groupIndex)}-${items.length + 1}`, title: parsed.title, detail: parsed.detail, status, line: lineIndex + 1 });
+            continue;
+          }
+          const acceptanceMatch = /^\s*-\s*\*\*Kabul:\*\*\s*(.*)$/i.exec(line);
+          if (acceptanceMatch) {
+            const parts = [acceptanceMatch[1]];
+            for (let cursor = lineIndex + 1; cursor < end; cursor += 1) {
+              const next = lines[cursor] || "";
+              if (!next.trim() || !/^\s{2,}\S/.test(next)) break;
+              parts.push(next.trim());
+            }
+            acceptance = stripMarkdown(parts.join(" "));
+            continue;
+          }
+          if (/^\|\s*\d+\s*\|/.test(line)) {
+            const cells = line.trim().slice(1, -1).split("|").map(cell => cell.trim());
+            if (cells.length >= 3) {
+              const statusCell = cells[2];
+              const status = statusCell.includes("✅") ? "done" : statusCell.includes("❌") ? "blocked" : statusCell.includes("⚠") ? "partial" : "open";
+              items.push({ id: `${phaseIdFromHeading(entry.heading, groupIndex)}-finding-${cells[0]}`, title: stripMarkdown(cells[1]), detail: stripMarkdown(statusCell.replace(/[✅❌⬜⚠️]/g, "")), status, line: lineIndex + 1 });
+            }
+          }
+        }
+        const id = phaseIdFromHeading(entry.heading, groupIndex);
+        return { id, heading: stripMarkdown(entry.heading), shortTitle: phaseShortTitle(entry.heading), line: entry.index + 1, items, acceptance };
+      });
+    }
+    function phaseCounts(items) {
+      const counts = { done: 0, partial: 0, open: 0, blocked: 0, total: items.length };
+      items.forEach(item => { counts[item.status] += 1; });
+      return counts;
+    }
+    function planTotals() { return phaseCounts(phaseGroups.flatMap(group => group.items)); }
+    function statusClass(status) { return status === "partial" || status === "inProgress" ? "progress" : status === "open" ? "planned" : status; }
+    function planStatusLabel(status) { return status === "done" ? t("planDone") : status === "partial" ? t("planPartial") : status === "blocked" ? t("planBlocked") : t("planOpen"); }
+    function planRecordLabel(status) { return status === "done" ? t("planDoneRecord") : status === "partial" ? t("planPartialRecord") : status === "blocked" ? t("planBlockedRecord") : t("planOpenRecord"); }
+    function phaseSummaryMarkup(counts) {
+      return `<div class="phase-summary"><div class="phase-stat"><strong>${counts.done}</strong><span>${t("planDone")}</span></div><div class="phase-stat"><strong>${counts.partial}</strong><span>${t("planPartial")}</span></div><div class="phase-stat"><strong>${counts.open}</strong><span>${t("planOpen")}</span></div><div class="phase-stat"><strong>${counts.blocked}</strong><span>${t("planBlocked")}</span></div></div>`;
+    }
+    function planSourceChipMarkup() {
+      const stale = activeProject().connectionState !== "ready";
+      return `<span class="source-chip${stale ? " snapshot" : ""}">${escapeHtml(activeProject().planFile)} · ${language === "tr" ? (stale ? "bayat indeks" : "kalıcı indeks") : (stale ? "stale index" : "persistent index")}</span>`;
+    }
+    function planSourceActionMarkup() {
+      const project = activeProject();
+      return `<a class="text-button phase-source-link" href="/api/projects/${encodeURIComponent(project.id)}/plan" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>${t("openPlan")}</span></a>`;
+    }
+    function updatePlanSourceLabels() {
+      const project = activeProject();
+      const stale = project.connectionState !== "ready";
+      $('#planSourceLabel').textContent = `${project.planFile} · ${language === "tr" ? (stale ? "bayat kalıcı indeks" : "kalıcı indeks") : (stale ? "stale persistent index" : "persistent index")}`;
+      $('#planSourceLabel').classList.toggle("is-snapshot", stale);
+      $('#attentionTitle').textContent = `${project.name} · ${language === "tr" ? (stale ? "son başarılı indeks korunuyor" : "repo indeksi doğrulandı") : (stale ? "last successful index retained" : "repository index verified")}`;
+      $('#attentionBody').textContent = language === "tr" ? `Fazlar ve kod düğümleri aynı ${project.record.index.commit.slice(0, 8)} commit makbuzundan gelir; proje bağlamları birleşmez.` : `Phases and code nodes come from the same ${project.record.index.commit.slice(0, 8)} commit receipt; project contexts never merge.`;
+      $('#previewGenerated').textContent = `${project.name} · ${language === "tr" ? "kalıcı indeks" : "persistent index"} · projectId:${project.id}`;
+    }
+    function renderPhaseRail() {
+      if (!phaseGroups.length) return;
+      const total = planTotals();
+      const allButton = `<button class="phase-filter" type="button" data-phase="all" aria-pressed="${selectedPhase === "all"}"><span class="phase-row"><span class="phase-name">${t("allPhases")}</span><span class="phase-count">${total.done}/${total.total}</span></span><span class="phase-filter-meta"><span><i class="status-mark done"></i>${total.done} ${t("planDone")}</span><span>${total.total - total.done} ${t("remaining")}</span></span><progress class="phase-progress" max="${Math.max(total.total, 1)}" value="${total.done}" aria-label="${escapeHtml(t("planOverview"))}"></progress></button>`;
+      const phaseButtons = phaseGroups.map(group => {
+        const counts = phaseCounts(group.items);
+        return `<button class="phase-filter" type="button" data-phase="${escapeHtml(group.id)}" aria-pressed="${selectedPhase === group.id}"><span class="phase-row"><span class="phase-name">${escapeHtml(phaseDisplayName(group))}</span><span class="phase-count">${counts.done}/${counts.total}</span></span><span class="phase-filter-meta"><span><i class="status-mark done"></i>${counts.done}</span><span><i class="status-mark planned"></i>${counts.open + counts.partial + counts.blocked}</span></span><progress class="phase-progress" max="${Math.max(counts.total, 1)}" value="${counts.done}" aria-label="${escapeHtml(phaseDisplayName(group))}"></progress></button>`;
+      }).join("");
+      $('#phaseList').innerHTML = allButton + phaseButtons;
+      $('#phaseList').setAttribute("aria-busy", "false");
+      activeProject().planSummary = { tr: `${phaseGroups.length} faz · ${total.total} madde`, en: `${phaseGroups.length} phases · ${total.total} items` };
+      renderProjectCatalog(); renderProjectContext(); renderCompare();
+      $('#planScope').textContent = `${phaseGroups.length} ${t("planGroups")} · ${total.total} ${t("planItemCount")} · ${total.done} ${t("planDone").toLocaleLowerCase(language === "tr" ? "tr-TR" : "en-US")}`;
+      $('#planHeaderScope').textContent = `${phaseGroups.length} / ${total.total} / ${total.done}`;
+      updatePlanSourceLabels();
+      renderTimeline();
+    }
+    function renderPlanOverview() {
+      const counts = planTotals();
+      selectedNode = { id: "all", type: "phase" };
+      const rows = phaseGroups.map(group => { const groupCounts = phaseCounts(group.items); return `<button class="phase-overview-row" type="button" data-phase-jump="${escapeHtml(group.id)}"><strong>${escapeHtml(phaseDisplayName(group))}</strong><span>${groupCounts.done}/${groupCounts.total} ${escapeHtml(t("planDone").toLocaleLowerCase(language === "tr" ? "tr-TR" : "en-US"))}</span></button>`; }).join("");
+      $('#inspectorBody').innerHTML = `<div class="phase-detail-kicker"><p class="eyebrow">${t("planOverview")}</p>${planSourceChipMarkup()}</div><div class="detail-title">${t("allPhases")}</div><div class="detail-path">${escapeHtml(activeProject().planFile)} · L1</div>${phaseSummaryMarkup(counts)}<p class="phase-truth-note">${t("planTruthNote")}</p><div class="phase-overview-list">${rows}</div>${planSourceActionMarkup()}`;
+      openInspector();
+    }
+    function renderPhaseInspector(phaseId) {
+      if (phaseId === "all") { renderPlanOverview(); return; }
+      const group = phaseGroups.find(candidate => candidate.id === phaseId);
+      if (!group) return;
+      selectedNode = { id: group.id, type: "phase" };
+      const counts = phaseCounts(group.items);
+      const firstUnfinishedIndex = group.items.findIndex(item => item.status !== "done");
+      const items = group.items.map((item, index) => `<details class="phase-item"${index === firstUnfinishedIndex ? " open" : ""}><summary><span class="status-mark ${statusClass(item.status)}"></span><span class="phase-item-title">${escapeHtml(item.title)}</span><span class="phase-item-state">${escapeHtml(planStatusLabel(item.status))}</span><svg class="phase-item-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></summary><div class="phase-item-body"><dl><div class="phase-fact"><dt>${t("currentRecord")}</dt><dd>${escapeHtml(planRecordLabel(item.status))}</dd></div><div class="phase-fact"><dt>${t("expectedOutput")}</dt><dd>${escapeHtml(item.detail || t("expectedUnspecified"))}</dd></div><div class="phase-fact"><dt>${t("codeEvidence")}</dt><dd>${t("noCodeMapping")}</dd></div><div class="phase-fact"><dt>${t("sourceLocation")}</dt><dd>${escapeHtml(activeProject().planFile)} · L${item.line}</dd></div></dl></div></details>`).join("");
+      $('#inspectorBody').innerHTML = `<div class="phase-detail-kicker"><p class="eyebrow">${t("planOverview")}</p>${planSourceChipMarkup()}</div><div class="detail-title">${escapeHtml(phaseDisplayName(group))}</div><div class="detail-path">${escapeHtml(activeProject().planFile)} · L${group.line}${language === "en" ? ` · ${t("planSourceLanguage")}` : ""}</div>${phaseSummaryMarkup(counts)}<p class="phase-truth-note">${t("planTruthNote")}</p><section class="phase-acceptance"><strong>${t("acceptance")}</strong><p>${escapeHtml(group.acceptance || t("noAcceptance"))}</p></section><div class="phase-items-heading"><h3>${t("planItems")}</h3><span>${counts.total} ${t("planItemCount")}</span></div><div class="phase-items">${items}</div>${planSourceActionMarkup()}`;
+      openInspector();
+    }
+    async function loadPlanData() {
+      const project = activeProject();
+      try {
+        phaseGroups = project.indexedGroups.length ? project.indexedGroups.map((group, index) => ({
+          id: phaseIdFromHeading(group.heading, index),
+          heading: stripMarkdown(group.heading),
+          shortTitle: phaseShortTitle(group.heading),
+          line: group.items[0]?.line || 1,
+          acceptance: "",
+          items: group.items.map(item => ({ id: item.id, title: item.title, detail: "", status: item.status, line: item.line }))
+        })) : parsePlanMarkdown(project.planSnapshot || "").filter(group => group.items.length > 0);
+        if (!phaseGroups.length) throw new Error("no phase items");
+        planSourceMode = "indexed";
+        renderPhaseRail();
+      } catch (error) {
+        $('#phaseList').setAttribute("aria-busy", "false");
+        $('#phaseList').innerHTML = `<div class="phase-load-error" role="status">${t("planLoadError")}<br><code>${escapeHtml(error.message)}</code></div>`;
+        $('#planScope').textContent = t("planLoadError");
+      }
+    }
+
+    function applyLanguage(nextLanguage) {
+      language = nextLanguage;
+      localStorage.setItem("kokpit-language", language);
+      document.documentElement.lang = language;
+      $$('[data-i18n]').forEach(element => { const value = I18N[language][element.dataset.i18n]; if (value !== undefined) element.textContent = value; });
+      $$('[data-i18n-aria]').forEach(element => { const value = I18N[language][element.dataset.i18nAria]; if (value !== undefined) element.setAttribute("aria-label", value); });
+      $$('[data-i18n-placeholder]').forEach(element => { const value = I18N[language][element.dataset.i18nPlaceholder]; if (value !== undefined) element.placeholder = value; });
+      $('#langTr').setAttribute("aria-pressed", String(language === "tr"));
+      $('#langEn').setAttribute("aria-pressed", String(language === "en"));
+      renderProjectChrome(); renderProjectMenu(); renderProjectCatalog(); renderProjectContext(); renderCompare();
+      updateViewCopy();
+      renderGraph();
+      if (phaseGroups.length) { renderPhaseRail(); updatePlanSourceLabels(); renderTimeline(); }
+      if (selectedNode) selectedNode.type === "phase" ? renderPhaseInspector(selectedNode.id) : renderInspector(selectedNode.id, selectedNode.type);
+      if ($('#connectDialog').open) renderConnectDialog();
+    }
+    function updateViewCopy() { const [titleKey, descriptionKey] = viewCopy[activeView]; $('#viewTitle').textContent = t(titleKey); $('#viewDescription').textContent = t(descriptionKey); }
+    function showView(view, options = {}) {
+      activeView = view;
+      $$('.view-tab').forEach(tab => { const isActive = tab.dataset.view === view; tab.setAttribute("aria-selected", String(isActive)); tab.tabIndex = isActive ? 0 : -1; });
+      $$('.view-panel').forEach(panel => { panel.hidden = panel.id !== `view-${view}`; });
+      updateViewCopy();
+      if (options.focusTab) $(`#tab-${view}`).focus();
+    }
+    function setPhaseFilter(phase, announce = false) {
+      selectedPhase = phase;
+      $$('.phase-filter').forEach(button => button.setAttribute("aria-pressed", String(button.dataset.phase === phase)));
+      $$('.map-node').forEach(node => node.classList.remove("is-dimmed"));
+      showView("map"); updateMapCount(); renderPhaseInspector(phase); if (announce && phase === "all") showToast(t("filterCleared"));
+    }
+    function updateMapCount() { const visible = $$('.map-node').filter(node => !node.classList.contains("is-dimmed")).length; const total = activeProject().nodes.length; $('#mapCount').textContent = language === "tr" ? `${visible} / ${total} doğrulanmış kod düğümü` : `${visible} / ${total} verified code nodes`; }
+    function statusLabel(status) { return status === "done" ? t("done") : status === "inProgress" ? t("inProgress") : status === "blocked" ? t("blocked") : t("planned"); }
+    function renderInspector(id, type = "node") {
+      const data = type === "issue" ? ISSUE_DATA[id] : activeProject().nodes.find(node => node.id === id);
+      if (!data) return;
+      selectedNode = { id, type };
+      const phaseName = data.phaseName ? data.phaseName[language] : data.phase;
+      const evidenceNote = type === "issue" ? t("demoEvidence") : (language === "tr" ? `Bu yol ${activeProject().record.index.commit.slice(0, 8)} commit makbuzunda doğrulandı.` : `This path was verified in commit receipt ${activeProject().record.index.commit.slice(0, 8)}.`);
+      const sourceNote = type === "issue" ? t("sourceUnavailable") : (language === "tr" ? `${activeProject().branch} · kalıcı indeks kanıtı` : `${activeProject().branch} · persistent index evidence`);
+      $('#inspectorBody').innerHTML = `<div class="detail-title">${data.title}</div><div class="detail-path">${data.path}</div><div class="detail-status"><span class="status-mark ${data.status === "inProgress" ? "progress" : data.status}"></span>${statusLabel(data.status)}</div><section class="detail-section"><h3>${t("phase")}</h3><p>${data.phase}${phaseName !== data.phase ? ` · ${phaseName}` : ""}</p></section><section class="detail-section"><h3>${t("evidence")}</h3><p>${data.description[language]}</p><p>${evidenceNote}</p></section><button class="text-button source-disabled" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>${sourceNote}</span></button>`;
+      openInspector();
+    }
+    function selectMapNode(id) { $$('.map-node').forEach(node => node.setAttribute("aria-pressed", String(node.dataset.node === id))); renderInspector(id, "node"); }
+    function resetInspector() {
+      selectedNode = null;
+      $('#inspectorBody').innerHTML = `<div class="inspector-empty"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-panel"></use></svg></div><strong>${escapeHtml(t("nothingSelected"))}</strong><p>${escapeHtml(t("nothingSelectedBody"))}</p></div>`;
+      closeInspector();
+    }
+    function openInspector() { if (window.matchMedia("(max-width: 1199px)").matches) document.body.classList.add("inspector-open"); else document.body.classList.remove("inspector-collapsed"); $('#inspectorToggle').setAttribute("aria-pressed", "true"); }
+    function closeInspector() { document.body.classList.remove("inspector-open"); if (!window.matchMedia("(max-width: 1199px)").matches) document.body.classList.add("inspector-collapsed"); $('#inspectorToggle').setAttribute("aria-pressed", "false"); }
+    function toggleInspector() { const isOpen = window.matchMedia("(max-width: 1199px)").matches ? document.body.classList.contains("inspector-open") : !document.body.classList.contains("inspector-collapsed"); isOpen ? closeInspector() : openInspector(); }
+    function setZoom(next) { zoomLevel = Math.min(1.25, Math.max(.8, next)); $('#graphLayer').style.transform = `scale(${zoomLevel})`; }
+    function setTheme(theme) { document.documentElement.dataset.theme = theme; localStorage.setItem("kokpit-theme", theme); $('.theme-icon use').setAttribute("href", theme === "dark" ? "#i-sun" : "#i-moon"); $('#themeToggle').dataset.i18nAria = theme === "dark" ? "themeDark" : "themeLight"; $('#themeToggle').setAttribute("aria-label", t($('#themeToggle').dataset.i18nAria)); }
+    function openConnectDialog(source = null) {
+      connectState = { step: source ? 2 : 1, source, addedProjectId: null, input: {}, verified: null, busy: false, error: "" };
+      renderConnectDialog();
+      $('#connectDialog').showModal();
+    }
+    function connectSourceMarkup() {
+      return `<p class="connect-intro">${language === "tr" ? "Önce repo kaynağını seçin. Her iki seçenek de aynı doğrulama ve indeks makbuzu kapılarından geçer." : "Choose the repository source first. Both options pass through the same verification and index-receipt gates."}</p><div class="source-options"><button class="source-option" type="button" data-connect-source="local"><span class="source-icon"><svg class="icon" aria-hidden="true"><use href="#i-folder"></use></svg></span><strong>${t("localRepo")}</strong><span>${t("localRepoBody")}</span></button><button class="source-option" type="button" data-connect-source="github"><span class="source-icon"><svg class="icon" aria-hidden="true"><use href="#i-github"></use></svg></span><strong>${t("githubRepo")}</strong><span>${t("githubRepoBody")}</span></button></div>`;
+    }
+    function connectVerifyMarkup() {
+      const error = connectState.error ? `<div class="connect-error" id="connectError" role="alert">${escapeHtml(connectState.error)}</div>` : `<div class="connect-error" id="connectError" role="status"></div>`;
+      if (connectState.source === "github") return `<div class="connect-form"><div class="permission-note"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span>${language === "tr" ? "GitHub App · yalnız seçilen repo · Contents: read. Kimlik bilgileri yalnız sunucuda tutulur; PAT veya parola alanı yoktur." : "GitHub App · selected repositories only · Contents: read. Credentials stay server-side; there is no PAT or password field."}</span></div><div class="form-field"><label for="githubRepoInput">GitHub owner/repo</label><input id="githubRepoInput" type="text" value="${escapeHtml(connectState.input.repository || "")}" placeholder="owner/repository" autocomplete="off"><span class="form-help">${language === "tr" ? "Sunucu GitHub API üzerinden repo, dal, commit ve plan dosyasını gerçekten doğrular." : "The server verifies the repository, branch, commit, and plan file through the GitHub API."}</span></div><div class="form-field"><label for="githubBranchInput">${t("branch")}</label><input id="githubBranchInput" type="text" value="${escapeHtml(connectState.input.branch || "")}" placeholder="${language === "tr" ? "Boşsa varsayılan dal" : "Default branch when blank"}" autocomplete="off"></div><div class="form-field"><label for="githubPlanInput">${language === "tr" ? "Plan kaynağı" : "Plan source"}</label><input id="githubPlanInput" type="text" value="${escapeHtml(connectState.input.planPath || "")}" placeholder="PLAN.md / ROADMAP.md / otomatik" autocomplete="off"></div>${error}</div>`;
+      return `<div class="connect-form"><div class="permission-note"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span>${language === "tr" ? "Sunucu yalnız yazdığınız Git kökünü doğrular; plan yolu bu kökün dışına çıkamaz. Kayıt .kokpit/data altında tutulur." : "The server verifies only the Git root you enter; the plan path cannot escape that root. The record persists under .kokpit/data."}</span></div><div class="form-field"><label for="localPathInput">${language === "tr" ? "Yerel repo kökü" : "Local repository root"}</label><input id="localPathInput" type="text" value="${escapeHtml(connectState.input.path || "")}" placeholder="C:\\Users\\…\\repo" autocomplete="off"><span class="form-help">${language === "tr" ? ".git, etkin dal, commit ve okunabilir plan dosyası gerçek zamanlı doğrulanır." : ".git, active branch, commit, and a readable plan file are verified in real time."}</span></div><div class="form-field"><label for="localPlanInput">${language === "tr" ? "Tercih edilen plan kaynağı" : "Preferred plan source"}</label><select id="localPlanInput"><option value="auto">${language === "tr" ? "Otomatik keşfet" : "Auto-discover"}</option><option value="PLAN.md">PLAN.md</option><option value="ROADMAP.md">ROADMAP.md</option><option value="DEVIR_TESLIM.md">DEVIR_TESLIM.md</option></select></div>${error}</div>`;
+    }
+    function connectIndexMarkup() {
+      const record = connectState.verified;
+      if (!record) return `<div class="connect-error" role="alert">${language === "tr" ? "Doğrulama makbuzu bulunamadı." : "Verification receipt is missing."}</div>`;
+      const location = record.source.type === "local" ? record.source.root : `${record.source.owner}/${record.source.repo}`;
+      const summary = record.index.summary;
+      return `<p class="connect-intro">${language === "tr" ? "Doğrulama ve parser koşumu tamamlandı. Aşağıdaki makbuzu diske kaydetmeden önce inceleyin." : "Verification and the parser run completed. Review the receipt before saving it to disk."}</p><div class="scan-result"><div class="scan-row"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg><span><strong>${escapeHtml(location)}</strong><span>${escapeHtml(record.authMode)} · ${escapeHtml(record.branch)}</span></span><small>${language === "tr" ? "doğrulandı" : "verified"}</small></div><div class="scan-row"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span><strong>${escapeHtml(record.index.planPath)}</strong><span>${summary.phaseCount} ${t("planGroups")} · ${summary.itemCount} ${t("planItemCount")}</span></span><small>${summary.doneCount}/${summary.itemCount}</small></div><div class="scan-row"><svg class="icon" aria-hidden="true"><use href="#i-branch"></use></svg><span><strong>${escapeHtml(record.branch)} · ${escapeHtml(record.index.commit.slice(0, 12))}</strong><span>${record.index.nodes.length} ${language === "tr" ? "doğrulanmış kod düğümü" : "verified code nodes"}</span></span><small>${language === "tr" ? "makbuz hazır" : "receipt ready"}</small></div></div>${connectState.error ? `<div class="connect-error" role="alert">${escapeHtml(connectState.error)}</div>` : ""}`;
+    }
+    function connectSuccessMarkup() {
+      return `<div class="connect-success"><span class="success-mark"><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg></span><h3>${language === "tr" ? "Kalıcı proje kaydı hazır" : "Persistent project record ready"}</h3><p>${t("noRealConnection")} ${language === "tr" ? "Sayfa yenilense veya sunucu yeniden başlasa da kayıt ve son başarılı indeks makbuzu korunur." : "The record and last successful index receipt survive page reloads and server restarts."}</p></div>`;
+    }
+    function renderConnectDialog() {
+      $$('.connect-step').forEach(step => { const value = Number(step.dataset.step); step.classList.toggle("is-current", value === connectState.step); step.classList.toggle("is-complete", value < connectState.step); });
+      $('#connectBody').innerHTML = connectState.step === 1 ? connectSourceMarkup() : connectState.step === 2 ? connectVerifyMarkup() : connectState.step === 3 ? connectIndexMarkup() : connectSuccessMarkup();
+      if (connectState.step === 2 && connectState.source === "local" && $('#localPlanInput')) $('#localPlanInput').value = connectState.input.planPath || "auto";
+      $('#connectBack').disabled = connectState.busy || connectState.step === 1 || connectState.step === 4;
+      $('#connectNext').disabled = connectState.busy || connectState.step === 1;
+      $('#connectNext').textContent = connectState.busy ? (language === "tr" ? "Çalışıyor…" : "Working…") : connectState.step === 1 ? t("continue") : connectState.step === 2 ? t("verifyConnection") : connectState.step === 3 ? t("addPreviewRecord") : t("finish");
+      $('#connectCancel').textContent = connectState.step === 4 ? t("close") : t("cancel");
+    }
+    function collectConnectInput() {
+      if (connectState.source === "github") return {
+        repository: $('#githubRepoInput')?.value.trim() || "",
+        branch: $('#githubBranchInput')?.value.trim() || undefined,
+        planPath: $('#githubPlanInput')?.value.trim() || "auto"
+      };
+      return {
+        path: $('#localPathInput')?.value.trim() || "",
+        planPath: $('#localPlanInput')?.value || "auto"
+      };
+    }
+    async function advanceConnect() {
+      if (connectState.busy) return;
+      if (connectState.step === 4) {
+        $('#connectDialog').close();
+        if (connectState.addedProjectId) await activateProject(connectState.addedProjectId, { openWorkspace: true });
+        showToast(t("noRealConnection"));
+        return;
+      }
+      connectState.error = "";
+      try {
+        if (connectState.step === 2) {
+          connectState.input = collectConnectInput();
+          const sourceValue = connectState.source === "github" ? connectState.input.repository : connectState.input.path;
+          if (!sourceValue) throw new Error(language === "tr" ? "Kaynak alanı boş bırakılamaz." : "Source cannot be empty.");
+          connectState.busy = true;
+          renderConnectDialog();
+          connectState.verified = await apiRequest(`/api/projects/verify/${connectState.source}`, { method: "POST", body: JSON.stringify(connectState.input) });
+          connectState.step = 3;
+        } else if (connectState.step === 3) {
+          connectState.busy = true;
+          renderConnectDialog();
+          await apiRequest(`/api/projects/${connectState.source}`, { method: "POST", body: JSON.stringify(connectState.input) });
+          connectState.addedProjectId = connectState.verified.id;
+          compareSelection.add(connectState.addedProjectId);
+          await loadProjectRegistry({ preferredId: connectState.addedProjectId });
+          connectState.step = 4;
+        }
+      } catch (error) {
+        connectState.error = error.message;
+      } finally {
+        connectState.busy = false;
+        renderConnectDialog();
+      }
+    }
+    function openCommand() { $('#commandDialog').showModal(); $('#commandInput').value = ""; filterCommands(""); requestAnimationFrame(() => $('#commandInput').focus()); }
+    function filterCommands(query) { const normalized = query.trim().toLocaleLowerCase(language === "tr" ? "tr-TR" : "en-US"); let visible = 0; $$('.command-item').forEach(item => { const match = !normalized || `${item.dataset.search} ${item.textContent}`.toLocaleLowerCase().includes(normalized); item.hidden = !match; if (match) visible += 1; }); $('#commandEmpty').hidden = visible > 0; }
+    function runCommand(command) { const [type, value] = command.split(":"); if (type === "section") showSection(value); if (type === "view") { showSection("workspace"); showView(value); } if (type === "node") { showSection("workspace"); showView("map"); selectMapNode(value); } $('#commandDialog').close(); }
+    function setQueueFilter(filter) { showView("compliance"); $$('.queue-filter').forEach(button => button.setAttribute("aria-pressed", String(button.dataset.queueFilter === filter))); $$('.issue-row').forEach(row => row.classList.toggle("is-filtered", filter !== "all" && row.dataset.state !== filter)); }
+    function showToast(message) { const toast = $('#toast'); clearTimeout(toastTimer); toast.textContent = message; toast.classList.add("is-visible"); toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 2200); }
+
+    $$('.view-tab').forEach(tab => { tab.addEventListener("click", () => showView(tab.dataset.view)); tab.addEventListener("keydown", event => { if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return; event.preventDefault(); const tabs = $$('.view-tab'); const current = tabs.indexOf(tab); const next = event.key === 'ArrowRight' ? (current + 1) % tabs.length : (current - 1 + tabs.length) % tabs.length; showView(tabs[next].dataset.view, { focusTab: true }); }); });
+    $$('.primary-nav-button').forEach(button => button.addEventListener("click", () => showSection(button.dataset.section)));
+    $('#phaseList').addEventListener("click", event => { const button = event.target.closest('.phase-filter'); if (button) setPhaseFilter(button.dataset.phase); });
+    $('#inspectorBody').addEventListener("click", event => { const button = event.target.closest('[data-phase-jump]'); if (button) setPhaseFilter(button.dataset.phaseJump); });
+    $('#graphNodes').addEventListener("click", event => { const button = event.target.closest('.map-node'); if (button) selectMapNode(button.dataset.node); });
+    $('#timelineContent').addEventListener("click", event => { const button = event.target.closest('[data-timeline-phase]'); if (button) renderPhaseInspector(button.dataset.timelinePhase); });
+    $$('.issue-row').forEach(button => button.addEventListener("click", () => renderInspector(button.dataset.issue, "issue")));
+    $$('.queue-filter').forEach(button => button.addEventListener("click", () => setQueueFilter(button.dataset.queueFilter)));
+    $$('.signal-link').forEach(button => button.addEventListener("click", () => setQueueFilter(button.dataset.complianceFilter)));
+    $$('.command-item').forEach(button => button.addEventListener("click", () => runCommand(button.dataset.command)));
+    $('#langTr').addEventListener("click", () => applyLanguage("tr")); $('#langEn').addEventListener("click", () => applyLanguage("en"));
+    $('#themeToggle').addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+    $('#commandTrigger').addEventListener("click", openCommand); $('#commandInput').addEventListener("input", event => filterCommands(event.target.value));
+    $('#commandDialog').addEventListener("click", event => { if (event.target === $('#commandDialog')) $('#commandDialog').close(); });
+    $('#projectSwitcher').addEventListener("click", () => { const willOpen = $('#projectMenu').hidden; $('#projectMenu').hidden = !willOpen; $('#projectSwitcher').setAttribute("aria-expanded", String(willOpen)); });
+    $('#projectMenuList').addEventListener("click", event => { const button = event.target.closest('[data-project-select]'); if (button) activateProject(button.dataset.projectSelect, { openWorkspace: !PROJECTS[button.dataset.projectSelect].locked }); });
+    $('#projectMenuAdd').addEventListener("click", () => { $('#projectMenu').hidden = true; $('#projectSwitcher').setAttribute("aria-expanded", "false"); openConnectDialog(); });
+    document.addEventListener("click", event => { if (!event.target.closest('#projectSwitcher') && !event.target.closest('#projectMenu')) { $('#projectMenu').hidden = true; $('#projectSwitcher').setAttribute("aria-expanded", "false"); } });
+    async function handleProjectAction(event) {
+      const reindexButton = event.target.closest('[data-project-reindex]');
+      if (reindexButton) {
+        const projectId = reindexButton.dataset.projectReindex;
+        reindexButton.disabled = true;
+        reindexButton.textContent = language === "tr" ? "İndeksleniyor…" : "Indexing…";
+        try {
+          await apiRequest(`/api/projects/${encodeURIComponent(projectId)}/reindex`, { method: "POST", body: "{}" });
+          await loadProjectRegistry({ preferredId: projectId });
+          showToast(language === "tr" ? "Repo yeniden indekslendi ve makbuz kalıcılaştırıldı." : "Repository reindexed and receipt persisted.");
+        } catch (error) { showToast(error.message); }
+        return;
+      }
+      const button = event.target.closest('[data-project-open]');
+      if (!button) return;
+      await activateProject(button.dataset.projectOpen, { openWorkspace: true });
+    }
+    $('#projectList').addEventListener("click", handleProjectAction);
+    $('#compareScreen').addEventListener("click", event => { const chip = event.target.closest('[data-compare-project]'); if (chip) { const id = chip.dataset.compareProject; compareSelection.has(id) ? compareSelection.delete(id) : compareSelection.add(id); renderCompare(); return; } handleProjectAction(event); });
+    $('#addProject').addEventListener("click", () => openConnectDialog());
+    $('#refreshCatalog').addEventListener("click", async () => {
+      try { await loadProjectRegistry({ preferredId: activeProjectId }); showToast(language === "tr" ? "Kalıcı proje kayıtları diskten yenilendi." : "Persistent project records reloaded from disk."); }
+      catch (error) { showToast(error.message); }
+    });
+    $('#openActiveWorkspace').addEventListener("click", () => showSection("workspace"));
+    $('#connectBody').addEventListener("click", event => { const source = event.target.closest('[data-connect-source]'); if (!source) return; connectState.source = source.dataset.connectSource; connectState.step = 2; renderConnectDialog(); });
+    $('#connectBack').addEventListener("click", () => { if (connectState.step > 1 && connectState.step < 4) { connectState.step -= 1; connectState.error = ""; if (connectState.step === 1) { connectState.source = null; connectState.verified = null; } renderConnectDialog(); } });
+    $('#connectNext').addEventListener("click", advanceConnect);
+    $('#connectClose').addEventListener("click", () => $('#connectDialog').close());
+    $('#connectCancel').addEventListener("click", () => $('#connectDialog').close());
+    $('#connectDialog').addEventListener("click", event => { if (event.target === $('#connectDialog')) $('#connectDialog').close(); });
+    $('#inspectorToggle').addEventListener("click", toggleInspector); $('#inspectorClose').addEventListener("click", closeInspector); $('#inspectorScrim').addEventListener("click", closeInspector);
+    $('#resetPhase').addEventListener("click", () => setPhaseFilter("all", true)); $('#zoomIn').addEventListener("click", () => setZoom(zoomLevel + .1)); $('#zoomOut').addEventListener("click", () => setZoom(zoomLevel - .1)); $('#zoomFit').addEventListener("click", () => setZoom(1));
+    document.addEventListener("keydown", event => { const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName); if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openCommand(); return; } if (event.key === "/" && !isTyping) { event.preventDefault(); openCommand(); return; } if (!isTyping && ['1', '2', '3', '4'].includes(event.key)) { showSection("workspace"); showView(['map', 'timeline', 'delta', 'compliance'][Number(event.key) - 1]); } if (event.key === "Escape" && document.body.classList.contains("inspector-open")) closeInspector(); });
+    async function initializeApp() {
+      setTheme(localStorage.getItem("kokpit-theme") || "dark");
+      try {
+        await loadProjectRegistry();
+        applyLanguage(language);
+        showView("map");
+        showSection("projects");
+      } catch (error) {
+        $('#catalogCount').textContent = " · 0";
+        $('#projectList').innerHTML = `<div class="phase-load-error" role="alert"><strong>${language === "tr" ? "Proje servisine bağlanılamadı" : "Cannot connect to the project service"}</strong><br><code>${escapeHtml(error.message)}</code><br>${language === "tr" ? "Uygulamayı npm run dev ile açın." : "Start the application with npm run dev."}</div>`;
+        $('#modeBadge').textContent = language === "tr" ? "Servis yok" : "Service offline";
+      }
+    }
+    initializeApp();
+  </script>
 </body>
 </html>

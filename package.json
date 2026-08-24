@@ -5,6 +5,8 @@
   "type": "module",
   "description": "Faz-farkındalı geliştirme kokpiti — faz belgelerinden okuyan, kod durumunu haritada gösteren araç",
   "scripts": {
+    "dev": "tsx watch kokpit/server.ts",
+    "start": "tsx kokpit/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

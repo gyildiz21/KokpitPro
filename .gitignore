@@ -3,6 +3,8 @@ dist/
 coverage/
 .env
 .env.local
+.kokpit/
+output/
 *.log
 # referans motor — kendi .git'i var, bu repoya girmez
 gitdiagram/

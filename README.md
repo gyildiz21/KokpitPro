@@ -30,16 +30,38 @@ doğrulama katmanı ve UI desenleri oradan öğrenilir/adapt edilir. Kokpit kend
 kök reposunda büyür; upstream güncellemeleri `cd gitdiagram && git pull
 upstream main` ile alınır.
 
-## Çalışma kısıtı (şimdilik)
+## Çalıştırma
 
-Bu makinedeki WSL kabuğunda Node çalışmıyor → `npm install`, dev-server ve
-testler Windows terminalinde koşulur:
+Windows terminalinde repo kökünden:
 
-```
-cd gitdiagram
-npm install        # veya: bun install
+```powershell
+npm install
 npm run dev
 ```
+
+Uygulama `http://127.0.0.1:4173/arayuz-onizleme.html` adresinde açılır.
+Statik dosya sunucusu kullanmayın; Proje Merkezi `/api/projects` ve kalıcı
+kayıt defteri olmadan çalışmaz.
+
+## Kalıcı proje bağlantıları
+
+- Proje kayıtları ve son başarılı indeks makbuzları
+  `.kokpit/data/projects.json` içinde tutulur; bu dizin Git'e girmez.
+- Yerel bağlantı `.git`, etkin dal, commit ve `PLAN.md` / `ROADMAP.md` /
+  `DEVIR_TESLIM.md` kaynağını doğrular. Plan yolu seçilen Git kökünün dışına
+  çıkamaz.
+- GitHub bağlantısı halka açık repolarda anonim salt-okur çalışır. Özel
+  repolar için önerilen kurulum GitHub App'tir:
+
+```powershell
+$env:GITHUB_APP_ID = "..."
+$env:GITHUB_APP_INSTALLATION_ID = "..."
+$env:GITHUB_APP_PRIVATE_KEY_PATH = "C:\secure\kokpit-pro.pem"
+npm run dev
+```
+
+Yerel geliştirmede `GITHUB_TOKEN` sunucu ortam değişkeni de desteklenir. Token
+HTML'e, API yanıtına, `localStorage`'a veya proje kayıt dosyasına yazılmaz.
 
 ## Durum
 
@@ -47,5 +69,7 @@ npm run dev
 - [x] Repo iskeleti
 - [x] Dilim 1 kodu: parser (roadmap+phaseFiles) + Zod sözleşme + CLI + i18n temeli
       *(koşum Windows terminalinde — bkz. PLAN.md Dilim 1 uyarısı)*
+- [x] Dilim 2.1: kalıcı ProjectRecord kayıt defteri, yerel Git doğrulama,
+      GitHub Contents/GitHub App adaptörü ve proje-bazlı indeks makbuzları
 - [ ] Dilim 0: GitDiagram motorunu yerelde ayağa kaldırma (Windows terminal)
 - [ ] Dilim 2: Harita + Durum Boyaması (+ D1 i18n disipliniyle ilk bileşenler)
