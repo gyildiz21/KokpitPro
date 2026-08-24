@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KokpitPro — UI-SPEC Görüntüleyici</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+ :root{--bg:#f8fafc;--panel:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#2563eb;
+        --st-done:#10b981;--st-partial:#f59e0b;--st-open:#cbd5e1;--go:#0ea5e9;--err:#dc2626}
+ [data-theme="dark"]{--bg:#0b1220;--panel:#111a2c;--text:#e2e8f0;--muted:#94a3b8;--line:#1e293b}
+ body{margin:0;background:var(--bg);color:var(--text);
+      font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.6}
+ .bar{position:sticky;top:0;display:flex;gap:10px;align-items:center;padding:8px 16px;
+      background:var(--panel);border-bottom:1px solid var(--line);z-index:5}
+ .bar b{font-size:14px} .bar .sp{flex:1}
+ button{border:1px solid var(--line);background:var(--bg);color:var(--text);
+        border-radius:8px;padding:4px 12px;cursor:pointer;font-size:12.5px}
+ main{max-width:960px;margin:24px auto;padding:0 20px}
+ .md h1{font-size:26px;border-bottom:2px solid var(--accent);padding-bottom:8px}
+ .md h2{font-size:20px;margin-top:34px;border-bottom:1px solid var(--line);padding-bottom:6px}
+ .md h3{font-size:16.5px;margin-top:26px;color:var(--accent)}
+ .md blockquote{margin:14px 0;padding:10px 16px;border-left:4px solid var(--st-partial);
+       background:var(--panel);border-radius:8px;color:var(--muted)}
+ .md code{background:var(--bg);border:1px solid var(--line);border-radius:5px;
+          padding:1px 6px;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+ .md pre{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto}
+ .md pre code{border:none;background:none}
+ .md table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13.5px}
+ .md th,.md td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+ .md th{background:var(--panel)}
+ [data-theme="dark"] .md th{background:#16223a}
+ .md hr{border:none;border-top:1px dashed var(--line);margin:26px 0}
+</style>
+</head>
+<body>
+<div class="bar">
+ <b>📜 KokpitPro · UI-SPEC (bağlayıcı sözleşme görüntüleyici)</b>
+ <span class="sp"></span>
+ <button onclick="document.body.dataset.theme=document.body.dataset.theme==='dark'?'':'dark'">🌗 Tema</button>
+ <button onclick="window.print()">🖨 Yazdır/PDF</button>
+</div>
+<main><div id="out" class="md">Yükleniyor… (internet gerekir — marked.js CDN)</div></main>
+<script type="text/plain" id="mdsrc">
+# KokpitPro — Arayüz Sözleşmesi (UI-SPEC)
+
+> **Durum:** 🟡 TASLAK v0.3 — **Patron onayı bekliyor** (yeni: §10 Uyum &
+> Süreç Telemetrisi katmanı). Onay verilirse BAĞLAYICI olur.
+> **Canlı önizleme:** `arayuz-onizleme.html` — 4 sekme (Harita / Zaman /
+> Delta / **Uyum**), TR/EN, açık-koyu tema.
+> Üst sözleşmeler: `DESIGN.md` D1–D5.
+
+## §0 · Nasıl Okunur — vibecoding dostu kılavuz
+
+Bu belge **kodsuz okunabilir** olacak şekilde yazılır:
+
+1. **Her teknik adın yanında anlaşılır Türkçesi parantez içinde durur:**
+   *Zaman Çizelgesi (timeline)* = "fazların üst üste dizildiği liste ekranı".
+2. **Etiketler doğrudan Türkçedir** — ekranda görünecek olan budur. İngilizce
+   karşılıklar yalnız sağda küçük harfle, EN moda geçince ekranda görünecek
+   metin olarak verilir: *Kodlandı (done → Done)*.
+3. **Renk/şekil örnekleri emoji ile gösterilir** (🟢🟡⚪); ürün içinde aynı
+   anlam profesyonel ikonlarla çizilir.
+4. Karar verilmesi gereken yerler ⚖️, bilinçli yasaklar 🚫 ile işaretlidir.
+5. Uygulama dosya yolları (`kokpit/parser/…`) geliştirici notudur — okumak
+   için gerekmez.
+
+**Mini sözlük:** *IR* = ara-veri dosyası (parser'ın çıkardıği kokpit-ir.json)
+· *düğüm (node)* = haritadaki her kutu · *kenar (edge)* = kutuları bağlayan
+çizgi · *çekmece (drawer)* = sağdan açılan detay paneli · *belirteç (token)* =
+rengin tek kayıt yerindeki adı.
+
+
+
+---
+
+## §1 · Ürün Tanımı ve Ekran Envanteri
+
+KokpitPro tek sayfalık yerel bir uygulamadır (tarayıcıda açılır, veriyi
+`kokpit-ir.json` dosyasından okur). **Üç görünüm + bir panel:**
+
+| Görünüm | Kod adı | Ne gösterir | Hangi dilimde doğar |
+|---|---|---|---|
+| **Harita** | `map` | Repoyu düğüm/kenar grafiği olarak; düğümler faz durumuna göre boyalı | Dilim 2 |
+| **Zaman Çizgisi** | `timeline` | Fazlar yatay şeritler; maddeler durum rozetleriyle | Dilim 2 (basit sürüm) |
+| **Delta Ön-görünümü** | `delta` | Seçilen plan-adımı kodlanınca haritada ne değişecek | Dilim 3 |
+| Remap Paneli | `remap` | Yeniden düzenleme önerileri (her görünümden açılır çekmece) | Dilim 4 |
+
+## §2 · Ekran Anatomisi (Harita görünümü — ana yüzey)
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│ ÜST ŞERİT: [KokpitPro] [repo seçici ▾]        [TR|EN] [🎨 tema]    │ ← 48px
+├──────────────┬──────────────────────────────────┬──────────────────┤
+│ SOL PANEL    │ MERKEZ: HARİTA (React Flow)      │ SAĞ ÇEKMECE       │
+│ 240px        │                                  │ 320px (kapatılabilir)│
+│ ┌──────────┐ │   ┌─────────┐    ┌─────────┐     │ Seçili düğüm:     │
+│ │Faz ağacı │ │   │ handlers│───▶│services │     │ · yol + satır     │
+│ │ P0 ✅(9) │ │   └────┬────┘    └────┬────┘     │ · durum + gerekçe │
+│ │ P1 🔶(7) │ │        │              │          │ · ilgili faz madde│
+│ │ P2 🔶(6) │ │   ┌────▼────┐    ┌────▼────┐     │ · ilgili testler  │
+│ │ ...      │ │   │schema.ts│    │ ai.ts   │     │ [Kaynağı aç ↗]    │
+│ │          │ │   └─────────┘    └─────────┘     │                   │
+│ │ LEJANT   │ │  alt-sol köşe: zoom ± / sığdır   │                   │
+│ └──────────┘ │                                  │                   │
+├──────────────┴──────────────────────────────────┴──────────────────┤
+│ ALT ŞERİT: [Harita][Zaman Çizgisi][Delta] sekmeleri + durum çubuğu  │ ← 32px
+└────────────────────────────────────────────────────────────────────┘
+```
+
+### Bölge kuralları
+
+| # | Kural |
+|---|---|
+| A1 | Sol panel faz ağacı: her satır = grup başlığı + sayaç rozeti `(yeşil/toplam)`; tıklanınca o faza ait düğümler haritada **vurgulanır**, diğerleri soluklaşır |
+| A2 | Merkez harita: düğüm = dizin/dosya kümesi; kenar = import ilişkisi; **pan/zoom** fare ile; `Sığdır` düğmesi her zaman görünür |
+| A3 | Sağ çekmece: hiçbir seçim yokken kapanır; düğüm/faz/madde seçimi açar; `Esc` kapatır |
+| A4 | Alt şerit sekmeleri görünümler arası geçiştir; aktif sekme altı çizili |
+| A5 | Üst şerit repo seçici: son açılan `kokpit-ir.json` yollarını hatırlar (localStorage) |
+
+## §3 · Görsel Dil v2 — "Trafik Lambası" Sistemi
+
+> Tasarım hedefi: **ilk bakışta anla, ikinci bakışta güven.** Kullanıcıya
+> sorulan tek soru: *"Bu iş bitti mi, sürüyor mu, bekliyor mu?"* — cevap her
+> yerde aynı üç şekil + aynı üç renktir.
+
+### §3.1 Üç Ana Durum (dünyaca bilinen trafik metaforu)
+
+| | Şekil | Renk | Token | Etiket TR / EN | Anlam |
+|---|---|---|---|---|---|
+| 🟢 | **DOLU** daire/kare | Zümrüt `#10b981` (zemin `#ecfdf5`) | `--st-done` | Kodlandı / Done | İş bitti, kanıtı var |
+| 🟡 | **KESİKLİ kenarlıklı**, amber dolgu | Amber `#f59e0b` (zemin `#fffbeb`) | `--st-partial` | Sürüyor / In progress | Yarında — hareket var |
+| ⚪ | **BOŞ** kontur | Gri `#cbd5e1`, metin `#64748b` | `--st-open` | Planlandı / Planned | Sırada — henüz yok |
+
+**Neden bu üçlü:** herkesin okuldan beri bildiği kırmızı-sarı-yeşil dizilimi.
+Kırmızıyı bilinçli KULLANMIYORUZ — kırmızı "hata" demektir, "planlandı" hata
+değildir. Hata/uyarı ayrı bir dil (aşağıda).
+
+### §3.2 Örnek Kartlar (bileşenler tam böyle çizilir)
+
+**Harita düğümü — üç durum yan yana:**
+
+```
+  ╭──────────────╮   ┌╌╌╌╌╌╌╌╌╌╌╌╌┐   ╭ ─ ─ ─ ─ ─ ─ ╮
+  │ ██ services  │   │ ⋯ handlers │   │   ai.ts     │
+  │ 🟢 Kodlandı  │   │ 🟡 Sürüyor │   │ ⚪ Planlandı │
+  ╰──────────────╯   └╌╌╌╌╌╌╌╌╌╌╌╌┘   ╰ ─ ─ ─ ─ ─ ─ ╯
+     DOLU zemin         kesikli çerçeve      boş kontur
+```
+
+**Faz satırı (sol panel):**
+
+```
+ P1 · Kanıt Altyapısı            ████████░░░░  4/7
+   ├─ 🟢 Kanonik eser modeli
+   ├─ 🟡 Çok kaynaklı bağlayıcılar
+   └─ ⚪ Kartopu (snowballing)
+```
+
+**Zaman çizelgesi çipi:**
+
+```
+ [🟢 #1 Konsensüs körlüğü]  [🟡 Bağlayıcılar]  [⚪ Kartopu]
+```
+
+**Lejant kartı (harita sol-alt köşe, kalıcı):**
+
+```
+┌ LEJANT ──────────────────┐
+│ ● Kodlandı    ● Sürüyor  │
+│ ○ Planlandı   ◌ GO bekliyor│
+│ ⬚ Eklenecek (delta)      │
+└──────────────────────────┘
+```
+
+### §3.3 İkincil Sinyaller (ana üçlüyü kirletmeden)
+
+| Sinyal | Görsel | Nerede | Neden ayrı dil |
+|---|---|---|---|
+| **GO bekliyor** | 🔵 mavi **dış kontur halkası** (`#0ea5e9`, 2px) — iç renk ana durumu göstermeye devam eder | kodu bitmiş ama kapıda bekleyen | "hazır ama kapalı" = geçici durum |
+| **Delta: eklenecek** | ⬚ kesikli hayalet düğüm, yeşil `%40 opak` | Delta görünümü | henüz yok — gelecek |
+| **Delta: değişecek** | mevcut düğümde amber köşe-noktası • | Delta görünümü | dokunulacak |
+| **Bayat veri (>7g)** | alt şeritte 🕐 rozet | global | haritayı boyamaz |
+| **Hata / engel** | kırmızı YALNIZ burada: `#dc2626` satır-içi mesaj + 🔴 ikon | hata kartları | kırmızının değeri nadirliğidir |
+
+### §3.4 Kural Seti (kod yazan herkes için)
+
+1. Bileşende hex YASAK — yalnız token (`--st-*`); koyu tema karşılıkları
+   belirteçte yaşar.
+2. Her renkli öğenin **metin etiketi veya ikonu** vardır; renk tek başına
+   bilgi taşımaz (renk-körü dostu).
+3. Bir ekranda aynı anda en fazla **3 farklı dolgu rengi** görünür; fazlası
+   çekmeceye iner.
+4. Emoji (🟢🟡⚪) yalnız belge/CLI çıktısında kullanılır; ürün içinde ikon
+   kütüphanesi (lucide) ile aynı anlam çizilir.
+
+### §3.5 Karşılaştırma — eski vs yeni
+
+| Eski (v0.1) | Yeni (v0.2) |
+|---|---|
+| 7 durum × hex tablosu | 3 ana durum + 5 ikincil sinyal |
+| `go-waiting` ayrı renk → 4 renk karışırdı | mavi HALKA; iç renk korunur |
+| delta renkleri ana sözlükte | delta kendi görünümünün dili |
+| kırmızı tanımsız (yanlışlıkla kullanılabilirdi) | kırmızı yalnız hataya rezerve |
+
+## §4 · Veri Akışı (tek yön, döngüsüz)
+
+```mermaid
+graph LR
+    A[ROADMAP.md + faz dosyaları] -->|cli.ts| B[kokpit-ir.json]
+    C[repo kaynak kodu] -->|dependency-cruiser| B
+    B --> D[UI: Harita/Zaman/Delta]
+    B -.opsiyonel.-> E[Mermaid statik ihrac]
+```
+
+- **Kokpit-IR v1 şeması** (`schema.ts` genişletmesi): `nodes[{id,path,status,phaseRefs[]}]`,
+  `edges`, `phases[PhaseGroup...]`, `meta{generatedAt,sources[]}`.
+- UI **hesaplama yapmaz**: yalnız IR'yi okur ve boyar (Aptal-Frontend mirası).
+- Yenileme = CLI'yı yeniden koşturmak; UI'da "veri taze" mi? göstergesi
+  (`generatedAt` farkından okunur).
+
+## §5 · Görünüm Detayları
+
+### §5.1 Zaman Çizgisi
+Fazlar üstten alta; her faz satırında madde çipleri: `[●] #1 Konsensüs…`
+(● renk= durum). Madde çipine tıkla → sağ çekmecede tam metin + satır
+numarası + "haritada göster" (ilişkili düğüm varsa vurgular).
+
+### §5.2 Delta Ön-görünümü (Dilim 3)
+Girdi: plan durumundaki bir madde seçilir. Çıktı kartında:
+1. Etkilenecek düğümler (kesikli yeşil/amber harita vurgusu eş zamanlı)
+2. Etkilenecek test dosyaları (yol eşleşmesinden)
+3. Kaynak: maddenin ROADMAP satır alıntısı
+Veri yetersizse kart **"bu madde için yol eşlemesi yok"** der — tahmin üretmez.
+
+### §5.3 Remap Paneli (Dilim 4)
+Öneri kartı: `[öneri] Neden: X dosyası 3 farklı katmandan import ediliyor →
+öneri: services/ altına taşı`. Uygula butonu YOKTUR (v1) — yalnız kopyalanabilir
+metin; uygulama insan kararıdır.
+
+### §5.4 Boş/Hata durumları (hepsi D2#3'e tabi)
+| Durum | Ekran |
+|---|---|
+| IR yok | "Başlamak için: npm run kokpit -- --roadmap …" komut kartı |
+| Parser 0 madde | "Faz belgesi bulunamadı" + girdi yolu gösterilir |
+| Import-grafı boş | Harita yerine düz liste görünümüne otomatik düşer |
+| Bayat veri (>7 gün) | Alt şeritte amber "veri bayat" rozeti |
+
+## §6 · Teknoloji ve Dosya Yapısı (kesinleştirme — onay istenir)
+
+- **Stack:** Vite + React 19 + TypeScript + Tailwind v4 + **React Flow** +
+  `mermaid` (statik ihrac) + `zustand` (görünüm durumu). Sunucusuz — tamamen
+  tarayıcı-içi.
+- **Yapı:**
+  ```
+  app/                    ← Vite kökü (index.html, main.tsx)
+  src/
+    features/map/         ← Harita görünümü + React Flow wrapper
+    features/timeline/    ← Zaman çizelgesi
+    features/delta/       ← Delta ön-görünümü
+    lib/ir/               ← Kokpit-IR tipleri + loader
+    lib/diagram/          ← GitDiagram'dan taşınan saf motor (bkz. adaptasyon tablosu)
+    i18n/                 ← labels + locale dosyaları
+  ```
+- Motor taşımaları (XS-S maliyetli): graph-schema, validate/compile,
+  mermaid-sanitize seti, export — adaptasyon tablosundaki gibi.
+
+## §7 · Kabul Kriterleri (görünüm başına)
+
+| Görünüm | Kabul |
+|---|---|
+| Harita | MethodLogos reposu IR'iyle ≥30 düğüm akıcı gezilir; her düğümden kaynağa tıklama çalışır; lejant tüm durumları gösterir |
+| Timeline | 62 maddenin tamamı doğru durum rozetiyle listelenir |
+| Delta | Plan-adımı seçince ≥1 düğüm vurgusu + test listesi; verisiz maddede dürüst mesaj |
+| i18n | TR↔EN geçişte hiçbir ekranda karma dil kalmaz; parity testi yeşil |
+
+## §8 · Bilinçli Sınırlar (v1'de YAPILMAZ)
+
+Çalışma-zamanı telemetrisi · çok-kullanıcı/sunucu · düzenleme (harita elle
+düzenlenemez) · AI ile otomatik gruplama (gitdiagram motoru opsiyonel kalır) ·
+mobil-özel tasarım (duyarlı ama masaüstü öncelik).
+
+---
+**Onay bloğu:** Patron onayı: ⬜ (onaylanırsa durum BAĞLAYICI'ya çevrilir ve
+Dilim 2 bu sözleşmeye göre kodlanır.)
+
+---
+
+## §10 · Uyum & Süreç Telemetrisi — Komuta Merkezi Katmanı (v0.3 EKLENTİSİ)
+
+> **Patron gereksinimi (2026-08-24):** Kokpit yalnız "ne kodlandı"yı değil,
+> **sürecin bütünlüğünü** gösterecek: hangi defterler dolduruldu/doldurulmadı,
+> kurallar nerede aşıldı, yeni yön kararları doğru işlendi mi, çelişkili
+> kararlar neler? Hepsi **karmaşasız**: L1 özet → L2 liste → L3 kanıt.
+>
+> Desen kaynakları: GitHub Security (ihlal şeması), Sentry (triage kuyruğu +
+> sparkline), Linear (drill-through), Grafana (eşik-tile), Nx (near-miss),
+> CodeScene (öncelik matrisi), Backstage TechRadar (karar timeline'ı).
+
+### §10.1 Dört Veri Akışı
+
+| Akış | Soru | Kaynak | Durum dili |
+|---|---|---|---|
+| **A. Faz** | Ne kodlandı? | ROADMAP + faz dosyaları | 🟢🟡⚪ (mevcut §3) |
+| **B. Defter Senkronu** | Kodlandıktan sonra defter dolduruldu mu? | git log × faz dosyaları × handoff'lar | ✅ güncel · ⚠ bayat · ❌ yazılmadı · ◐ kısmi |
+| **C. Kural İhlali** | Kurallar nerede aşıldı? | AGENTS/DESIGN kurallarının denetlenebilir hâlleri | Error / Warning / Note + bağlam puanı |
+| **D. Karar Bütünlüğü** | Çelişki var mı? Yön değişimi işlendi mi? | karar-defteri + ROADMAP + faz dosyaları çaprazı | açık çelişki / superseded-zinciri / temiz |
+
+### §10.2 Uyum Panosu (L1) — üst şeride sağlık çipleri
+
+Harita görünümünün üst şeridine ikinci satır eklenir; her çip tıklanabilir
+ve **drill-through** yapar (Linear deseni):
+
+```
+┌ FAZ SAĞLIĞI ──┐ ┌ DEFTER SENKRONU ─┐ ┌ AÇIK İHLAL ──┐ ┌ ÇELİŞKİ ─────┐
+│  🟢 6 / 🟡 3  │ │  %78 ✅ · 2 ⚠    │ │  🔴 1 🟠 4   │ │  ⚖️ 1 çift   │
+│  /9 faz       │ │  son koşum: 2sa  │ │  (friction↑) │ │  D5↔§5.7     │
+└───────────────┘ └──────────────────┘ └──────────────┘ └──────────────┘
+```
+
+- Çip rengi = eşik hükümüdür (Grafana): yeşil/amber/kırmızı sayıdan üretilir.
+- Tıklama → o akışın **filtreli listesine** iner (L2).
+
+### §10.3 Defter Senkronu (Akış B)
+
+Her kod dilimi için üçlü kontrol:
+
+| Kontrol | Nasıl | Sonuç |
+|---|---|---|
+| Faz dosyası güncellendi mi? | dilim commit'i SONRASI ilgili `.agents/phases/*.md` mtime/değişiklik | ✅/❌ |
+| ROADMAP kutusu işaretlendi mi? | checkbox durumu ↔ commit varlığı çaprazı | ✅/⚠ bayat/❌ |
+| Handoff/devir notu düştü mü? | `handoff-*`/`next-session-*` değişimi | ✅/◐ |
+
+**Near-miss (Nx deseni):** ❌ durumunda NEDEN kırılır: *tarih farkı mı,
+içerik-hash mi, sürüm alanı mı* — tek satır açıklama zorunlu.
+
+### §10.4 Kural İhali Kuyruğu (Akış C — Sentry/GitHub şeması)
+
+Her ihlal kaydı:
+
+```
+[🔴 ERR] sahte-kapı        · kokpit/ui/InviteButton.tsx:12   ▁▃▂▁▂▄▆ (14g)
+  Kural: DESIGN.md D2#4 — capability yokken yüzey çizilmez
+  Bağlam ciddiyeti: YÜKSEK (bu yol 14 günde 6 kez değişti — friction ↑)
+  İlk görülme: 2026-08-12 · Durum: YENİ
+  [Düzeltme ↗]  [Gerekçeyle kapat…]          ← kapatma = zorunlu gerekçe + kim/zaman
+```
+
+Kurallar:
+1. **İki ayrı ciddiyet:** kural ciddiyeti (Error/Warning/Note) ≠ bağlam
+   ciddiyeti (o bölgedeki değişim yoğunluğu — CodeScene friction deseni).
+   Sıralama friction×severity'dir.
+2. **Triage sekmeleri:** Yeni · Regress (çözülüp geri gelen!) · Yükselen ·
+   Gerekçeyle kapalı. Kapatma **gerekçesiz olamaz**; gerekçe audit'e yazılır.
+3. **Alert ↔ fix bağlantısı:** ihlal kartında "düzelten commit/PR" alanı;
+   çözülmeyenler için fix önerisi metni.
+4. Başlangıç kural seti (denetlenebilir → otomatik): `koşumsuz-commit`
+   · `hardcode-metin` · `hex-in-component` · `sahte-kapı` · `bayat-kutu`
+   · `ks-band-delinmesi`. Set genişletilebilir (`kokpit/check/rules/`).
+
+### §10.5 Karar Bütünlüğü (Akış D — TechRadar deseni)
+
+Kararlar asla silinmez; **moved zinciriyle** taşınır:
+
+```
+⚖️ ÇELİŞKİ #7 · AÇIK
+  A: ROADMAP §2.2/#16 "Crossref ikinci kaynak yok"      (2026-08-04)
+  B: S1I-D0 kaydı "RW küratörlü kaynak eklendi"          (2026-08-17)
+  Öneri: A satırına superseded-notu düşülmalı → [Düzelt…][Çelişki olarak kabul et…]
+────────────────────────────────────────────────────────
+D5 Dağıtım Yolu   ● 2026-08-24 Adopt (+1)  "yerel-önce"
+CORPUS_FROM_YEAR  ● 2026-08-22 Hold (-1)   "kod zaten açık"
+```
+
+- Çelişki tespiti: aynı konuda iki otorite farklı söylüyorsa (anahtar-kelime
+  + tarih sırası sezgisel başlar; v1'de yarım-otomatik, onaylı).
+- Yön-değişimi doğrulaması: yeni karar geldiğinde etkilenen belgelerin
+  güncellenip güncellenmediği Akış B ile çaprazlanır.
+
+### §10.6 IR Şeması Genişlemesi (v0.2)
+
+`KokpitIr`'e eklenir: `sync[{sliceId,phaseFile,roadmapBox,handoff,nearMiss?}]`,
+`violations[]`, `conflicts[]`, `health{phaseDone,partial,open,syncPct,vioErr,vioWarn,conflicts}`.
+Tümü Zod'lu; UI hesaplama yapmaz.
+
+### §10.7 Kabul (Uyum katmanı)
+
+1. MethodLogos verisinde pano, gerçek 1 ERR ihlal (örn. bilinen bayat kutu)
+   ve ≥1 çelişkiyi yakalar.
+2. Her çipten drill-through ≤2 tıklama.
+3. Kapatılan her ihlalde gerekçe+kim+zaman audit kaydı oluşur.
+4. TR/EN paritesi yeni metinlerde de bozulmaz.
+
+### §10.8 Desen kaynakları — ikinci tur araştırma (2026-08-24)
+
+| Kaynak | Desen | Kokpite benimseme |
+|---|---|---|
+| **Swimm** | Bileşen başına % **tazelik skoru** (100=güncel, 0=kod değişti doküman değişmedi) | ✅ v1 — her faz maddesine tazelik yüzdesi |
+| **DocToolchain/doctest** | Uyumsuzluk = CI fail + **diff kanıtı** | ✅ v1 — her kırmızı hücre kanıt diff'ine gider |
+| **log4brains (ADR)** | Supersedes zinciri grafiği; **çelişki tespiti YOK** | ✅ zincir zaten var (TechRadar deseni) · 🔎 **boşluk bizim**: "geçersiz karara dayanan kod" rozeti |
+| **OPA/SARIF/Gatekeeper** | Severity × hedef ısı haritası; satır=kural sütun=bileşen | 🟡 v0.1 parlatma — ihlal yoğunluk matrisi |
+| **Conftest** | Tek-satır özet: "12 kontrol, 9 geçti, 2 uyarı, 1 ihlal" | ✅ zaten §10.2 çiplerinin altında kalıcı şerit |
+| **DORA** | Tek sayı DEĞİL: 3-4 boyut × A/B/C bandı + 12 haftalık trend oku | ✅ sağlık çipleri bu formatta (faz/defter/ihlal/çelişki ayrı bant) |
+| **Covidence/Rayyan** | Aşama hunisi (giren/kalan/elenen+gerekçe) + **çelişki çözüm kuyruğu** | ✅ Defter Senkronu huni görünümü + çelişki kuyruğu modeli |
+
+> Sentezin tamamı: `docs/arastirma/kokpit/` yan dosyası yerine bu bölümde
+> kalır — tasarım kanıtı sözleşmeden ayrı yaşamaz.
+</script>
+<script>
+  const src = document.getElementById('mdsrc').textContent
+    .replace(/^\s*<\!doctype[\s\S]*?>/i,'');
+  document.getElementById('out').innerHTML = marked.parse(src);
+</script>
+</body>
+</html>

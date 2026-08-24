@@ -346,3 +346,18 @@ Tümü Zod'lu; UI hesaplama yapmaz.
 2. Her çipten drill-through ≤2 tıklama.
 3. Kapatılan her ihlalde gerekçe+kim+zaman audit kaydı oluşur.
 4. TR/EN paritesi yeni metinlerde de bozulmaz.
+
+### §10.8 Desen kaynakları — ikinci tur araştırma (2026-08-24)
+
+| Kaynak | Desen | Kokpite benimseme |
+|---|---|---|
+| **Swimm** | Bileşen başına % **tazelik skoru** (100=güncel, 0=kod değişti doküman değişmedi) | ✅ v1 — her faz maddesine tazelik yüzdesi |
+| **DocToolchain/doctest** | Uyumsuzluk = CI fail + **diff kanıtı** | ✅ v1 — her kırmızı hücre kanıt diff'ine gider |
+| **log4brains (ADR)** | Supersedes zinciri grafiği; **çelişki tespiti YOK** | ✅ zincir zaten var (TechRadar deseni) · 🔎 **boşluk bizim**: "geçersiz karara dayanan kod" rozeti |
+| **OPA/SARIF/Gatekeeper** | Severity × hedef ısı haritası; satır=kural sütun=bileşen | 🟡 v0.1 parlatma — ihlal yoğunluk matrisi |
+| **Conftest** | Tek-satır özet: "12 kontrol, 9 geçti, 2 uyarı, 1 ihlal" | ✅ zaten §10.2 çiplerinin altında kalıcı şerit |
+| **DORA** | Tek sayı DEĞİL: 3-4 boyut × A/B/C bandı + 12 haftalık trend oku | ✅ sağlık çipleri bu formatta (faz/defter/ihlal/çelişki ayrı bant) |
+| **Covidence/Rayyan** | Aşama hunisi (giren/kalan/elenen+gerekçe) + **çelişki çözüm kuyruğu** | ✅ Defter Senkronu huni görünümü + çelişki kuyruğu modeli |
+
+> Sentezin tamamı: `docs/arastirma/kokpit/` yan dosyası yerine bu bölümde
+> kalır — tasarım kanıtı sözleşmeden ayrı yaşamaz.
