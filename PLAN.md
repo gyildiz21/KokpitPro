@@ -3,6 +3,10 @@
 > Kaynak: `docs/arastirma/kokpit/05-senaryolar-ve-oneri.md` (MethodLogos_Pro).
 > Bu dosya kokpitin kendi faz defteridir — kokpit, kendisini de kendi
 > metodolojisiyle geliştirir.
+>
+> **Bağlayıcı tasarım sözleşmesi:** `DESIGN.md` (D1: TR/EN çift dil baştan ·
+> D2: UX barı "referanstan iyi" · D3: React Flow + Mermaid · D4: AGENTS.md
+> bağışı). UI kodu yazan her dilim bu sözleşmeye tabidir.
 
 ## Dilim 0 · Motoru ayağa kaldırma (Windows terminalinde)
 
@@ -25,12 +29,18 @@
 - [x] Nöbetçi testler: `__tests__/roadmap.test.ts` (gerçek MethodLogos kesiti,
       3 durum + tarih + satır izlenebilirliği) · `phaseFiles.test.ts`
       (S1I kesiti, öncelik sırası + durumsuz başlık atlanır)
+- [x] **CLI kabul aracı:** `kokpit/cli.ts` —
+      `npx tsx kokpit/cli.ts --roadmap <yol> [--phases <dizin>] [--pretty]`;
+      JSON anahtarları İngilizce sabit (makine sözleşmesi, bkz. DESIGN.md D1)
 - ⚠️ **Kod yazıldı; koşum Windows terminalinde** (`npm install && npm run test`)
   — koşulmadan dilim kapanmış sayılmaz.
-- **Kabul:** MethodLogos_Pro ROADMAP'inde çalıştırıldığında P0–P5 ve S1I
+- **Kabul:** MethodLogos_Pro ROADMAP'ine CLI ile bakıldığında P0–P5 ve S1I
   D0–D4 durumları doğru çıkar.
 
 ## Dilim 2 · Harita + Durum Boyaması
+
+> **D1 uygulaması bu dilimde başlar:** `kokpit/i18n/labels.ts` kuruldu
+> (tr/en parite nöbetçili); bileşen metinleri yalnız sözlükten gelir.
 
 - [ ] Import-grafı: `dependency-cruiser` ile TS/JS kenarları
 - [ ] AST düğümü ↔ dizin eşlemesi → faz dilimi bağlama

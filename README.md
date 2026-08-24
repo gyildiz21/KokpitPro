@@ -45,5 +45,7 @@ npm run dev
 
 - [x] Araştırma paketi (5 rapor)
 - [x] Repo iskeleti
+- [x] Dilim 1 kodu: parser (roadmap+phaseFiles) + Zod sözleşme + CLI + i18n temeli
+      *(koşum Windows terminalinde — bkz. PLAN.md Dilim 1 uyarısı)*
 - [ ] Dilim 0: GitDiagram motorunu yerelde ayağa kaldırma (Windows terminal)
-- [ ] Dilim 1: Faz-Belge Ayrıştırıcı v0
+- [ ] Dilim 2: Harita + Durum Boyaması (+ D1 i18n disipliniyle ilk bileşenler)
