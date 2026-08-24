@@ -8,23 +8,28 @@
 > D2: UX barı "referanstan iyi" · D3: React Flow + Mermaid · D4: AGENTS.md
 > bağışı). UI kodu yazan her dilim bu sözleşmeye tabidir.
 
-## Dilim 0 · Motoru ayağa kaldırma (Windows terminalinde)
+## Dilim 0 · Motoru ayağa kaldırma — B YOLU KARARLI (storage'sız lite)
 
-> **Koşum notu 2026-08-24:** `npm run dev` Windows CMD'de kırık (betik bash +
-> Bun istiyor). Doğru yollar aşağıda.
+> **Patron kararı 2026-08-24:** R2/Upstash hesap açılmayacak; referans motor
+> `lite` dalında storage'sız çalışır. Uretilen diyagram önbelleklenmez, her
+> ziyarette yeniden üretilir — Dilim 2 UI'sı için yeterli.
 
-- [ ] `gitdiagram/` içinde bağımlılıklar: **Tercihen** Bun kur
-      (`powershell -c "irm bun.sh/install.ps1 | iex"`) → `bun install` ·
-      Alternatif: `npm install`
-- [ ] `.env.example` → `.env` kopyala; `OPENAI_API_KEY` (+ opsiyonel
-      `GITHUB_TOKEN`) gir
-- [ ] Dev sunucu — üç yol:
-      1. Bun kurulduysa: `bun run --bun next dev --turbo`
-      2. Node yolu: `npx next dev --turbo`
-      3. Git Bash varsa: `"C:\Program Files\Git\bin\bash.exe" scripts/dev-turbo.sh`
-- **Kabul:** `localhost:3000` açılır, örnek repo diyagramı üretilir;
-  tıklanınca GitHub dosyasına gidiliyor.
-- **Durum:** ❌ henüz koşulmadı (yukarıdaki komutlar kullanıcıda).
+- [x] **`lite` dalı hazır** (`gitdiagram`, commit `1e1e8e9`):
+      R2 okumaları "yapılandırılmamış = artefakt yok" sayar; Turbopack kökü
+      sabitlendi; persistence zaten fail-safe'ti (uyarı bandı normaldir)
+- [ ] `cd gitdiagram && git checkout lite`
+- [ ] `.env.example` → `.env`; zorunlu tek alan: **`OPENAI_API_KEY`**
+      *(alternatif: `AI_PROVIDER=openrouter` + `OPENROUTER_API_KEY`;
+      önerilir: `GITHUB_PAT` — GitHub API limitini yükseltir)*
+- [ ] Kurulum: `bun install` *(önerilen)* veya `npm install`
+- [ ] **Yalnız bu dizinden** çalıştır: `bun run --bun next dev --turbo`
+      *(veya Node ile `npx next dev --turbo`)*
+- **Lite modda NORMAL görünenler:** `/api/healthz` 503 · üretim sonrası
+  "could not be cached" uyarı bandı · artefakt önbelleği yok
+- **Kabul:** ana sayfadan örnek/gerçek repo girildiğinde akışkan üretim
+  çalışır, interaktif Mermaid haritası render edilir, düğüme tıklanınca
+  GitHub dosyası açılır.
+- **Durum:** ❌ koşulmadı — kullanıcı OPENAI_API_KEY girdikten sonra.
 
 ## Dilim 0.1 · Parser kabul koşumu
 
