@@ -43,3 +43,16 @@ Referans motorun (GitDiagram) UX'i yetersiz bulunmuştur. Kokpitin asgari barı:
 Repolar arası format standardı `AGENTS.md` ekosistemidir; kokpit çıktısı
 gelecekte AGENTS.md'e "mimari durum" bloğu yazabilme capability'sine yol
 açacak şekilde tasarlanır (yazma izni ayrı GO konusu).
+
+## D5 · Dağıtım Yolu — Yerel-önce; SaaS'a ve açık-kaynağa hazır (Patron kararı 2026-08-24)
+
+1. **Bugün tamamen yerel:** veri makineden çıkmaz; UI tarayıcı-içinde çalışır,
+   sunucu zorunluluğu yoktur.
+2. **SaaS'e evrim sınırı şimdiden çizilir:** tüm LLM/storage erişimi sunucu
+   katmanında ve env ile yapılandırılır; Kokpit-IR şeması sürümlüdür
+   (`schemaVersion`); kimlik/asıl veri istemci paketine gömülmez.
+3. **Açık-kaynak olasılığı:** MIT LICENSE ilk günden mevcuttur; gizli değerler
+   yalnız `.env`'dedir; kişisel ad/e-posta kaynak ağacına girmez
+   (`personalEmailYasak` deseninin genellemesi).
+4. Bu karar tek-başına SaaS taahhüdü DEĞİLDİR — yalnızca bugünkü seçimlerin
+   o kapıyı kapatmamasıdır.

@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KokpitPro — Arayüz Önizleme (UI-SPEC v0.2)</title>
+<style>
+  /* ============ TOKENLAR (UI-SPEC §3) ============ */
+  :root{
+    --bg:#f8fafc; --panel:#ffffff; --text:#0f172a; --muted:#64748b;
+    --line:#e2e8f0; --accent:#2563eb;
+    --st-done:#10b981; --st-done-bg:#ecfdf5;
+    --st-partial:#f59e0b; --st-partial-bg:#fffbeb;
+    --st-open:#cbd5e1; --st-open-text:#64748b;
+    --go:#0ea5e9; --err:#dc2626;
+    --radius:12px; --shadow:0 1px 3px rgb(15 23 42 / .08);
+  }
+  [data-theme="dark"]{
+    --bg:#0b1220; --panel:#111a2c; --text:#e2e8f0; --muted:#94a3b8;
+    --line:#1e293b;
+    --st-done-bg:#06281e; --st-partial-bg:#2a1f05; --st-open-text:#94a3b8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+       background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}
+
+  /* ============ ŞERİTLER ============ */
+  .ribbon{background:repeating-linear-gradient(45deg,#fef3c7,#fef3c7 12px,#fde68a 12px,#fde68a 24px);
+          color:#78350f;text-align:center;padding:4px;font-weight:600;font-size:12px}
+  [data-theme="dark"] .ribbon{background:#3b2f05;color:#fde68a}
+
+  /* ÜST ŞERİT */
+  .topbar{display:flex;align-items:center;gap:10px;background:var(--panel);
+          border-bottom:1px solid var(--line);padding:8px 14px;position:sticky;top:0;z-index:20}
+  .logo{width:14px;height:14px;border-radius:4px;background:linear-gradient(135deg,var(--accent),var(--st-done))}
+  .brand{font-weight:700;letter-spacing:.2px}
+  .repo-pill{border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--muted);font-size:12px}
+  .spacer{flex:1}
+  .btn{border:1px solid var(--line);background:var(--bg);color:var(--text);
+       border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px}
+  .btn.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+
+  /* ANA IZGARA */
+  .grid{display:grid;grid-template-columns:240px 1fr 320px;gap:12px;padding:12px;max-width:1400px;margin:auto}
+  @media(max-width:1000px){.grid{grid-template-columns:200px 1fr}.drawer{display:none}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+
+  /* SOL PANEL */
+  .side{padding:12px;height:fit-content}
+  .side h3,.drawer h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .phase{margin-bottom:10px}
+  .phase .head{display:flex;justify-content:space-between;font-weight:600;font-size:13px}
+  .bar{height:6px;border-radius:99px;background:var(--line);margin:4px 0 6px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--st-done)}
+  .item{display:flex;gap:6px;align-items:center;padding:2px 0 2px 10px;font-size:12.5px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .d-done{background:var(--st-done)} .d-part{background:var(--st-partial)}
+  .d-open{border:2px solid var(--st-open);width:8px;height:8px;background:transparent}
+
+  .legend{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px;font-size:12.5px}
+  .legend .row{display:flex;align-items:center;gap:8px;margin:4px 0}
+  .sw{width:16px;height:16px;border-radius:5px;flex:none;display:inline-block}
+  .sw.done{background:var(--st-done)} .sw.part{background:var(--st-partial)}
+  .sw.open{border:2px solid var(--st-open)} 
+  .sw.go{background:var(--st-done);outline:2px solid var(--go);outline-offset:2px}
+  .sw.add{background:transparent;border:2px dashed var(--st-done)}
+
+  /* MERKEZ SAHNE */
+  .stage{min-height:520px;display:flex;flex-direction:column}
+  .tabs{display:flex;gap:4px;padding:8px 10px 0}
+  .tab{padding:6px 14px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);
+       border:1px solid transparent;border-bottom:none;font-size:13px}
+  .tab.on{background:var(--bg);color:var(--text);border-color:var(--line);font-weight:700}
+  .viewwrap{flex:1;background:var(--bg);border-top:1px solid var(--line);border-radius:0 0 var(--radius) var(--radius);position:relative;overflow:hidden}
+
+  /* HARİTA KANVASI */
+  .canvas{position:relative;height:480px}
+  .canvas svg.wires{position:absolute;inset:0;width:100%;height:100%}
+  .node{position:absolute;width:158px;padding:10px 12px;border-radius:var(--radius);
+        background:var(--panel);box-shadow:var(--shadow);cursor:pointer;
+        border:1.5px solid var(--line);transition:.15s}
+  .node:hover{transform:translateY(-2px);border-color:var(--accent)}
+  .node.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgb(37 99 235 / .18)}
+  .node .t{font-weight:700;font-size:13px}
+  .node .p{font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;margin:2px 0 6px}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;
+        padding:2px 8px;border-radius:999px}
+  .chip.done{background:var(--st-done-bg);color:var(--st-done)}
+  .chip.part{background:var(--st-partial-bg);color:var(--st-partial)}
+  .chip.open{color:var(--st-open-text);border:1px solid var(--st-open)}
+  .node.done{border-color:var(--st-done)}
+  .node.part{border-style:dashed;border-color:var(--st-partial);background:var(--st-partial-bg)}
+  .node.open{border-style:solid;background:transparent}
+  .node.goring{outline:2px solid var(--go);outline-offset:3px}
+  .node.ghost{border:2px dashed var(--st-done);opacity:.55;background:repeating-linear-gradient(45deg,transparent,transparent 6px,var(--st-done-bg) 6px,var(--st-done-bg) 12px)}
+
+  .zoom{position:absolute;left:12px;bottom:12px;display:flex;flex-direction:column;gap:4px}
+  .zoom button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
+
+  /* ZAMAN ÇİZGİSİ */
+  .tl{padding:16px}
+  .tlrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .tlname{width:170px;font-weight:600;font-size:13px}
+  .tlbar{height:8px;border-radius:99px;background:var(--line);flex:1;min-width:120px;overflow:hidden}
+  .tlbar i{display:block;height:100%;background:var(--st-done)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .tchip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;background:var(--panel)}
+
+  /* DELTA */
+  .delta-note{margin:14px 16px;padding:10px 14px;border-left:4px solid var(--accent);
+              background:var(--panel);border-radius:8px;font-size:13px}
+  .affected{margin:0 16px 16px;padding:12px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+  .affected ul{margin:6px 0 0;padding-left:18px}
+  code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;
+       font-family:ui-monospace,Consolas,monospace;font-size:12px}
+
+  /* ÇEKMECE */
+  .drawer{padding:12px;height:fit-content;position:sticky;top:60px}
+  .field{margin:8px 0;font-size:13px}
+  .field b{display:block;font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em}
+  .srcbtn{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:8px;
+          background:var(--accent);color:#fff;text-decoration:none;font-size:12.5px;font-weight:600}
+
+  /* ALT ŞERİT */
+  .statusbar{display:flex;gap:14px;align-items:center;padding:6px 16px;font-size:12px;
+             color:var(--muted);border-top:1px solid var(--line);background:var(--panel)}
+  .stale{color:var(--st-partial);font-weight:600}
+
+  .hint{position:absolute;top:12px;right:12px;font-size:11.5px;color:var(--muted);
+        background:var(--panel);border:1px dashed var(--line);border-radius:8px;padding:6px 10px}
+</style>
+</head>
+<body>
+
+<div class="ribbon" id="ribbon">ÖNİZLEME · UI-SPEC v0.2 sözleşmesinin görsel örneği — gerçek uygulama değildir</div>
+
+<!-- ═══════════ ÜST ŞERİT ═══════════ -->
+<header class="topbar">
+  <span class="logo"></span><span class="brand">KokpitPro</span>
+  <span class="repo-pill">📁 MethodLogos_Pro · ROADMAP.md</span>
+  <span class="spacer"></span>
+  <button class="btn on" id="langTr" onclick="setLang('tr')">TR</button>
+  <button class="btn" id="langEn" onclick="setLang('en')">EN</button>
+  <button class="btn" id="themeBtn" onclick="toggleTheme()" title="Açık/Koyu">🌗</button>
+</header>
+
+<main class="grid">
+
+  <!-- ═══════════ SOL PANEL: FAZ AĞACI + LEJANT ═══════════ -->
+  <aside class="side card">
+    <h3 id="l-phases">FAZLAR</h3>
+
+    <div class="phase">
+      <div class="head"><span>P0 · Güven</span><span>9/9</span></div>
+      <div class="bar"><i style="width:100%"></i></div>
+      <div class="item"><span class="dot d-done"></span>Konsensüs körlüğü</div>
+      <div class="item"><span class="dot d-done"></span>Gerçek embedding</div>
+    </div>
+
+    <div class="phase">
+      <div class="head"><span>P1 · Altyapı</span><span>4/7</span></div>
+      <div class="bar"><i style="width:57%"></i></div>
+      <div class="item"><span class="dot d-done"></span>Kanonik eser modeli</div>
+      <div class="item"><span class="dot d-part"></span>Bağlayıcılar</div>
+      <div class="item"><span class="dot d-open"></span>Kartopu</div>
+    </div>
+
+    <div class="phase">
+      <div class="head"><span>P2 · Analiz Motoru</span><span>2/6</span></div>
+      <div class="bar"><i style="width:33%"></i></div>
+      <div class="item"><span class="dot d-done"></span>Atıf-bağlamı</div>
+      <div class="item"><span class="dot d-part"></span>Künye v2</div>
+    </div>
+
+    <div class="legend">
+      <h3 id="l-legend">LEJANT</h3>
+      <div class="row"><span class="sw done"></span><span data-i18n="lgDone">Kodlandı / Done</span></div>
+      <div class="row"><span class="sw part"></span><span data-i18n="lgPart">Sürüyor / In progress</span></div>
+      <div class="row"><span class="sw open"></span><span data-i18n="lgOpen">Planlandı / Planned</span></div>
+      <div class="row"><span class="sw go"></span><span data-i18n="lgGo">GO bekliyor / Awaiting GO</span></div>
+      <div class="row"><span class="sw add"></span><span data-i18n="lgAdd">Eklenecek (delta)</span></div>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MERKEZ SAHNE ═══════════ -->
+  <section class="stage card">
+    <nav class="tabs">
+      <button class="tab on" id="tab-map"     onclick="show('map')"><span data-i18n="tabMap">Harita</span></button>
+      <button class="tab"   id="tab-timeline" onclick="show('timeline')"><span data-i18n="tabTime">Zaman Çizgisi</span></button>
+      <button class="tab"   id="tab-delta"    onclick="show('delta')"><span data-i18n="tabDelta">Delta</span></button>
+    </nav>
+
+    <!-- ─── HARİTA ─── -->
+    <div class="viewwrap" id="view-map">
+      <div class="canvas">
+        <svg class="wires" viewBox="0 0 900 480" preserveAspectRatio="none">
+          <defs>
+            <marker id="arw" viewBox="0 0 8 8" refX="8" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L8,4 L0,8 z" fill="#94a3b8"/>
+            </marker>
+          </defs>
+          <path d="M250,75  H430"  stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)" fill="none"/>
+          <path d="M160,105 V205 H210" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)" fill="none"/>
+          <path d="M340,240 H470"  stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)" fill="none"/>
+          <path d="M600,215 V355 H585" stroke="#94a3b8" stroke-width="2" marker-end="url(#arw)" fill="none"/>
+          <path d="M330,255 C280,320 260,330 245,345" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="5 5" fill="none"/>
+        </svg>
+
+        <!-- düğümler: tıklanabilir -->
+        <div class="node done goring" style="left:430px;top:38px" onclick="pick(this,'handlers/')">
+          <div class="t">handlers/</div><div class="p">functions/src/handlers</div>
+          <span class="chip done">🟢 <span data-i18n="sDone">Kodlandı</span></span>
+        </div>
+        <div class="node part" style="left:60px;top:40px" onclick="pick(this,'frontend/')">
+          <div class="t">frontend/</div><div class="p">components,literature</div>
+          <span class="chip part">🟡 <span data-i18n="sPart">Sürüyor</span></span>
+        </div>
+        <div class="node done" style="left:470px;top:178px" onclick="pick(this,'services/')">
+          <div class="t">services/</div><div class="p">ai · literature · graph</div>
+          <span class="chip done">🟢 <span data-i18n="sDone">Kodlandı</span></span>
+        </div>
+        <div class="node open" style="left:85px;top:345px" onclick="pick(this,'kokpit/snowball')">
+          <div class="t">snowball/</div><div class="p">(planlanan dilim)</div>
+          <span class="chip open">⚪ <span data-i18n="sOpen">Planlandı</span></span>
+        </div>
+        <div class="node part" style="left:210px;top:205px" onclick="pick(this,'literature.ts')">
+          <div class="t">literature.ts</div><div class="p">2.064 satır</div>
+          <span class="chip part">🟡 <span data-i18n="sPart">Sürüyor</span></span>
+        </div>
+
+        <div class="hint" data-i18n="hintMap">💡 Düğüme tıklayın → sağda detay açılır</div>
+        <div class="zoom"><button title="Yakınlaş">＋</button><button title="Uzaklaş">－</button><button title="Sığdır" onclick="alert('Harita görünümü sıfırlandı')">⤢</button></div>
+      </div>
+    </div>
+
+    <!-- ─── ZAMAN ÇİZGİSİ ─── -->
+    <div class="viewwrap" id="view-timeline" hidden>
+      <div class="tl">
+        <div class="tlrow"><span class="tlname">P0 · Güven</span><div class="tlbar"><i style="width:100%"></i></div></div>
+        <div class="chips">
+          <span class="tchip">🟢 #1 Konsensüs körlüğü</span><span class="tchip">🟢 Gerçek embedding</span>
+          <span class="tchip">🟢 SDK göçü</span><span class="tchip">🟢 Güvenlik hijyeni</span>
+        </div>
+        <div class="tlrow" style="margin-top:18px"><span class="tlname">P1 · Altyapı</span><div class="tlbar"><i style="width:57%"></i></div></div>
+        <div class="chips">
+          <span class="tchip">🟢 Kanonik eser modeli</span><span class="tchip">🟡 Bağlayıcılar</span>
+          <span class="tchip">🟡 Sorgu boru hattı</span><span class="tchip">⚪ Kartopu</span><span class="tchip">⚪ Filtreler</span>
+        </div>
+        <div class="tlrow" style="margin-top:18px"><span class="tlname">P3 · İş Akışı</span><div class="tlbar"><i style="width:14%"></i></div></div>
+        <div class="chips">
+          <span class="tchip">🟢 Kanıt Matrisi</span><span class="tchip">⚪ Tarama modu</span>
+          <span class="tchip">⚪ Sentez Notları</span><span class="tchip">⚪ Eser assembly</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── DELTA ─── -->
+    <div class="viewwrap" id="view-delta" hidden>
+      <div class="delta-note" data-i18n="deltaNote">
+        ⚖️ Seçili plan maddesi: <b>“Kartopu (snowballing)”</b> — bu dilim kodlandığında haritada aşağıdaki değişiklikler oluşacaktır (henüz kodlanmadı).
+      </div>
+      <div class="canvas" style="height:300px">
+        <div class="node ghost" style="left:120px;top:80px">
+          <div class="t">snowball/</div><div class="p">yeni modül</div>
+          <span class="chip done" style="opacity:.6">⬚ <span data-i18n="sAdd">Eklenecek</span></span>
+        </div>
+        <div class="node done" style="left:420px;top:80px" >
+          <div class="t">literature.ts</div><div class="p">değişecek •</div>
+          <span class="chip part">🟡 <span data-i18n="sTouch">Değişecek</span></span>
+        </div>
+      </div>
+      <div class="affected">
+        <b data-i18n="affTests">Etkilenecek test dosyaları:</b>
+        <ul>
+          <li><code>snowball.test.ts</code> — <em>yeni</em></li>
+          <li><code>literature.merge.test.ts</code> — güncellenecek</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ SAĞ ÇEKMECE ═══════════ -->
+  <aside class="drawer card" id="drawer">
+    <h3 id="l-detail">DETAY</h3>
+    <div id="drawerBody">
+      <p style="color:var(--muted)" data-i18n="drawerHint">◀ Haritada bir düğüme tıklayın.</p>
+    </div>
+  </aside>
+</main>
+
+<footer class="statusbar">
+  <span>📊 62 madde · 9 faz</span>
+  <span>🕒 <span data-i18n="genAt">üretilme</span>: 2026-08-24 07:51</span>
+  <span class="stale" data-i18n="stale">🕐 Veri bayat — CLI'yı yeniden koşun</span>
+  <span class="spacer"></span>
+  <span>v0.2 önizleme</span>
+</footer>
+
+<script>
+/* ── DİL SÖZLÜĞÜ (labels.ts ile aynı disiplin) ── */
+const DICT = {
+ tr:{tabMap:"Harita",tabTime:"Zaman Çizgisi",tabDelta:"Delta",
+     sDone:"Kodlandı",sPart:"Sürüyor",sOpen:"Planlandı",sAdd:"Eklenecek",sTouch:"Değişecek",
+     lgDone:"Kodlandı / Done",lgPart:"Sürüyor / In progress",lgOpen:"Planlandı / Planned",
+     lgGo:"GO bekliyor / Awaiting GO",lgAdd:"Eklenecek (delta)",
+     hintMap:"💡 Düğüme tıklayın → sağda detay açılır",
+     drawerHint:"◀ Haritada bir düğüme tıklayın.",
+     affTests:"Etkilenecek test dosyaları:",deltaNote:'⚖️ Seçili plan maddesi: <b>"Kartopu (snowballing)"</b> — bu dilim kodlandığında haritada aşağıdaki değişiklikler oluşacaktır (henüz kodlanmadı).',
+     genAt:"üretilme",stale:"🕐 Veri bayat — CLI'yı yeniden koşun",
+     dStatus:"Durum",dPath:"Yol",dPhase:"İlgili faz maddesi",dSrc:"Kaynağı aç ↗"},
+ en:{tabMap:"Map",tabTime:"Timeline",tabDelta:"Delta",
+     sDone:"Done",sPart:"In progress",sOpen:"Planned",sAdd:"Will add",sTouch:"Will change",
+     lgDone:"Done",lgPart:"In progress",lgOpen:"Planned",
+     lgGo:"Awaiting GO",lgAdd:"Will add (delta)",
+     hintMap:"💡 Click a node → details open on the right",
+     drawerHint:"◀ Click a node on the map.",
+     affTests:"Affected test files:",deltaNote:'⚖️ Selected plan item: <b>"Snowballing"</b> — once implemented, these changes will appear on the map (not coded yet).',
+     genAt:"generated",stale:"🕐 Data stale — rerun the CLI",
+     dStatus:"Status",dPath:"Path",dPhase:"Related phase item",dSrc:"Open source ↗"}
+};
+let LANG='tr';
+
+function setLang(l){
+  LANG=l;
+  document.documentElement.lang=l;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const v=DICT[l][el.dataset.i18n]; if(v!==undefined) el.innerHTML=v;
+  });
+  document.getElementById('langTr').classList.toggle('on',l==='tr');
+  document.getElementById('langEn').classList.toggle('on',l==='en');
+}
+
+/* ── TEMA ── */
+function toggleTheme(){
+  const b=document.body;
+  b.dataset.theme = b.dataset.theme==='dark' ? '' : 'dark';
+}
+
+/* ── SEKMELER ── */
+function show(v){
+  ['map','timeline','delta'].forEach(k=>{
+    document.getElementById('view-'+k).hidden = k!==v;
+    document.getElementById('tab-'+k).classList.toggle('on',k===v);
+  });
+}
+
+/* ── DÜĞÜM SEÇİMİ → ÇEKMECE ── */
+const PHASE_OF={
+ 'handlers/':'P0 · Güvenlik hijyeni ✅',
+ 'frontend/':'P2.5 · Öneri çipleri ✅ (kısmen)',
+ 'services/':'P2 · Atıf-bağlamı sınıflandırması ✅',
+ 'literature.ts':'P2 · Retraksiyon bayrakları 🟡',
+ 'kokpit/snowball':'P1 · Kartopu (snowballing) ⚪'
+};
+function pick(el,path){
+  document.querySelectorAll('.node').forEach(n=>n.classList.remove('sel'));
+  el.classList.add('sel');
+  const status=el.querySelector('.chip').innerText.trim();
+  const dark=document.body.dataset.theme==='dark';
+  document.getElementById('drawerBody').innerHTML=`
+    <div class="field"><b>${DICT[LANG].dStatus}</b> ${status}</div>
+    <div class="field"><b>${DICT[LANG].dPath}</b> <code>${path}</code></div>
+    <div class="field"><b>${DICT[LANG].dPhase}</b> ${PHASE_OF[path]||'—'}</div>
+    <a class="srcbtn" href="#" onclick="return false">${DICT[LANG].dSrc}</a>`;
+}
+
+setLang('tr');
+</script>
+</body>
+</html>
