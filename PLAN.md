@@ -10,6 +10,13 @@
 
 ## Dilim 0 · Motoru ayağa kaldırma — B YOLU KARARLI (storage'sız lite)
 
+> **Kapsam ayrımı (2026-08-25):** Bu dilim **referans doğrulama** kapısıdır —
+> harici AI sağlayıcılı GitDiagram lite koşumunun uçtan uca görülmesi. Ana ürün
+> kapısı DEĞİLDİR: Dilim 2.0 saf diyagram motoru AI çağrısı olmadan çalışır ve
+> bu dilimin beklemesiyle engellenmez. Harici API/model çağrısı için ayrıca
+> Patron GO'su gerekir; GO gelene kadar durum **harici GO bekliyor** olarak
+> korunur, kapanmış gösterilmez.
+
 > **Patron kararı 2026-08-24:** R2/Upstash hesap açılmayacak; referans motor
 > `lite` dalında storage'sız çalışır. Uretilen diyagram önbelleklenmez, her
 > ziyarette yeniden üretilir — Dilim 2 UI'sı için yeterli.
@@ -101,14 +108,31 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 
 ## Dilim 2.0 · Saf diyagram motoru nakli (AI'sız) — [hazirlik-auditi §3]
 
-- [ ] `lib/diagram/graph-schema.ts` ← gitdiagram `features/diagram/graph.ts`
-      (141 satır; kaynak zod^4 strictObject kullanıyor → zod^3 uyum nöbetçisi)
-- [ ] `lib/diagram/compile.ts` ← `server/generate/graph.ts` validate+compile
-      +stripUnknownNodePaths (473 satır; saf — I/O yok)
-- [ ] `lib/diagram/mermaid-sanitize.ts` ← `mermaid-validator.ts` (343) + testleri
-- [ ] Adaptör: proje düğümleri (`IndexReceipt.nodes`) → `DiagramGraph`
-      *(eşleme tablosu: hazirlik-auditi §1.3/§4; status→tone sözlüğü §3.1
-      belirteçlerine bağlanır)*
+> **Yol kararı (2026-08-25):** `lib/diagram/*` yerine repo yapısına uygun
+> `kokpit/diagram/*` kullanılır — tsconfig/vitest yalnız `kokpit/**` tarar,
+> yapı sarsıntısı olmadan aynı kapsamda typecheck+test edilir.
+
+- [x] `kokpit/diagram/graph-schema.ts` ← gitdiagram `features/diagram/graph.ts`
+      (zod^4 strictObject → zod^3 `.strict()` uyumu nöbetçili; schemaVersion +
+      metadata sözleşmesi eklendi; saf `validateDiagramGraph` duplicate/
+      unknown-edge/missing-path kategorileriyle) · kanıt: 11 nöbetçi test
+- [x] `kokpit/diagram/mermaid-sanitize.ts` ← `mermaid-validator.ts` fikrinin
+      saf-string uyarlaması (safeMermaidId/escapeMermaidLabel/
+      validateMermaidSource/buildFileLink) · kanıt: 32 enjeksiyon/determinizm
+      nöbetçisi
+- [x] `kokpit/diagram/compile.ts` ← `server/generate/graph.ts` validate+compile
+      fikrinin saf uyarlaması (deterministik sıralama; subgraph/classDef kasıtlı
+      dışarıda — sanitizer yönerge redline'ı) · kanıt: 14 derleme nöbetçisi
+- [x] Adaptör: gerçek import taraması (`IndexReceipt.groups` +
+      `kokpit/importgraph`) → `DiagramGraph` + düğüm-başına makbuz
+      (`receipt-adapter.ts`: projectId/dal/commit/yol/faz/kanıt-türü;
+      plan-path-match · unmeasured hiyerarşisi; checkbox tek başına kod kanıtı
+      değil nöbetçili) · kanıt: 8 adaptör testi
+- **2026-08-25 canlı kabul:** geçici portta KokpitPro kendi reposu AI çağrısı
+  OLMADAN ölçüldü — 53 dosya tarandı, 34 düğüm / 48 kenar grafı, done·open·
+  unmeasured 3 durum, 117 satır deterministik Mermaid (GitHub click linkli),
+  makbuz `local-859d21494b4a · codex/dilim-2-real-map · 8821a1e`; sır yolları
+  404, yabancı Host 403.
 - **Kabul:** KokpitPro kendi reposunu AI çağrısı OLMADAN Mermaid haritası olarak
   çizer; ≥3 durum aynı ekranda görünür (Dilim 2 kabulüyle birleşir).
 - Geçici köprü: UI'ya "GitDiagram'da aç" link-butonu [(a)=XS]; iframe istenirse
@@ -119,9 +143,22 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 > **D1 uygulaması bu dilimde başlar:** `kokpit/i18n/labels.ts` kuruldu
 > (tr/en parite nöbetçili); bileşen metinleri yalnız sözlükten gelir.
 
-- [ ] Import-grafı: `dependency-cruiser` ile TS/JS kenarları
-- [ ] AST düğümü ↔ dizin eşlemesi → faz dilimi bağlama
-- [ ] Renk sözlüğü: kodlandı(yeşil) / sürüyor(amber) / planda(gri) / GO bekliyor(mavi)
+- [~] Import-grafı: `dependency-cruiser` ile TS/JS kenarları
+      *(motor + ürün bağlantısı canlı: `kokpit/importgraph/scan.ts`, 17 fixture
+      nöbetçisi; `/api/projects/:id/diagram` uç noktası; kokpit duman ölçümü
+      44 düğüm · 76 kenar · 3 çözülemeyen · ~0.8s)*
+- [~] AST düğümü ↔ dizin eşlemesi → faz dilimi bağlama
+      *(tam yol alt-dizesi eşleşmesi birinci kanıt; `plan-path-match` türü
+      denetçide görünür; eşleşmeyen maddeler `unmatchedPlanItems` ile görünür
+      kalır — sezgisel öneri kanıt gibi sunulmaz; test-dosyası eşleme ayrıca
+      bağlanacak)*
+- [~] Renk sözlüğü: kodlandı(yeşil) / sürüyor(amber) / planda(gri) / GO
+      bekliyor(mavi) *(--st-* belirteçleriyle boyama canlı; 'durum kanıtı yok'
+      ayrı dürüst etiket; GO halka göstergesi henüz bağlı değil)*
+- **2026-08-25 canlı kabul:** gerçek KokpitPro haritasında done·open·unmeasured
+  ≥3 durum aynı ekranda; düğümden GitHub blob kaynağına tıklama; proje
+  değişiminde seçili düğüm/denetçi/diyagram sıfırlaması kodda. 1440/1024/768
+  taşma turu ve TR/EN parite koşumu bu dilimi kapatmadan önce yapılacak.
 - **Kabul:** kendi reposunun haritasında en az 3 durum aynı anda görünür.
 
 ## Dilim 2.1 · Proje Merkezi + Repo Bağlantı Yaşam Döngüsü

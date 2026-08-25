@@ -59,3 +59,31 @@ describe('UI-SPEC v0.9 persistent project lifecycle', () => {
         expect(preview).not.toMatch(/--(?:done|progress|planned|danger)(?:-soft)?\b/);
     });
 });
+
+describe('Dilim 2 real-map wiring', () => {
+    it('fetches the measured project diagram and resets it on project switch', () => {
+        expect(preview).toContain('apiRequest(`/api/projects/${encodeURIComponent(projectId)}/diagram`)');
+        const activation = /async function activateProject\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
+        expect(activation).toContain('diagramState = null;');
+        expect(activation.indexOf('resetInspector();')).toBeLessThan(activation.indexOf('await loadPlanData();'));
+        expect(activation).toContain('await loadDiagramData();');
+        expect(preview).toContain('async function loadDiagramData()');
+    });
+
+    it('keeps sample nodes honestly labeled and paints statuses only through evidence kinds', () => {
+        expect(preview).toContain('<span class="sample-label">${escapeHtml(t("sample"))}</span>');
+        expect(preview).toContain('function mapNodeStatus(evidence)');
+        expect(preview).toContain("evidence.evidenceKind === \"plan-path-match\"");
+        expect(preview).toContain('t("unmeasuredStatus")');
+        expect(preview).not.toMatch(/style="[^"]*#[0-9a-fA-F]{3,8}/);
+    });
+
+    it('exposes the deterministic mermaid export and evidence receipt inspector', () => {
+        expect(preview).toContain('id="mermaidExport"');
+        expect(preview).toContain('id="mermaidSource"');
+        expect(preview).toContain('id="copyMermaid"');
+        expect(preview).toContain('function renderRealNodeInspector(id)');
+        expect(preview).toContain('evidenceKindLabel(evidence.evidenceKind)');
+        expect(preview).toContain('projectId:<code>${escapeHtml(evidence.projectId)}</code>');
+    });
+});

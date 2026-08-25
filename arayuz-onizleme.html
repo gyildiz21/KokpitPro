@@ -280,8 +280,7 @@
     .graph-viewport { position: relative; min-height: 518px; overflow: auto; background-color: var(--surface); background-image: radial-gradient(circle, color-mix(in srgb, var(--line-strong) 45%, transparent) 1px, transparent 1px); background-size: 20px 20px; }
     .graph-layer { position: relative; width: max(100%, 680px); height: 518px; transform: scale(1); transform-origin: 50% 50%; transition: transform 180ms ease; }
     .wires { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--line-strong); pointer-events: none; }
-    .wires path { fill: none; stroke: currentColor; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
-    .wires path.planned { stroke-dasharray: 5 6; opacity: .65; }
+    .wires line { stroke: currentColor; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
     .map-node { position: absolute; width: 174px; min-height: 78px; padding: 11px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: color-mix(in srgb, var(--surface-2) 92%, transparent); box-shadow: 0 12px 30px rgba(1, 7, 13, .16); cursor: pointer; text-align: left; transition: border-color 180ms ease, background 180ms ease, opacity 180ms ease, transform 180ms ease; }
     .map-node:hover { z-index: 2; transform: translateY(-2px); border-color: var(--accent); background: var(--surface-3); }
     .map-node[aria-pressed="true"] { z-index: 3; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), 0 18px 40px rgba(1, 7, 13, .24); }
@@ -328,6 +327,10 @@
     .issue-row:hover { background: var(--surface-2); }
     .issue-row.is-filtered { display: none; }
     .sample-label { display: inline-flex; align-items: center; justify-content: center; width: fit-content; min-height: 22px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--text-3); font-size: 9px; font-weight: 740; letter-spacing: .07em; text-transform: uppercase; }
+    .mermaid-export { margin: 10px 0 0; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
+    .mermaid-export summary { cursor: pointer; padding: 9px 12px; color: var(--text-2); font-size: 11px; font-weight: 700; }
+    .mermaid-export pre { max-height: 220px; overflow: auto; margin: 0; padding: 10px 12px; border-top: 1px solid var(--line); color: var(--text-2); font-family: var(--mono, monospace); font-size: 10.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+    .mermaid-export .text-button { margin: 8px 12px 10px; }
     .issue-title { display: block; color: var(--text); font-size: 11.5px; font-weight: 640; }
     .issue-path { display: block; margin-top: 3px; overflow: hidden; color: var(--text-3); font-family: ui-monospace, monospace; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
     .issue-rule { color: var(--text-2); font-size: 11px; }
@@ -616,10 +619,11 @@
 
         <section class="view-panel" id="view-map" role="tabpanel" aria-labelledby="tab-map">
           <div class="map-toolbar"><span id="mapCount" aria-live="polite">5 / 30 örnek düğüm</span><div class="map-tools"><button class="icon-button" id="zoomOut" type="button" data-i18n-aria="zoomOut" aria-label="Uzaklaştır"><svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button><button class="icon-button" id="zoomIn" type="button" data-i18n-aria="zoomIn" aria-label="Yakınlaştır"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button><button class="icon-button" id="zoomFit" type="button" data-i18n-aria="fit" aria-label="Haritayı sığdır"><svg class="icon" aria-hidden="true"><use href="#i-fit"></use></svg></button></div></div>
-          <div class="graph-viewport"><div class="graph-layer" id="graphLayer"><svg class="wires" viewBox="0 0 900 518" preserveAspectRatio="none" aria-hidden="true"><path d="M240 102 H500"></path><path d="M185 150 V245 H320"></path><path d="M465 280 H610"></path><path d="M700 318 V405 H330"></path><path class="planned" d="M410 335 C360 385 320 395 280 410"></path></svg>
+          <div class="graph-viewport"><div class="graph-layer" id="graphLayer"><svg class="wires" id="mapWires" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
             <div id="graphNodes"></div>
             <div class="graph-help"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="mapHelp">Düğümü seçin; kanıt sağdaki denetçide açılır.</span></div>
           </div></div>
+          <details class="mermaid-export" id="mermaidExport" hidden><summary data-i18n="mermaidSourceTitle">Deterministik Mermaid kaynağı</summary><pre id="mermaidSource" aria-live="polite"></pre><button class="text-button" id="copyMermaid" type="button"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span data-i18n="copyMermaidAction">Mermaid'i kopyala</span></button></details>
         </section>
 
         <section class="view-panel" id="view-timeline" role="tabpanel" aria-labelledby="tab-timeline" hidden><div class="timeline"><div class="preview-note"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="timelineProjectScoped">Zaman çizgisi yalnız etkin projenin izlenebilir faz maddelerinden üretilir.</span></div><div id="timelineContent"></div></div></section>
@@ -670,6 +674,13 @@
 > bağışı). UI kodu yazan her dilim bu sözleşmeye tabidir.
 
 ## Dilim 0 · Motoru ayağa kaldırma — B YOLU KARARLI (storage'sız lite)
+
+> **Kapsam ayrımı (2026-08-25):** Bu dilim **referans doğrulama** kapısıdır —
+> harici AI sağlayıcılı GitDiagram lite koşumunun uçtan uca görülmesi. Ana ürün
+> kapısı DEĞİLDİR: Dilim 2.0 saf diyagram motoru AI çağrısı olmadan çalışır ve
+> bu dilimin beklemesiyle engellenmez. Harici API/model çağrısı için ayrıca
+> Patron GO'su gerekir; GO gelene kadar durum **harici GO bekliyor** olarak
+> korunur, kapanmış gösterilmez.
 
 > **Patron kararı 2026-08-24:** R2/Upstash hesap açılmayacak; referans motor
 > `lite` dalında storage'sız çalışır. Uretilen diyagram önbelleklenmez, her
@@ -762,14 +773,31 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 
 ## Dilim 2.0 · Saf diyagram motoru nakli (AI'sız) — [hazirlik-auditi §3]
 
-- [ ] `lib/diagram/graph-schema.ts` ← gitdiagram `features/diagram/graph.ts`
-      (141 satır; kaynak zod^4 strictObject kullanıyor → zod^3 uyum nöbetçisi)
-- [ ] `lib/diagram/compile.ts` ← `server/generate/graph.ts` validate+compile
-      +stripUnknownNodePaths (473 satır; saf — I/O yok)
-- [ ] `lib/diagram/mermaid-sanitize.ts` ← `mermaid-validator.ts` (343) + testleri
-- [ ] Adaptör: proje düğümleri (`IndexReceipt.nodes`) → `DiagramGraph`
-      *(eşleme tablosu: hazirlik-auditi §1.3/§4; status→tone sözlüğü §3.1
-      belirteçlerine bağlanır)*
+> **Yol kararı (2026-08-25):** `lib/diagram/*` yerine repo yapısına uygun
+> `kokpit/diagram/*` kullanılır — tsconfig/vitest yalnız `kokpit/**` tarar,
+> yapı sarsıntısı olmadan aynı kapsamda typecheck+test edilir.
+
+- [x] `kokpit/diagram/graph-schema.ts` ← gitdiagram `features/diagram/graph.ts`
+      (zod^4 strictObject → zod^3 `.strict()` uyumu nöbetçili; schemaVersion +
+      metadata sözleşmesi eklendi; saf `validateDiagramGraph` duplicate/
+      unknown-edge/missing-path kategorileriyle) · kanıt: 11 nöbetçi test
+- [x] `kokpit/diagram/mermaid-sanitize.ts` ← `mermaid-validator.ts` fikrinin
+      saf-string uyarlaması (safeMermaidId/escapeMermaidLabel/
+      validateMermaidSource/buildFileLink) · kanıt: 32 enjeksiyon/determinizm
+      nöbetçisi
+- [x] `kokpit/diagram/compile.ts` ← `server/generate/graph.ts` validate+compile
+      fikrinin saf uyarlaması (deterministik sıralama; subgraph/classDef kasıtlı
+      dışarıda — sanitizer yönerge redline'ı) · kanıt: 14 derleme nöbetçisi
+- [x] Adaptör: gerçek import taraması (`IndexReceipt.groups` +
+      `kokpit/importgraph`) → `DiagramGraph` + düğüm-başına makbuz
+      (`receipt-adapter.ts`: projectId/dal/commit/yol/faz/kanıt-türü;
+      plan-path-match · unmeasured hiyerarşisi; checkbox tek başına kod kanıtı
+      değil nöbetçili) · kanıt: 8 adaptör testi
+- **2026-08-25 canlı kabul:** geçici portta KokpitPro kendi reposu AI çağrısı
+  OLMADAN ölçüldü — 53 dosya tarandı, 34 düğüm / 48 kenar grafı, done·open·
+  unmeasured 3 durum, 117 satır deterministik Mermaid (GitHub click linkli),
+  makbuz `local-859d21494b4a · codex/dilim-2-real-map · 8821a1e`; sır yolları
+  404, yabancı Host 403.
 - **Kabul:** KokpitPro kendi reposunu AI çağrısı OLMADAN Mermaid haritası olarak
   çizer; ≥3 durum aynı ekranda görünür (Dilim 2 kabulüyle birleşir).
 - Geçici köprü: UI'ya "GitDiagram'da aç" link-butonu [(a)=XS]; iframe istenirse
@@ -780,9 +808,22 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 > **D1 uygulaması bu dilimde başlar:** `kokpit/i18n/labels.ts` kuruldu
 > (tr/en parite nöbetçili); bileşen metinleri yalnız sözlükten gelir.
 
-- [ ] Import-grafı: `dependency-cruiser` ile TS/JS kenarları
-- [ ] AST düğümü ↔ dizin eşlemesi → faz dilimi bağlama
-- [ ] Renk sözlüğü: kodlandı(yeşil) / sürüyor(amber) / planda(gri) / GO bekliyor(mavi)
+- [~] Import-grafı: `dependency-cruiser` ile TS/JS kenarları
+      *(motor + ürün bağlantısı canlı: `kokpit/importgraph/scan.ts`, 17 fixture
+      nöbetçisi; `/api/projects/:id/diagram` uç noktası; kokpit duman ölçümü
+      44 düğüm · 76 kenar · 3 çözülemeyen · ~0.8s)*
+- [~] AST düğümü ↔ dizin eşlemesi → faz dilimi bağlama
+      *(tam yol alt-dizesi eşleşmesi birinci kanıt; `plan-path-match` türü
+      denetçide görünür; eşleşmeyen maddeler `unmatchedPlanItems` ile görünür
+      kalır — sezgisel öneri kanıt gibi sunulmaz; test-dosyası eşleme ayrıca
+      bağlanacak)*
+- [~] Renk sözlüğü: kodlandı(yeşil) / sürüyor(amber) / planda(gri) / GO
+      bekliyor(mavi) *(--st-* belirteçleriyle boyama canlı; 'durum kanıtı yok'
+      ayrı dürüst etiket; GO halka göstergesi henüz bağlı değil)*
+- **2026-08-25 canlı kabul:** gerçek KokpitPro haritasında done·open·unmeasured
+  ≥3 durum aynı ekranda; düğümden GitHub blob kaynağına tıklama; proje
+  değişiminde seçili düğüm/denetçi/diyagram sıfırlaması kodda. 1440/1024/768
+  taşma turu ve TR/EN parite koşumu bu dilimi kapatmadan önce yapılacak.
 - **Kabul:** kendi reposunun haritasında en az 3 durum aynı anda görünür.
 
 ## Dilim 2.1 · Proje Merkezi + Repo Bağlantı Yaşam Döngüsü
@@ -874,6 +915,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         timelinePreview: "Bu görünüm etkin projenin PLAN.md kaynağında bulunan bütün faz ve maddeleri gösterir; kapsam proje değiştirildiğinde projectId ile birlikte yenilenir.", honestState: "Dürüst boş durum", noMapping: "Bu madde için yol eşlemesi yok", noMappingBody: "Kartopu maddesi seçildi; ancak doğrulanmış dosya veya test ilişkisi üretilmedi. Kokpit tahmin göstermeyecek.", evidenceReceipt: "Kanıt makbuzu", selectedItem: "Seçili madde", source: "Kaynak", sampleRecord: "örnek kayıt", mapping: "Yol eşlemesi", unknown: "bilinmiyor", openSource: "Kaynağı aç",
         compliancePreview: "Uyum motoru bağlı değil. Aşağıdaki satırlar kuyruk, filtre ve denetçi davranışını gösteren örnek kayıtlardır.", all: "Tümü", violations: "İhlaller", syncIssues: "Defter senkronu", decisions: "Kararlar", engineOffline: "Motor bağlı değil", sample: "Örnek", error: "Hata", warning: "Uyarı", review: "İncele", fakeGateRule: "D2#4 · capability olmadan yüzey çizilmez", staleLedgerRule: "Kod değişmiş, defter kaydı doğrulanmamış", decisionRule: "İki otorite kaydı farklı yön bildiriyor", context: "Bağlam", closeInspector: "Denetçiyi kapat", nothingSelected: "Henüz seçim yok", nothingSelectedBody: "Haritada bir düğüm veya listede bir kayıt seçin. Kaynak, durum ve kanıt burada açılır.",
         planLoading: "PLAN.md yükleniyor", previewGenerated: "Canlı plan · örnek harita", snapshotPreviewGenerated: "Plan anlık görüntüsü · örnek harita", commandTitle: "Komut ve arama", commandPlaceholder: "Görünüm veya düğüm ara…", commandMap: "Haritayı aç", commandTimeline: "Zamanı aç", commandDelta: "Delta'yı aç", commandCompliance: "Uyumu aç", noResults: "Sonuç bulunamadı", navigate: "gezin", open: "aç", close: "kapat", status: "Durum", phase: "Faz", evidence: "Kanıt", demoEvidence: "Bu bilgi demo veri setinden gelir; repo kanıtı değildir.", sourceUnavailable: "Demo modunda doğrulanmış kaynak yolu yok.", filterCleared: "Faz seçimi sıfırlandı",
+        unmeasuredStatus: "Durum kanıtı yok", evidenceMeasuredImport: "Ölçülmüş import grafiği", evidencePlanPathMatch: "Plan maddesi + yol eşleşmesi", evidenceNoClaim: "Kanıt yok — tahmin üretilmez", measuredEdgesLabel: "ölçümlü kenar", unresolvedImportsLabel: "çözülemeyen import", scannedFilesLabel: "taranan dosya", mermaidSourceTitle: "Deterministik Mermaid kaynağı", copyMermaidAction: "Mermaid'i kopyala", copiedToast: "Mermaid kaynağı kopyalandı.", openSourceOnGithub: "Kaynağı GitHub'da aç", sourceLocalNote: "Yerel kök tarayıcıdan açılamaz; bağlantı yalnız GitHub uzak adresiyle üretilir.", sampleNodeCount: "örnek düğüm", realNodeCount: "ölçümlü düğüm", diagramUnavailableNote: "Diyagram motoru bu proje için ölçüm yapamadı; harita örnek veriyle kalır.",
         planLoadError: "PLAN.md okunamadı ve gömülü anlık görüntü kullanılamadı.", planOverview: "Plan özeti", planItems: "Alt maddeler", planLive: "canlı", planSnapshot: "anlık görüntü", planTruthNote: "Sayaçlar PLAN.md işaretlerini özetler. ‘Tamamlandı’ kaydı tek başına kod kanıtı değildir; doğrulanmış dosya ve test eşlemesi ayrıca gösterilir.", planDone: "Tamamlandı", planPartial: "Kısmi", planOpen: "Açık", planBlocked: "Engelli", acceptance: "Beklenen kabul", currentRecord: "Mevcut kayıt", expectedOutput: "Beklenen çıktı", codeEvidence: "Kod kanıtı", noCodeMapping: "— Kod dosyası veya test eşlemesi henüz bağlı değil.", sourceLocation: "Kaynak konumu", openPlan: "PLAN.md dosyasını aç", planDoneRecord: "PLAN.md bu maddeyi tamamlandı olarak işaretliyor.", planPartialRecord: "PLAN.md bu madde için kısmi ilerleme bildiriyor.", planOpenRecord: "PLAN.md bu maddeyi açık bırakıyor; tamamlanma kaydı yok.", planBlockedRecord: "PLAN.md bu madde için engel bildiriyor.", expectedUnspecified: "Plan maddesi ayrı bir sonuç açıklaması vermiyor; başlıktaki işin tamamlanması bekleniyor.", noAcceptance: "Bu faz için ayrı bir kabul cümlesi bulunamadı.", planSourceLanguage: "Kaynak metin Türkçe kalır", planGroups: "faz", planItemCount: "madde", remaining: "bekleyen",
         viewMapTitle: "Mimari harita", viewMapBody: "Faz ile kod yüzeyini aynı bağlamda inceleyin; bir düğüm seçerek kanıta inin.", viewTimelineTitle: "Faz zaman çizgisi", viewTimelineBody: "Yol haritası maddelerini faz ve durum bağlamında tarayın.", viewDeltaTitle: "Delta ön-görünümü", viewDeltaBody: "Plan maddesinin kod yüzeyinde doğrulanmış etkisi varsa görün; yoksa tahmin yerine boş durum alın.", viewComplianceTitle: "Uyum kuyruğu", viewComplianceBody: "Defter, kural ve karar kayıtlarını aynı kanıt hiyerarşisinde inceleyin.",
         recentProjects: "Son projeler", addProject: "Proje ekle", projectsNav: "Projeler", workspaceNav: "Çalışma alanı", compareNav: "Karşılaştır", projectHubLabel: "Proje merkezi", projectHubTitle: "Tüm repolar, tek güvenilir bağlam.", projectHubBody: "Yerel ve GitHub projelerini kaydedin; hangi dalın, plan kaynağının ve indeks sonucunun açık olduğunu proje değiştirmeden önce görün.", refresh: "Yenile", registeredProjects: "Kayıtlı projeler", previewRecords: "Kayıtlar diskte kalıcıdır", activeContext: "Etkin bağlam", sourceType: "Kaynak türü", branch: "Dal", planSource: "Plan kaynağı", lastIndex: "Son indeks", sourceStep: "Kaynak", sourceStepBody: "Yerel klasör veya GitHub reposu.", verifyStep: "Doğrula", verifyStepBody: "Repo kökü, dal ve erişim sınırı.", indexStep: "İndeksle", indexStepBody: "PLAN/ROADMAP, faz ve kod yüzeyi.", readyStep: "Hazır", readyStepBody: "Projeyi tek bağlamda çalışma alanına aç.", portfolioLabel: "Portföy görünümü", compareTitle: "Projeleri karıştırmadan karşılaştırın.", compareBody: "Kaynak, dal, güncellik ve plan kapsamı ayrı kalır. Bilinmeyen değerler sıfıra çevrilmez; tek bir yanıltıcı sağlık yüzdesi üretilmez.", openWorkspace: "Etkin projeyi aç", project: "Proje", sourceBranch: "Kaynak / dal", connection: "Bağlantı", planCoverage: "Plan kapsamı", nextAction: "Sonraki eylem", compareNote: "Karşılaştırma yalnız özet düzeyindedir. Bir projeyi açtığınızda çalışma alanı o projectId için baştan yüklenir.", timelineProjectScoped: "Zaman çizgisi yalnız etkin projenin kalıcı indeks makbuzundan üretilir.", interactivePreview: "Gerçek bağlantı", connectTitle: "Projeyi KokpitPro'ya ekle", connectIntro: "Repo doğrulanır, plan kaynağı gerçek parser ile indekslenir ve kayıt diskte kalıcı tutulur.", cancel: "İptal", back: "Geri", continue: "Devam", localRepo: "Yerel repo", localRepoBody: "Bu bilgisayardaki izinli bir repo kökünü seçin; dosya erişimi yalnız o kökle sınırlanır.", githubRepo: "GitHub", githubRepoBody: "GitHub App ile yalnız seçtiğiniz repolara ve salt okunur içeriğe erişin.", verifyConnection: "Bağlantıyı doğrula", startIndex: "İndeksi kaydet", addPreviewRecord: "Kalıcı kaydı oluştur", finish: "Bitir", openProject: "Çalışma alanında aç", repairConnection: "Bağlantıyı onar", sourceLabel: "Kaynak", statusLabel: "Durum", planLabel: "Plan", noRealConnection: "Repo doğrulandı, indekslendi ve kalıcı kaydedildi."
@@ -888,6 +930,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         timelinePreview: "This view shows every phase and item found in the active project's PLAN.md source; scope reloads with projectId when the project changes.", honestState: "Honest empty state", noMapping: "No path mapping for this item", noMappingBody: "The Snowballing item is selected, but no verified file or test relationship was produced. Kokpit will not guess.", evidenceReceipt: "Evidence receipt", selectedItem: "Selected item", source: "Source", sampleRecord: "sample record", mapping: "Path mapping", unknown: "unknown", openSource: "Open source",
         compliancePreview: "The compliance engine is not connected. The rows below are samples for queue, filter, and inspector behavior.", all: "All", violations: "Violations", syncIssues: "Ledger sync", decisions: "Decisions", engineOffline: "Engine not connected", sample: "Sample", error: "Error", warning: "Warning", review: "Review", fakeGateRule: "D2#4 · do not draw a surface without capability", staleLedgerRule: "Code changed; the ledger entry is not verified", decisionRule: "Two authority records point in different directions", context: "Context", closeInspector: "Close inspector", nothingSelected: "Nothing selected", nothingSelectedBody: "Select a node on the map or a record in a list. Source, status, and evidence open here.",
         planLoading: "Loading PLAN.md", previewGenerated: "Live plan · sample map", snapshotPreviewGenerated: "Plan snapshot · sample map", commandTitle: "Commands and search", commandPlaceholder: "Search views or nodes…", commandMap: "Open map", commandTimeline: "Open timeline", commandDelta: "Open delta", commandCompliance: "Open compliance", noResults: "No results found", navigate: "navigate", open: "open", close: "close", status: "Status", phase: "Phase", evidence: "Evidence", demoEvidence: "This information comes from the demo dataset; it is not repository evidence.", sourceUnavailable: "No verified source path is available in demo mode.", filterCleared: "Phase selection reset",
+        unmeasuredStatus: "No status evidence", evidenceMeasuredImport: "Measured import graph", evidencePlanPathMatch: "Plan item + path match", evidenceNoClaim: "No evidence — no guess produced", measuredEdgesLabel: "measured edges", unresolvedImportsLabel: "unresolved imports", scannedFilesLabel: "scanned files", mermaidSourceTitle: "Deterministic Mermaid source", copyMermaidAction: "Copy Mermaid", copiedToast: "Mermaid source copied.", openSourceOnGithub: "Open source on GitHub", sourceLocalNote: "A local root cannot be opened from the browser; links require a GitHub remote.", sampleNodeCount: "sample nodes", realNodeCount: "measured nodes", diagramUnavailableNote: "The diagram engine could not measure this project; the map keeps sample data.",
         planLoadError: "PLAN.md could not be read and the embedded snapshot was unavailable.", planOverview: "Plan overview", planItems: "Sub-items", planLive: "live", planSnapshot: "snapshot", planTruthNote: "Counts summarize PLAN.md markers. A ‘complete’ record is not code evidence on its own; verified file and test mappings are shown separately.", planDone: "Complete", planPartial: "Partial", planOpen: "Open", planBlocked: "Blocked", acceptance: "Expected acceptance", currentRecord: "Current record", expectedOutput: "Expected outcome", codeEvidence: "Code evidence", noCodeMapping: "— Code file or test mapping is not connected yet.", sourceLocation: "Source location", openPlan: "Open PLAN.md", planDoneRecord: "PLAN.md marks this item as complete.", planPartialRecord: "PLAN.md reports partial progress for this item.", planOpenRecord: "PLAN.md leaves this item open; there is no completion record.", planBlockedRecord: "PLAN.md reports a blocker for this item.", expectedUnspecified: "The plan item has no separate outcome statement; the work named in the title is expected to be completed.", noAcceptance: "No separate acceptance statement was found for this phase.", planSourceLanguage: "Source content remains in Turkish", planGroups: "phases", planItemCount: "items", remaining: "remaining",
         viewMapTitle: "Architecture map", viewMapBody: "Inspect phase and code surfaces in the same context, then select a node to reach its evidence.", viewTimelineTitle: "Phase timeline", viewTimelineBody: "Scan roadmap items in phase and status context.", viewDeltaTitle: "Delta preview", viewDeltaBody: "See a plan item's verified code impact when available; receive an honest empty state instead of a guess when it is not.", viewComplianceTitle: "Compliance queue", viewComplianceBody: "Review ledger, rule, and decision records in one evidence hierarchy.",
         recentProjects: "Recent projects", addProject: "Add project", projectsNav: "Projects", workspaceNav: "Workspace", compareNav: "Compare", projectHubLabel: "Project hub", projectHubTitle: "Every repository, one reliable context.", projectHubBody: "Register local and GitHub projects, then verify the branch, plan source, and index state before switching context.", refresh: "Refresh", registeredProjects: "Registered projects", previewRecords: "Records persist on disk", activeContext: "Active context", sourceType: "Source type", branch: "Branch", planSource: "Plan source", lastIndex: "Last index", sourceStep: "Source", sourceStepBody: "A local folder or GitHub repository.", verifyStep: "Verify", verifyStepBody: "Repository root, branch, and access boundary.", indexStep: "Index", indexStepBody: "PLAN/ROADMAP, phases, and code surface.", readyStep: "Ready", readyStepBody: "Open the project in one isolated workspace.", portfolioLabel: "Portfolio view", compareTitle: "Compare projects without mixing them.", compareBody: "Source, branch, freshness, and plan scope remain separate. Unknown values do not become zero and no misleading health score is produced.", openWorkspace: "Open active project", project: "Project", sourceBranch: "Source / branch", connection: "Connection", planCoverage: "Plan coverage", nextAction: "Next action", compareNote: "Comparison stays at summary level. Opening a project reloads the workspace for that projectId.", timelineProjectScoped: "The timeline is generated from the active project's persistent index receipt only.", interactivePreview: "Live connection", connectTitle: "Add a project to KokpitPro", connectIntro: "The repository is verified, its plan is indexed by the real parser, and the record persists on disk.", cancel: "Cancel", back: "Back", continue: "Continue", localRepo: "Local repository", localRepoBody: "Choose an approved repository root on this computer; file access stays within that root.", githubRepo: "GitHub", githubRepoBody: "Use a GitHub App with read-only content access to repositories you select.", verifyConnection: "Verify connection", startIndex: "Save index", addPreviewRecord: "Create persistent record", finish: "Finish", openProject: "Open workspace", repairConnection: "Repair connection", sourceLabel: "Source", statusLabel: "Status", planLabel: "Plan", noRealConnection: "The repository was verified, indexed, and saved persistently."
@@ -909,6 +952,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     let selectedNode = null;
     let selectedPhase = "all";
     let phaseGroups = [];
+    let diagramState = null;
     let planSourceMode = "live";
     let zoomLevel = 1;
     let toastTimer;
@@ -1024,11 +1068,6 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       $('#activeSourceState').className = `source-state ${projectStateClass(project)}`.trim();
       $('#modeBadge').textContent = project.connectionState === "ready" ? (language === "tr" ? "Kalıcı indeks" : "Persistent index") : (language === "tr" ? "Bayat indeks" : "Stale index");
     }
-    function renderGraph() {
-      const project = activeProject();
-      $('#graphNodes').innerHTML = project.nodes.map(node => `<button class="map-node ${escapeHtml(node.position)}" type="button" data-node="${escapeHtml(node.id)}" data-phase="${escapeHtml(node.phase)}" aria-pressed="false"><span class="node-title">${escapeHtml(node.title)}</span><span class="node-path">${escapeHtml(node.path)}</span><span class="node-state"><span class="status-mark ${statusClass(node.status)}"></span><span>${escapeHtml(statusLabel(node.status))}</span></span></button>`).join("");
-      updateMapCount();
-    }
     function renderTimeline() {
       if (!phaseGroups.length) { $('#timelineContent').innerHTML = `<div class="empty-state"><h2>${language === "tr" ? "İzlenebilir faz bulunamadı" : "No traceable phases found"}</h2><p>${language === "tr" ? "Bu proje için plan kaynağı doğrulanmadan zaman çizgisi üretilmez." : "A timeline is not produced until this project's plan source is verified."}</p></div>`; return; }
       $('#timelineContent').innerHTML = phaseGroups.map(group => { const counts = phaseCounts(group.items); const items = group.items.map(item => `<button class="timeline-item" type="button" data-timeline-phase="${escapeHtml(group.id)}"><span class="status-mark ${statusClass(item.status)}"></span><span>${escapeHtml(item.title)}</span></button>`).join(""); return `<article class="timeline-group"><div class="timeline-head"><span class="timeline-name">${escapeHtml(phaseDisplayName(group))}</span><progress class="phase-progress" max="${Math.max(counts.total, 1)}" value="${counts.done}" aria-label="${escapeHtml(phaseDisplayName(group))}"></progress><span class="timeline-count">${counts.done} / ${counts.total}</span></div><div class="timeline-items">${items}</div></article>`; }).join("");
@@ -1053,11 +1092,14 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       }
       activeProjectId = projectId;
       resetInspector();
+      diagramState = null;
       selectedPhase = "all";
       phaseGroups = [];
       renderProjectChrome(); renderProjectMenu(); renderProjectCatalog(); renderProjectContext(); renderCompare();
       $('#projectMenu').hidden = true; $('#projectSwitcher').setAttribute("aria-expanded", "false");
       await loadPlanData();
+      await loadDiagramData();
+      updatePlanSourceLabels();
       renderGraph();
       if (options.openWorkspace) showSection("workspace");
     }
@@ -1163,8 +1205,12 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const stale = project.connectionState !== "ready";
       $('#planSourceLabel').textContent = `${project.planFile} · ${language === "tr" ? (stale ? "bayat kalıcı indeks" : "kalıcı indeks") : (stale ? "stale persistent index" : "persistent index")}`;
       $('#planSourceLabel').classList.toggle("is-snapshot", stale);
-      $('#attentionTitle').textContent = `${project.name} · ${language === "tr" ? (stale ? "son başarılı indeks korunuyor" : "repo indeksi doğrulandı") : (stale ? "last successful index retained" : "repository index verified")}`;
-      $('#attentionBody').textContent = language === "tr" ? `Fazlar ve kod düğümleri aynı ${project.record.index.commit.slice(0, 8)} commit makbuzundan gelir; proje bağlamları birleşmez.` : `Phases and code nodes come from the same ${project.record.index.commit.slice(0, 8)} commit receipt; project contexts never merge.`;
+      $('#attentionTitle').textContent = `${project.name} · ${language === "tr" ? (stale ? "son başarılı indeks korunuyor" : activeDiagram() ? "harita gerçek import grafiğinden" : "repo indeksi doğrulandı") : (stale ? "last successful index retained" : activeDiagram() ? "map built from real import graph" : "repository index verified")}`;
+      $('#attentionBody').textContent = activeDiagram()
+        ? (language === "tr"
+          ? `Düğümler ve kenarlar dependency-cruiser ölçümünden gelir; kanıtsız eşlemeler durum kanıtı yok olarak işaretlenir.`
+          : `Nodes and edges come from dependency-cruiser measurements; mappings without evidence are marked as having no status evidence.`)
+        : (language === "tr" ? `Fazlar ve kod düğümleri aynı ${project.record.index.commit.slice(0, 8)} commit makbuzundan gelir; proje bağlamları birleşmez.` : `Phases and code nodes come from the same ${project.record.index.commit.slice(0, 8)} commit receipt; project contexts never merge.`);
       $('#previewGenerated').textContent = `${project.name} · ${language === "tr" ? "kalıcı indeks" : "persistent index"} · projectId:${project.id}`;
     }
     function renderPhaseRail() {
@@ -1253,9 +1299,104 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       $$('.map-node').forEach(node => node.classList.remove("is-dimmed"));
       showView("map"); updateMapCount(); renderPhaseInspector(phase); if (announce && phase === "all") showToast(t("filterCleared"));
     }
-    function updateMapCount() { const visible = $$('.map-node').filter(node => !node.classList.contains("is-dimmed")).length; const total = activeProject().nodes.length; $('#mapCount').textContent = language === "tr" ? `${visible} / ${total} doğrulanmış kod düğümü` : `${visible} / ${total} verified code nodes`; }
-    function statusLabel(status) { return status === "done" ? t("done") : status === "inProgress" ? t("inProgress") : status === "blocked" ? t("blocked") : t("planned"); }
+    function updateMapCount() {
+      const visible = $$('.map-node').filter(node => !node.classList.contains("is-dimmed")).length;
+      const diagram = activeDiagram();
+      if (diagram) {
+        const m = diagram.receipt.measurements;
+        const unit = t("realNodeCount");
+        $('#mapCount').textContent = `${visible} / ${m.renderedNodeCount} ${unit} · ${m.renderedEdgeCount} ${t("measuredEdgesLabel")} · ${m.unresolvedCount} ${t("unresolvedImportsLabel")}`;
+        return;
+      }
+      const total = activeProject().nodes.length;
+      $('#mapCount').textContent = `${visible} / ${total} ${t("sampleNodeCount")}`;
+    }
+    function statusLabel(status) { return status === "done" ? t("done") : status === "inProgress" ? t("inProgress") : status === "blocked" ? t("blocked") : status === "unmeasured" ? t("unmeasuredStatus") : t("planned"); }
+    // Dilim 2 dürüstlük kuralı: kanıt türü duruma dönüşür; checkbox tek başına
+    // kod kanıtı değildir — done yalnız plan-path eşleşmesi VE ölçülmüş dosya ile.
+    function mapNodeStatus(evidence) {
+      if (!evidence) return "unmeasured";
+      if (evidence.evidenceKind === "plan-path-match") {
+        return evidence.itemStatus === "done" ? "done" : evidence.itemStatus === "partial" ? "inProgress" : evidence.itemStatus === "open" ? "planned" : "unmeasured";
+      }
+      return "unmeasured";
+    }
+    function activeDiagram() { return diagramState && diagramState.projectId === activeProjectId && diagramState.measurable ? diagramState : null; }
+    async function loadDiagramData() {
+      const projectId = activeProjectId;
+      try {
+        const payload = await apiRequest(`/api/projects/${encodeURIComponent(projectId)}/diagram`);
+        diagramState = payload && payload.measurable
+          ? { measurable: true, projectId, receipt: payload.receipt, mermaid: payload.mermaid, fileLinkBase: payload.fileLinkBase || null }
+          : { measurable: false, projectId, reason: (payload && payload.reason) || "" };
+      } catch (error) {
+        diagramState = { measurable: false, projectId, reason: error.message };
+      }
+    }
+    function renderGraph() {
+      const project = activeProject();
+      const diagram = activeDiagram();
+      if (!diagram) {
+        // Örnek modu: her düğüm görünür ÖRNEK etiketi taşır; gerçek repo kanıtı gibi sunulamaz.
+        $('#graphNodes').innerHTML = project.nodes.map(node => `<button class="map-node ${escapeHtml(node.position)}" type="button" data-node="${escapeHtml(node.id)}" data-phase="${escapeHtml(node.phase)}" aria-pressed="false"><span class="sample-label">${escapeHtml(t("sample"))}</span><span class="node-title">${escapeHtml(node.title)}</span><span class="node-path">${escapeHtml(node.path)}</span><span class="node-state"><span class="status-mark ${statusClass(node.status)}"></span><span>${escapeHtml(statusLabel(node.status))}</span></span></button>`).join("");
+        $('#mapWires').innerHTML = "";
+        $('#mermaidExport').hidden = true;
+        updateMapCount();
+        return;
+      }
+      const receipt = diagram.receipt;
+      const slots = ["node-pos-1", "node-pos-2", "node-pos-3", "node-pos-4", "node-pos-5"];
+      $('#graphNodes').innerHTML = receipt.graph.nodes.map((node, index) => {
+        const status = mapNodeStatus(receipt.nodeEvidence[node.id]);
+        return `<button class="map-node ${slots[index % slots.length]}" type="button" data-node="${escapeHtml(node.id)}" aria-pressed="false"><span class="node-title">${escapeHtml(node.label)}</span><span class="node-path">${escapeHtml(node.path)}</span><span class="node-state"><span class="status-mark ${statusClass(status)}"></span><span>${escapeHtml(statusLabel(status))}</span></span></button>`;
+      }).join("");
+      renderRealWires(receipt);
+      const mermaidBlock = $('#mermaidExport');
+      mermaidBlock.hidden = false;
+      $('#mermaidSource').textContent = diagram.mermaid;
+      updateMapCount();
+    }
+    function renderRealWires(receipt) {
+      const coords = { "node-pos-1": [56, 10], "node-pos-2": [10, 12], "node-pos-3": [32, 39], "node-pos-4": [62, 42], "node-pos-5": [17, 72] };
+      const slotOf = new Map();
+      receipt.graph.nodes.forEach((node, index) => { slotOf.set(node.id, `node-pos-${(index % 5) + 1}`); });
+      $('#mapWires').innerHTML = receipt.graph.edges.map(edge => {
+        const fromSlot = coords[slotOf.get(edge.from)];
+        const toSlot = coords[slotOf.get(edge.to)];
+        if (!fromSlot || !toSlot) return "";
+        return `<line x1="${fromSlot[0]}" y1="${fromSlot[1] + 6}" x2="${toSlot[0]}" y2="${toSlot[1] + 6}"></line>`;
+      }).join("");
+    }
+    function evidenceKindLabel(kind) {
+      if (kind === "plan-path-match") return t("evidencePlanPathMatch");
+      if (kind === "measured-import") return t("evidenceMeasuredImport");
+      return t("evidenceNoClaim");
+    }
+    function githubBlobUrl(fileLinkBase, branch, path) {
+      if (!fileLinkBase || !/https:\/\/github\.com\//.test(fileLinkBase)) return null;
+      const encode = value => value.split("/").filter(Boolean).map(encodeURIComponent).join("/");
+      if (path.split("/").some(segment => segment === "..")) return null;
+      return `${fileLinkBase.replace(/\/+$/, "")}/blob/${encode(branch)}/${encode(path)}`;
+    }
+    function renderRealNodeInspector(id) {
+      const diagram = activeDiagram();
+      const node = diagram.receipt.graph.nodes.find(candidate => candidate.id === id);
+      const evidence = diagram.receipt.nodeEvidence[id];
+      if (!node || !evidence) return;
+      selectedNode = { id, type: "node" };
+      const status = mapNodeStatus(evidence);
+      const measurements = diagram.receipt.measurements;
+      const sourceUrl = githubBlobUrl(diagram.fileLinkBase, evidence.branch, evidence.path);
+      const sourceAction = sourceUrl
+        ? `<a class="text-button" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>${t("openSourceOnGithub")}</span></a>`
+        : `<button class="text-button source-disabled" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>${t("sourceLocalNote")}</span></button>`;
+      $('#inspectorBody').innerHTML = `<div class="detail-title">${escapeHtml(node.label)}</div><div class="detail-path">${escapeHtml(evidence.path)}</div><div class="detail-status"><span class="status-mark ${statusClass(status)}"></span>${escapeHtml(statusLabel(status))}</div><section class="detail-section"><h3>${t("evidence")}</h3><p>${escapeHtml(evidenceKindLabel(evidence.evidenceKind))}${evidence.itemStatus ? ` · ${escapeHtml(statusLabel(evidence.itemStatus === "partial" ? "inProgress" : evidence.itemStatus))}` : ""}</p><p>${language === "tr"
+        ? `${measurements.scannedFileCount} ${t("scannedFilesLabel")} · ${measurements.renderedEdgeCount}/${measurements.totalEdgeCount} ${t("measuredEdgesLabel")} · ${measurements.unresolvedCount} ${t("unresolvedImportsLabel")}`
+        : `${measurements.scannedFileCount} ${t("scannedFilesLabel")} · ${measurements.renderedEdgeCount}/${measurements.totalEdgeCount} ${t("measuredEdgesLabel")} · ${measurements.unresolvedCount} ${t("unresolvedImportsLabel")}`}</p></section>${evidence.phaseHeading ? `<section class="detail-section"><h3>${t("phase")}</h3><p>${escapeHtml(evidence.phaseHeading)}</p><p><code>${escapeHtml(evidence.itemId || "")}</code></p></section>` : ""}<section class="detail-section"><h3>${t("evidenceReceipt")}</h3><p>projectId:<code>${escapeHtml(evidence.projectId)}</code></p><p><code>${escapeHtml(evidence.branch)} · ${escapeHtml(evidence.commit.slice(0, 12))}</code></p></section>${sourceAction}`;
+      openInspector();
+    }
     function renderInspector(id, type = "node") {
+      if (type === "node" && activeDiagram() && activeDiagram().receipt.nodeEvidence[id]) return renderRealNodeInspector(id);
       const data = type === "issue" ? ISSUE_DATA[id] : activeProject().nodes.find(node => node.id === id);
       if (!data) return;
       selectedNode = { id, type };
@@ -1364,6 +1505,12 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     $('#phaseList').addEventListener("click", event => { const button = event.target.closest('.phase-filter'); if (button) setPhaseFilter(button.dataset.phase); });
     $('#inspectorBody').addEventListener("click", event => { const button = event.target.closest('[data-phase-jump]'); if (button) setPhaseFilter(button.dataset.phaseJump); });
     $('#graphNodes').addEventListener("click", event => { const button = event.target.closest('.map-node'); if (button) selectMapNode(button.dataset.node); });
+    $('#copyMermaid').addEventListener("click", async () => {
+      const diagram = activeDiagram();
+      if (!diagram) return;
+      try { await navigator.clipboard.writeText(diagram.mermaid); showToast(t("copiedToast")); }
+      catch (error) { showToast(error.message); }
+    });
     $('#timelineContent').addEventListener("click", event => { const button = event.target.closest('[data-timeline-phase]'); if (button) renderPhaseInspector(button.dataset.timelinePhase); });
     $$('.issue-row').forEach(button => button.addEventListener("click", () => renderInspector(button.dataset.issue, "issue")));
     $$('.queue-filter').forEach(button => button.addEventListener("click", () => setQueueFilter(button.dataset.queueFilter)));

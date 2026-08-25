@@ -2,6 +2,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { extname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildProjectDiagram } from './diagram/diagram-service';
 import { githubAuthConfiguration, indexGithubProject, type GithubProjectInput } from './projects/github';
 import { indexLocalProject, type LocalProjectInput } from './projects/local';
 import { ProjectRegistry } from './projects/registry';
@@ -114,6 +115,24 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
         const project = findProject(decodeURIComponent(planMatch[1]));
         response.writeHead(200, { 'Content-Type': 'text/markdown; charset=utf-8', 'Cache-Control': 'no-store' });
         response.end(project.index.planMarkdown);
+        return true;
+    }
+    // Dilim 2: gerçek import-grafından ölçümlü diyagram. Yerel kökü olmayan
+    // kaynakta measurable:false döner — tahmin üretilmez.
+    const diagramMatch = /^\/api\/projects\/([^/]+)\/diagram$/.exec(url.pathname);
+    if (request.method === 'GET' && diagramMatch?.[1]) {
+        const project = findProject(decodeURIComponent(diagramMatch[1]));
+        json(response, 200, await buildProjectDiagram({
+            projectId: project.id,
+            sourceRoot: project.source.type === 'local' ? project.source.root : undefined,
+            remoteUrl:
+                project.source.type === 'local'
+                    ? project.source.remoteUrl
+                    : `https://github.com/${project.source.owner}/${project.source.repo}`,
+            branch: project.index.branch,
+            commit: project.index.commit,
+            groups: project.index.groups,
+        }));
         return true;
     }
     if (request.method === 'POST' && url.pathname === '/api/projects/verify/local') {
