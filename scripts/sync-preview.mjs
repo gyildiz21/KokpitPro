@@ -16,7 +16,9 @@ function expectedPreview(source, plan) {
     const end = source.indexOf(closing, start + opening.length);
     if (start < 0 || end < 0) throw new Error('planSnapshot block was not found.');
 
-    let expected = `${source.slice(0, start)}${opening}\n${plan.trimEnd()}\n${source.slice(end)}`;
+    const eol = source.includes('\r\n') ? '\r\n' : '\n';
+    const normalizedPlan = plan.trimEnd().replace(/\r\n?|\n/g, eol);
+    let expected = `${source.slice(0, start)}${opening}${eol}${normalizedPlan}${eol}${source.slice(end)}`;
     const tokenRenames = [
         ['--done-soft', '--st-done-soft'],
         ['--progress-soft', '--st-partial-soft'],
@@ -30,6 +32,19 @@ function expectedPreview(source, plan) {
     }
     return expected;
 }
+
+function assertLineEndingStability() {
+    const plan = '# Plan\n\n- [ ] item\n';
+    for (const eol of ['\n', '\r\n']) {
+        const sample = `before${eol}${opening}${eol}stale${eol}${closing}${eol}after${eol}`;
+        const expectedBlock = `${opening}${eol}${plan.trimEnd().replace(/\n/g, eol)}${eol}${closing}`;
+        if (!expectedPreview(sample, plan).includes(expectedBlock)) {
+            throw new Error(`Line-ending sentinel failed for ${JSON.stringify(eol)}.`);
+        }
+    }
+}
+
+assertLineEndingStability();
 
 const source = readFileSync(previewPath, 'utf8');
 const plan = readFileSync(planPath, 'utf8');
