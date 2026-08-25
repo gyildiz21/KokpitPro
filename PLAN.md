@@ -93,7 +93,9 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 - ✅ **Düzeltme sonrası yeniden kabul (2026-08-25, Node 20.20.2):**
   `npm run check:preview` + `npm run typecheck` + `npm test` → **37/37**;
   statik sır yolları canlı kontrolde 404, yabancı Host 403. Kişisel yerel yol
-  içeren ekran görüntüleri yayımlanmadı; uzak koşum kanıtı GitHub Actions'tır.
+  içeren ekran görüntüleri yayımlanmadı. GitHub Actions iş akışı hazırdır;
+  ilk uzak iş kod adımlarına başlamadan hesap faturalama/harcama limiti nedeniyle
+  engellendi (`run 32842069439`) ve yeşil kanıt sayılmadı.
 - **Kabul:** MethodLogos_Pro ROADMAP'ine CLI ile bakıldığında P0–P5 ve S1I
   D0–D4 durumları doğru çıkar.
 

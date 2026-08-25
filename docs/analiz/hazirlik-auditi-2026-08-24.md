@@ -202,3 +202,10 @@ Kapatılan ek bulgular:
 **Node 20.20.2 kabul sonucu:** `check:preview` yeşil; typecheck exit 0; 6 test
 dosyasında **37/37** test geçti. Canlı `:4181` kabulünde UI ve health 200;
 `/.env`, `/.env.local`, `/gitdiagram/.env` 404; yabancı Host 403 döndü.
+
+**Uzak CI sınırı:** Dal push'undan sonra GitHub Actions `run 32842069439`
+oluştu; ancak iş hiçbir checkout/test adımına başlamadan hesap ödemesi veya
+harcama limiti anotasyonuyla durduruldu. Bu bir kod/test hatası değildir, fakat
+uzak koşum kanıtı da değildir. Faturalama engeli kalkınca workflow yeniden
+çalıştırılmalıdır; o zamana kadar kanonik yürütülmüş kanıt yukarıdaki yerel
+Node 20 kapısıdır.
