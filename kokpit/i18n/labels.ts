@@ -27,7 +27,6 @@ const tr = {
         DUZELTME: 'Düzeltme',
         GO: 'GO bekliyor',
         RUNTIME: 'Çalışır durumda',
-        PLAN: 'Plan',
     },
     empty: {
         noData: 'Bu bölüm için veri yok.',
@@ -60,7 +59,6 @@ const en: Dict = {
         DUZELTME: 'Fix-up',
         GO: 'Awaiting GO',
         RUNTIME: 'Running',
-        PLAN: 'Plan',
     },
     empty: {
         noData: 'No data for this section.',

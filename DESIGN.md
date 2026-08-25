@@ -46,8 +46,10 @@ açacak şekilde tasarlanır (yazma izni ayrı GO konusu).
 
 ## D5 · Dağıtım Yolu — Yerel-önce; SaaS'a ve açık-kaynağa hazır (Patron kararı 2026-08-24)
 
-1. **Bugün tamamen yerel:** veri makineden çıkmaz; UI tarayıcı-içinde çalışır,
-   sunucu zorunluluğu yoktur.
+1. **Bugün yerel-önce:** statik kabuk tarayıcıda açılabilir; gerçek yerel repo
+   doğrulama, indeks ve kalıcı kayıt için `kokpit/server.ts` zorunludur. Yerel
+   repo verisi kullanıcı açıkça GitHub/harici model bağlantısı seçmedikçe
+   makineden çıkmaz.
 2. **SaaS'e evrim sınırı şimdiden çizilir:** tüm LLM/storage erişimi sunucu
    katmanında ve env ile yapılandırılır; Kokpit-IR şeması sürümlüdür
    (`schemaVersion`); kimlik/asıl veri istemci paketine gömülmez.

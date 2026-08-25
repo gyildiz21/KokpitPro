@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "sync:preview": "node scripts/sync-preview.mjs",
+    "check:preview": "node scripts/sync-preview.mjs --check",
     "kokpit": "tsx kokpit/cli.ts"
   },
   "dependencies": {

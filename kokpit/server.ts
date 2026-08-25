@@ -27,6 +27,31 @@ class HttpError extends Error {
     constructor(readonly status: number, message: string) { super(message); }
 }
 
+export function isStaticPathBlocked(pathname: string): boolean {
+    const envSegment = /(^|\/)\.env(\.|$)/.test(pathname);
+    return pathname.includes('\0')
+        || pathname.startsWith('/.git')
+        || pathname.startsWith('/.kokpit')
+        || pathname.startsWith('/node_modules')
+        || pathname === '/gitdiagram'
+        || pathname.startsWith('/gitdiagram/')
+        || envSegment;
+}
+
+export function isAllowedHostHeader(
+    hostHeader: string | undefined,
+    configuredHost = HOST,
+    configuredPort = PORT,
+): boolean {
+    const normalized = (hostHeader || '').trim().toLowerCase();
+    const allowed = new Set([
+        `${configuredHost.toLowerCase()}:${configuredPort}`,
+        `127.0.0.1:${configuredPort}`,
+        `localhost:${configuredPort}`,
+    ]);
+    return allowed.has(normalized);
+}
+
 function json(response: ServerResponse, status: number, payload: unknown): void {
     response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
     response.end(JSON.stringify(payload));
@@ -130,9 +155,9 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
 
 function serveStatic(request: IncomingMessage, response: ServerResponse, url: URL): void {
     const pathname = decodeURIComponent(url.pathname === '/' ? '/arayuz-onizleme.html' : url.pathname);
-    if (pathname.includes('\0') || pathname.startsWith('/.git') || pathname.startsWith('/.kokpit') || pathname.startsWith('/node_modules')) {
-        throw new HttpError(404, 'Not found.');
-    }
+    // K1 güvenlik yaması (hazirlik-auditi §1.5): gizli anahtar/bağımlılık ağaçları
+    // asla servis edilmez. Referans motorun .env dosyası da bu sınıra dahildir.
+    if (isStaticPathBlocked(pathname)) throw new HttpError(404, 'Not found.');
     const path = resolve(ROOT, `.${pathname}`);
     const rel = relative(ROOT, path);
     if (rel === '..' || rel.startsWith(`..${sep}`)) throw new HttpError(403, 'Path is outside the application root.');
@@ -149,9 +174,14 @@ async function bootstrap(): Promise<void> {
 
 export async function startServer(): Promise<void> {
     await bootstrap();
+    // K1: Host header doğrulaması — DNS-rebinding'e karşı (auditi §1.5).
     const server = createServer(async (request, response) => {
         try {
-            const url = new URL(request.url || '/', `http://${request.headers.host || `${HOST}:${PORT}`}`);
+            const hostHeader = (request.headers.host || '').trim().toLowerCase();
+            if (!isAllowedHostHeader(hostHeader)) {
+                throw new HttpError(403, 'Forbidden host.');
+            }
+            const url = new URL(request.url || '/', `http://${hostHeader}`);
             if (await api(request, response, url)) return;
             if (request.method !== 'GET' && request.method !== 'HEAD') throw new HttpError(405, 'Method not allowed.');
             serveStatic(request, response, url);

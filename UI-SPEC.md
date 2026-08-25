@@ -1,14 +1,18 @@
 # KokpitPro — Arayüz Sözleşmesi (UI-SPEC)
 
-> **Durum:** 🟢 UYGULANAN v0.8 — proje kataloğu, kalıcı yerel/GitHub bağlantı
-> servisi, proje değiştirici, proje-bazlı veri izolasyonu, portföy
-> karşılaştırması ve tam-yükseklik kabuk aynı-köken uygulamada bağlıdır.
+> **Durum:** 🟢 **BAĞLAYICI v0.9** (Patron onayı 2026-08-24 — onay bloğu §son
+> imzalı). **Uygulama durumu sözleşmeden ayrıdır:** §12 proje yaşam döngüsü
+> büyük ölçüde bağlıdır; §1–§5 harita/delta yüzeyleri örnek veri taşır; §10 Uyum
+> motoru Dilim 5 kapsamında açıktır. Remap v2 backlog'tadır.
+> **Kapsam:** proje kataloğu, kalıcı yerel/GitHub bağlantı servisi, proje
+> değiştirici, veri izolasyonu, portföy karşılaştırması, tam-yükseklik kabuk,
+> Harita/Zaman/Delta/**Uyum** yüzeyleri.
 > **Canlı önizleme:** `arayuz-onizleme.html` — Projeler / Çalışma alanı /
-> Karşılaştır üst düzey akışları; dört adımlı repo bağlama; proje seçimi; canlı
-> `PLAN.md` faz/alt-madde incelemesi; Harita / Zaman / Delta / Uyum; TR/EN,
-> açık-koyu tema, klavye komutları ve duyarlı yerleşim. Katalog kayıtları
-> `.kokpit/data/projects.json` içinde kalıcıdır; kaynak/dal/commit/plan makbuzu
-> gerçek yerel Git veya GitHub Contents doğrulamasından gelir.
+> Karşılaştır üst düzey akışları; dört adımlı repo bağlama; proje seçimi;
+> canlı `PLAN.md` faz/alt-madde incelemesi; TR/EN, açık-koyu tema, klavye
+> komutları ve duyarlı yerleşim. Katalog kayıtları `.kokpit/data/projects.json`
+> içinde kalıcıdır; kaynak/dal/commit/plan makbuzu gerçek yerel Git veya GitHub
+> Contents doğrulamasından gelir.
 > Üst sözleşmeler: `DESIGN.md` D1–D5.
 
 ## §0 · Nasıl Okunur — vibecoding dostu kılavuz
@@ -30,6 +34,16 @@ Bu belge **kodsuz okunabilir** olacak şekilde yazılır:
 · *düğüm (node)* = haritadaki her kutu · *kenar (edge)* = kutuları bağlayan
 çizgi · *çekmece (drawer)* = sağdan açılan detay paneli · *belirteç (token)* =
 rengin tek kayıt yerindeki adı.
+
+### §0.1 Terim Sözlüğü — kanonik adlar (çapraz denetim kararı, 2026-08-24)
+
+| Kanonik ad (kod ne diyorsa o) | Yasak/dağınık kullanımlar | Sahip dosya |
+|---|---|---|
+| **RoadmapScan + PhaseFileScan** | ~~PhaseSlice[]~~ · ~~"Kokpit-IR v0"~~ | `kokpit/parser/schema.ts` |
+| **Kokpit-IR v0.2** (sync/violations/conflicts) | — | Dilim 5'te gelir |
+| **Dilim 0–5** (faz numaraları) | ~~D0/D1… önekleri~~ — DESIGN D1–D5 ile karışır | PLAN.md |
+| **D1–D5** | yalnız DESIGN karar ID'sidir, faz DEĞİLDİR | DESIGN.md |
+| **--st-done/partial/open/go** | ~~--done/--progress/--planned~~ | UI-SPEC §3.1 |
 
 
 
@@ -55,9 +69,9 @@ Etkin proje çalışma alanında **dört ana görünüm + bağlamsal denetçi** 
 | **Harita** | `map` | Repoyu düğüm/kenar grafiği olarak; düğümler faz durumuna göre boyalı | Dilim 2 |
 | **Zaman Çizgisi** | `timeline` | Fazlar yatay şeritler; maddeler durum rozetleriyle | Dilim 2 (basit sürüm) |
 | **Delta Ön-görünümü** | `delta` | Seçilen plan-adımı kodlanınca haritada ne değişecek | Dilim 3 |
-| **Uyum** | `compliance` | Defter senkronu, kural ihlali ve karar bütünlüğü; özetten kanıta iner | Dilim 4 |
+| **Uyum** | `compliance` | Defter senkronu, kural ihlali ve karar bütünlüğü; özetten kanıta iner | **Dilim 5** (bu PLAN) |
 | Bağlamsal Denetçi | `inspector` | Seçili faz için alt maddeler, durum özeti, kabul ve beklenen çıktı; düğüm/madde/ihlal için kaynak ve kanıt | Her görünüm |
-| Remap Paneli | `remap` | Yeniden düzenleme önerileri; denetçi içinde ayrı mod | Dilim 5 |
+| Remap Paneli | `remap` | Yeniden düzenleme önerileri; denetçi içinde ayrı mod | v2 backlog (dilimsiz) |
 
 Uygulama birden fazla projeyi hatırlar. Ana çalışma alanında aynı anda tek
 proje etkindir. İlişkili birden fazla repo ancak açıkça oluşturulmuş bir
@@ -334,7 +348,7 @@ Veri yetersizse kart **"bu madde için yol eşlemesi yok"** der — tahmin üret
 Statik HTML önizlemesinin varsayılan Delta durumu bu dürüst boş durumdur;
 hayalî test/dosya yolları gösterilmez.
 
-### §5.3 Remap Paneli (Dilim 4)
+### §5.3 Remap Paneli (v2 backlog)
 Öneri kartı: `[öneri] Neden: X dosyası 3 farklı katmandan import ediliyor →
 öneri: services/ altına taşı`. Uygula butonu YOKTUR (v1) — yalnız kopyalanabilir
 metin; uygulama insan kararıdır.
@@ -352,7 +366,7 @@ metin; uygulama insan kararıdır.
 | Bayat veri (>7 gün) | Alt şeritte amber "veri bayat" rozeti |
 | Karşılaştırma için <2 proje | Karşılaştır ekranı proje seçtirir; sahte tablo veya yüzde üretmez |
 
-## §6 · Teknoloji ve Dosya Yapısı (kesinleştirme — onay istenir)
+## §6 · Teknoloji ve Dosya Yapısı (BAĞLI — gerçek stack, 2026-08-24)
 
 - **Mevcut çalışan stack:** Node/TypeScript aynı-köken HTTP+API sunucusu,
   Zod sözleşmeleri ve bağımlılıksız HTML/CSS/JS ürün yüzeyi. React Flow ve
@@ -363,23 +377,21 @@ metin; uygulama insan kararıdır.
   `kokpit/projects/local.ts` üstlenir; UI doğrudan dosya sistemi okuyamaz.
 - **GitHub bağlantısı:** GitHub App; minimum repo seçimi ve `Contents: read`.
   Tokenlar ön yüze yazılmaz, loglanmaz veya `localStorage` içinde tutulmaz.
-- **Yapı:**
+- **Gerçek yapı (kodla birebir):**
   ```
-  app/                    ← Vite kökü (index.html, main.tsx)
-  src/
-    features/map/         ← Harita görünümü + React Flow wrapper
-    features/timeline/    ← Zaman çizelgesi
-    features/delta/       ← Delta ön-görünümü
-    lib/ir/               ← Kokpit-IR tipleri + loader
-    features/projects/    ← proje kataloğu, seçici ve kaynak durumları
-    features/connect/     ← Yerel/GitHub dört adımlı bağlantı akışı
-    features/compare/     ← proje-bazlı ayrık portföy özeti
-    lib/projects/         ← ProjectRecord, kayıt defteri, projectId izolasyonu
-    lib/diagram/          ← GitDiagram'dan taşınan saf motor (bkz. adaptasyon tablosu)
-    i18n/                 ← labels + locale dosyaları
+  arayuz-onizleme.html      ← ürün yüzeyi (bağımlılıksız; I18N sözlüklü)
+  UI-SPEC-goruntule.html    ← bu sözleşmenin tarayıcı görüntüleyicisi
+  kokpit/
+    parser/{roadmap,phaseFiles,schema,index}.ts   ← Dilim 1
+    projects/{schema,registry,local,github,plan}.ts ← Dilim 2.1 (çoklu-proje)
+    server.ts               ← :4173 aynı-köken API + statik servis (K1 sertleşti)
+    cli.ts                  ← kabul aracı
+    i18n/labels.ts          ← D1 sözlük
+    check/{sync,rules,conflicts}.ts  ← Dilim 5 (Uyum) — eklenecek
+    ir/                     ← Kokpit-IR v0.2 (sync/violations/conflicts) — eklenecek
+  gitdiagram/               ← referans motor (lite dalı; saf çekirdek Dilim 2.0'da nakledilir)
+  .github/workflows/ci.yml  ← typecheck + test koşum kanıtı
   ```
-- Motor taşımaları (XS-S maliyetli): graph-schema, validate/compile,
-  mermaid-sanitize seti, export — adaptasyon tablosundaki gibi.
 
 ## §7 · Kabul Kriterleri (görünüm başına)
 
@@ -411,8 +423,10 @@ bağlantısından ayrıdır; ürün kullanıcı adına `git remote add`, push ve
 yapmaz.
 
 ---
-**Onay bloğu:** Patron onayı: ⬜ (onaylanırsa durum BAĞLAYICI'ya çevrilir ve
-Dilim 2 bu sözleşmeye göre kodlanır.)
+**Onay bloğu:** ✅ **Patron onayı VERİLDİ — 2026-08-24.** Bu sözleşme
+BAĞLAYICIDIR; değişiklikler Patron onayıyla sürüm artırarak yapılır.
+*(§6 bloğu 2026-08-24'te gerçek stack ile senkronlandı; Remap v2 backlog'a
+alındı; Uyum=Dilim 5 olarak PLAN.md'ye işlendi.)*
 
 ---
 

@@ -7,7 +7,7 @@
 ## Ne yapacak (v1 hedefi)
 
 1. **Faz-Belge Ayrıştırıcı** — `ROADMAP.md` checkbox'ları, faz dosyası durum
-   satırları, GO/kapı kayıtları → yapılandırılmış `PhaseSlice[]` JSON
+   satırları, GO/kapı kayıtları → sürümlü `RoadmapScan` + `PhaseFileScan` JSON
 2. **Canlı Mimari Haritası** — import-grafı + dosya ağacı → Mermaid/React-Flow;
    düğümler faz durumuna göre boyanır (kodlandı / sürüyor / planda)
 3. **Delta Ön-Görünümü** — bir faz adımı seçilince etkilenen düğüm/kenar/test

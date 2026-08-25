@@ -47,6 +47,18 @@ function extractTitle(rest: string): string {
     return title.trim();
 }
 
+function collectTitleSource(lines: string[], startIdx: number, rest: string): string {
+    if (!rest.startsWith('**') || BOLD_TITLE_RE.test(rest)) return rest;
+    let joined = rest;
+    for (let i = startIdx + 1; i < lines.length; i += 1) {
+        const line = lines[i] ?? '';
+        if (!line.trim() || CHECKBOX_RE.test(line) || HEADING_RE.test(line)) break;
+        joined += ` ${line.trim()}`;
+        if (BOLD_TITLE_RE.test(joined)) break;
+    }
+    return joined;
+}
+
 /**
  * Bir checkbox bloğunun gövdesini (kendi satırı + girintili devam satırları)
  * tarih araması için birleştirir.
@@ -74,6 +86,9 @@ export function scanRoadmapText(text: string, sourceFile = 'inline'): RoadmapSca
     const groups: PhaseGroup[] = [];
     let currentHeading = '(başlıksız)';
     let currentGroup: PhaseGroup | null = null;
+    // K2: sayaç FAZ-KAPSAMLIdır — dosya başına değil, gruba göre sıfırlanır.
+    // Gerekçe: Dilim 3 delta kimliği `madde-N`e oturur; erken satır ekleme
+    // sonraki fazların kimliklerini kaydırmamalı (auditi §1.5).
     let counter = 0;
 
     for (let i = 0; i < lines.length; i++) {
@@ -86,6 +101,7 @@ export function scanRoadmapText(text: string, sourceFile = 'inline'): RoadmapSca
             // Maddesiz başlıklar sonda filtrelenir — gürültü üretmez.
             currentHeading = headingMatch[2]?.trim() ?? '';
             currentGroup = { heading: currentHeading, items: [] };
+            counter = 0;
             groups.push(currentGroup);
             continue;
         }
@@ -96,7 +112,7 @@ export function scanRoadmapText(text: string, sourceFile = 'inline'): RoadmapSca
         counter += 1;
         const status = statusOf(cb[2] ?? ' ');
         const rest = cb[3] ?? '';
-        const rawTitle = extractTitle(rest) || `madde ${counter}`;
+        const rawTitle = extractTitle(collectTitleSource(lines, i, rest)) || `madde ${counter}`;
         const explicitId = extractId(rawTitle);
         const body = collectBody(lines, i);
 
@@ -117,6 +133,7 @@ export function scanRoadmapText(text: string, sourceFile = 'inline'): RoadmapSca
     }
 
     const scan: RoadmapScan = {
+        schemaVersion: 1,
         sourceFile,
         // Maddesiz ara başlıklar ("## 6. Fazlar") çıktıyı kirletmesin.
         groups: groups.filter((g) => g.items.length > 0),

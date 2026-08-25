@@ -14,7 +14,10 @@ import { PhaseFileScan as PhaseFileScanSchema } from './schema';
 const HEADING_RE = /^(#{1,6})\s+(.*)$/;
 const DATE_RE = /(\d{4}-\d{2}-\d{2})/;
 
-/** Sıra anlamlıdır: önce özel/spesifik token, sonra genel. */
+/** Sıra anlamlıdır: önce özel/spesifik token, sonra genel.
+ *  NOT: PLAN bilinçli olarak kaldırıldı (K3) — gerçek defterlerde yanlış-pozitif
+ *  üretimi yüksekti ("plan değildir", "(plan metni, tarihsel)"). Gerekirse ileride
+ *  emoji/tarih şartıyla geri gelir. */
 const TOKEN_RULES: ReadonlyArray<readonly [StatusToken, RegExp]> = [
     ['DOCS_LOCK', /DOCS[\s-]*LOCK/i],
     ['WAITING_HUMAN', /WAITING[_ ]FOR|BEKL[İI]YOR/i],
@@ -22,16 +25,29 @@ const TOKEN_RULES: ReadonlyArray<readonly [StatusToken, RegExp]> = [
     ['KAPANDI', /\bKAPANDI\b/i],
     ['KAPALI', /\bKAPAL[Iİ]\b/i],
     ['LOCKED', /LOCKED/i],
-    ['ACIK', /\bAÇIK\b|\bAÇIK\s+KALAN/i],
+    ['ACIK', /\bAÇIK\b/],
     ['DUZELTME', /DÜZELTME/i],
     ['GO', /\bGO\b/],
     ['RUNTIME', /RUNTIME/i],
-    ['PLAN', /\bPLAN\b/i],
 ];
 
+/** K3: yapısal başlıklar durum taşımaz — her zaman atlanır. */
+const STRUCTURAL_SKIP: ReadonlyArray<RegExp> = [/^runtime açma (kapısı|koşulları)/i];
+/** K3: olumsuzlama koruması — "…değildir" kalıbı sinyal üretemez. */
+const NEGATION_RE = /değildir/i;
+
 function detectToken(headingText: string): StatusToken | null {
+    if (STRUCTURAL_SKIP.some((re) => re.test(headingText))) return null;
+    if (NEGATION_RE.test(headingText)) return null;
+
+    const hasDate = DATE_RE.test(headingText);
+    const hasStamp = /✅|🔧/.test(headingText);
+
     for (const [token, re] of TOKEN_RULES) {
-        if (re.test(headingText)) return token;
+        if (!re.test(headingText)) continue;
+        // DUZELTME konu-başlığıyla karışır ("Güvenlik Düzeltmeleri"): kanıt şartı.
+        if (token === 'DUZELTME' && !hasDate && !hasStamp) continue;
+        return token;
     }
     return null;
 }
@@ -52,7 +68,7 @@ export function scanPhaseFileText(text: string, sourceFile = 'inline'): PhaseFil
         signals.push({ file: sourceFile, heading, token, date, line: i + 1 });
     }
 
-    const scan: PhaseFileScan = { sourceFile, signals };
+    const scan: PhaseFileScan = { schemaVersion: 1, sourceFile, signals };
     return PhaseFileScanSchema.parse(scan);
 }
 
