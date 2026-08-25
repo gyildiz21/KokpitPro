@@ -1,4 +1,4 @@
-import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { ProjectRecord, RegistryFile, type ProjectRecord as ProjectRecordType, type RegistryFile as RegistryFileType } from './schema';
 
@@ -22,10 +22,13 @@ export class ProjectRegistry {
         const validated = RegistryFile.parse(next);
         mkdirSync(this.dataDir, { recursive: true });
         const temporary = `${this.filePath}.${process.pid}.tmp`;
-        writeFileSync(temporary, `${JSON.stringify(validated, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
-        copyFileSync(temporary, this.filePath);
-        chmodSync(this.filePath, 0o600);
-        unlinkSync(temporary);
+        try {
+            writeFileSync(temporary, `${JSON.stringify(validated, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+            renameSync(temporary, this.filePath);
+            chmodSync(this.filePath, 0o600);
+        } finally {
+            if (existsSync(temporary)) unlinkSync(temporary);
+        }
         return validated;
     }
 

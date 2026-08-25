@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Kapılar (typecheck + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: PLAN ve HTML anlık görüntü senkronu
+        run: npm run check:preview
+      - name: Tip denetimi (strict)
+        run: npm run typecheck
+      - name: Testler
+        run: npm test
+      # Not: markdown'dan beslenen parser testleri olduğu için paths-ignore
+      # YOKTUR — her push koşar (MethodLogos dersi). Koşumsuz commit, CI'da
+      # makinece yakalanır; "koşum disiplini" artık insan hatırası değildir.

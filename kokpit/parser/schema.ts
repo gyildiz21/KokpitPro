@@ -1,8 +1,8 @@
-// Kokpit-IR v0 — Dilim 1 sözleşmesi.
+// Parser çıktı sözleşmeleri — Dilim 1, schemaVersion 1.
 //
-// Bu şema kokpitin tek veri sözleşmesidir: parser'lar bunu ÜRETİR, harita ve
-// delta katmanları (Dilim 2–3) bunu TÜKETİR. Şema değişirse her iki taraf da
-// kırılır — bu kasıtlıdır; sessiz sürüşme yerine gürültülü kırılma isteriz.
+// RoadmapScan ve PhaseFileScan parser'ların kanonik çıktılarıdır. Gelecekteki
+// Kokpit-IR bunları tüketir; bu ara sözleşme değişirse tüketicilerin gürültülü
+// biçimde kırılması kasıtlıdır.
 
 import { z } from 'zod';
 
@@ -38,6 +38,8 @@ export type PhaseGroup = z.infer<typeof PhaseGroup>;
 
 /** scanRoadmapText çıktısı. */
 export const RoadmapScan = z.object({
+    /** D5.2: şema sürümü — tüketici (harita/delta) uyumsuz veriyi reddeder. */
+    schemaVersion: z.literal(1),
     sourceFile: z.string(),
     groups: z.array(PhaseGroup),
 });
@@ -46,7 +48,7 @@ export type RoadmapScan = z.infer<typeof RoadmapScan>;
 /**
  * Faz dosyası (.agents/phases/*.md) başlıklarından çıkan durum sinyali.
  * Öncelik sırası: DOCS_LOCK > WAITING_HUMAN > UYGULANDI > KAPANDI > KAPALI >
- * LOCKED > ACIK > DUZELTME > GO > RUNTIME > PLAN.
+ * LOCKED > ACIK > DUZELTME > GO > RUNTIME.
  */
 export const StatusToken = z.enum([
     'DOCS_LOCK',
@@ -59,7 +61,6 @@ export const StatusToken = z.enum([
     'DUZELTME',
     'GO',
     'RUNTIME',
-    'PLAN',
 ]);
 export type StatusToken = z.infer<typeof StatusToken>;
 
@@ -76,6 +77,7 @@ export const FileSignal = z.object({
 export type FileSignal = z.infer<typeof FileSignal>;
 
 export const PhaseFileScan = z.object({
+    schemaVersion: z.literal(1),
     sourceFile: z.string(),
     signals: z.array(FileSignal),
 });

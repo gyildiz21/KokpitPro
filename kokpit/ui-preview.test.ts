@@ -8,7 +8,7 @@ const preview = readFileSync(resolve(root, 'arayuz-onizleme.html'), 'utf8');
 const spec = readFileSync(resolve(root, 'UI-SPEC.md'), 'utf8');
 const plan = readFileSync(resolve(root, 'PLAN.md'), 'utf8');
 
-describe('UI-SPEC v0.8 persistent project lifecycle', () => {
+describe('UI-SPEC v0.9 persistent project lifecycle', () => {
     it('keeps the complete project lifecycle visible in the canonical spec and plan', () => {
         expect(spec).toContain('## §12 · Proje Merkezi, bağlantılar ve veri izolasyonu');
         expect(spec).toContain('Kaynak → Doğrula → İndeksle → Hazır');
@@ -48,5 +48,14 @@ describe('UI-SPEC v0.8 persistent project lifecycle', () => {
         expect(activation.indexOf('resetInspector();')).toBeLessThan(activation.indexOf('await loadPlanData();'));
         expect(preview).toContain('function resetInspector()');
         expect(preview).toContain("$('#inspectorBody').innerHTML = `<div class=\"inspector-empty\"");
+    });
+
+    it('keeps the file-mode PLAN snapshot and status tokens synchronized', () => {
+        const snapshot = /<script type="text\/plain" id="planSnapshot">\r?\n([\s\S]*?)\r?\n  <\/script>/.exec(preview)?.[1];
+        expect(snapshot?.replaceAll('\r\n', '\n')).toBe(plan.trimEnd().replaceAll('\r\n', '\n'));
+        expect(preview).toContain('--st-done');
+        expect(preview).toContain('--st-partial');
+        expect(preview).toContain('--st-open');
+        expect(preview).not.toMatch(/--(?:done|progress|planned|danger)(?:-soft)?\b/);
     });
 });

@@ -51,6 +51,7 @@ describe('scanRoadmapText — sözleşme (MethodLogos gerçek kesiti)', () => {
     });
 
     it('çıktı Zod şemasından geçer (kendi sözleşmesiyle kendini vurur)', () => {
+        expect(scan.schemaVersion).toBe(1);
         expect(() => scanRoadmapText(text)).not.toThrow();
     });
 });
@@ -90,6 +91,26 @@ describe('kenar durumlar', () => {
         expect(scan.groups).toHaveLength(1);
         expect(scan.groups[0]?.heading).toBe('Üst');
         expect(scan.groups[0]?.items[0]?.status).toBe('done');
+    });
+
+    it('K2: sayaç faz-kapsamlıdır — her grup madde-1\u2019den başlar', () => {
+        const scan = scanRoadmapText(
+            '## A\n\n- [x] **X:** ok\n\n## B\n\n- [ ] **Y:** bekliyor\n',
+        );
+        // Hata geçmişi: sayaç dosya-geneliydi; erken satır ekleme sonraki
+        // fazların kimliklerini kaydırıp Dilim 3 delta'yı kırıyordu.
+        expect(scan.groups.map((g) => g.items[0]?.id)).toEqual(['madde-1', 'madde-1']);
+        const compositeKeys = scan.groups.flatMap((group) =>
+            group.items.map((item) => `${group.heading}::${item.id}`),
+        );
+        expect(new Set(compositeKeys).size).toBe(compositeKeys.length);
+    });
+
+    it('çok satırlı bold başlığı kırpmadan birleştirir', () => {
+        const scan = scanRoadmapText(
+            '## A\n\n- [ ] **Çok satıra yayılan\n  akademik doğruluk kapısı:** açıklama\n',
+        );
+        expect(scan.groups[0]?.items[0]?.title).toBe('Çok satıra yayılan akademik doğruluk kapısı');
     });
 
     it('scanRoadmapPath dizindeki .md dosyalarını tarar', () => {

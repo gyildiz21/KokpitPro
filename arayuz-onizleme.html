@@ -21,12 +21,13 @@
       --line-strong: #324154;
       --accent: #7dd3fc;
       --accent-soft: rgba(125, 211, 252, .12);
-      --done: #53c99b;
-      --done-soft: rgba(83, 201, 155, .11);
-      --progress: #e3b65a;
-      --progress-soft: rgba(227, 182, 90, .12);
-      --planned: #8290a4;
-      --danger: #ee7b78;
+      --st-go: var(--accent);
+      --st-done: #53c99b;
+      --st-done-soft: rgba(83, 201, 155, .11);
+      --st-partial: #e3b65a;
+      --st-partial-soft: rgba(227, 182, 90, .12);
+      --st-open: #8290a4;
+      --st-error: #ee7b78;
       --focus: #a5e2ff;
       --shadow-float: 0 24px 70px rgba(2, 7, 13, .42), 0 2px 10px rgba(2, 7, 13, .28);
       --radius-control: 8px;
@@ -45,12 +46,12 @@
       --line-strong: #c7d1da;
       --accent: #036c91;
       --accent-soft: rgba(3, 108, 145, .09);
-      --done: #187c5b;
-      --done-soft: rgba(24, 124, 91, .09);
-      --progress: #9a6b0f;
-      --progress-soft: rgba(154, 107, 15, .09);
-      --planned: #68778a;
-      --danger: #b63d3a;
+      --st-done: #187c5b;
+      --st-done-soft: rgba(24, 124, 91, .09);
+      --st-partial: #9a6b0f;
+      --st-partial-soft: rgba(154, 107, 15, .09);
+      --st-open: #68778a;
+      --st-error: #b63d3a;
       --focus: #036c91;
       --shadow-float: 0 24px 70px rgba(39, 58, 73, .17), 0 2px 10px rgba(39, 58, 73, .09);
     }
@@ -112,7 +113,7 @@
     .command-trigger span { margin-left: 8px; }
     .keycap { margin-left: auto !important; padding: 2px 6px; border: 1px solid var(--line); border-bottom-color: var(--line-strong); border-radius: 5px; background: var(--bg-elevated); color: var(--text-3); font-family: ui-monospace, "Cascadia Code", monospace; font-size: 10px; }
     .top-actions { justify-content: flex-end; gap: 7px; }
-    .mode-badge { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--progress) 35%, var(--line)); border-radius: 7px; background: var(--progress-soft); color: var(--progress); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .mode-badge { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--st-partial) 35%, var(--line)); border-radius: 7px; background: var(--st-partial-soft); color: var(--st-partial); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
     .mode-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 14%, transparent); }
     .language-toggle { padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
     .language-toggle button { min-width: 34px; min-height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--text-3); cursor: pointer; font-size: 11px; font-weight: 680; }
@@ -144,9 +145,9 @@
     .primary-nav-button .icon { width: 16px; height: 16px; }
     .primary-nav-meta { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--text-3); font-size: 10.5px; }
     .source-state { display: inline-flex; align-items: center; gap: 6px; padding: 4px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text-2); font-size: 9.5px; font-weight: 650; }
-    .source-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--done); }
-    .source-state.preview::before { background: var(--progress); }
-    .source-state.locked::before { background: var(--danger); }
+    .source-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--st-done); }
+    .source-state.preview::before { background: var(--st-partial); }
+    .source-state.locked::before { background: var(--st-error); }
 
     .product-screen { flex: 1; min-height: 0; background: var(--bg); }
     .screen-shell { width: min(100% - 36px, 1460px); margin: 0 auto; padding: clamp(28px, 4vw, 54px) 0 58px; }
@@ -212,7 +213,7 @@
 
     .signal-strip { display: grid; grid-template-columns: minmax(280px, 1.3fr) minmax(420px, 1fr); gap: 18px; align-items: center; min-height: 62px; padding: 8px clamp(14px, 2vw, 28px); border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 74%, var(--bg)); }
     .signal-message { display: flex; align-items: center; gap: 11px; min-width: 0; }
-    .signal-symbol { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: var(--progress); box-shadow: 0 0 0 5px var(--progress-soft); }
+    .signal-symbol { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: var(--st-partial); box-shadow: 0 0 0 5px var(--st-partial-soft); }
     .signal-copy { min-width: 0; }
     .signal-copy strong { display: block; overflow: hidden; color: var(--text); font-size: 12.5px; font-weight: 640; text-overflow: ellipsis; white-space: nowrap; }
     .signal-copy span { color: var(--text-3); font-size: 11.5px; }
@@ -231,9 +232,9 @@
     .eyebrow { margin: 0 0 4px; color: var(--text-3); font-size: 10px; font-weight: 720; letter-spacing: .09em; text-transform: uppercase; }
     .rail-header h2, .inspector-header h2 { margin: 0; font-family: "Segoe UI Variable Display", "Aptos Display", sans-serif; font-size: 14px; font-weight: 690; letter-spacing: -.01em; }
     .rail-subtitle { display: block; margin-top: 3px; color: var(--text-3); font-size: 11px; }
-    .rail-source { display: inline-flex; align-items: center; gap: 6px; margin-top: 9px; color: var(--done); font-size: 10px; font-weight: 660; }
-    .rail-source::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, var(--done) 14%, transparent); }
-    .rail-source.is-snapshot { color: var(--progress); }
+    .rail-source { display: inline-flex; align-items: center; gap: 6px; margin-top: 9px; color: var(--st-done); font-size: 10px; font-weight: 660; }
+    .rail-source::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, var(--st-done) 14%, transparent); }
+    .rail-source.is-snapshot { color: var(--st-partial); }
     .phase-list { display: grid; gap: 3px; }
     .phase-filter { width: 100%; min-width: 0; min-height: 50px; padding: 7px 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; text-align: left; transition: background 160ms ease, border-color 160ms ease; }
     .phase-filter:hover { background: var(--surface-2); }
@@ -247,23 +248,23 @@
     .phase-filter-meta span { display: inline-flex; align-items: center; gap: 4px; }
     .phase-progress { display: block; width: 100%; height: 3px; margin-top: 7px; overflow: hidden; border: 0; border-radius: 99px; background: var(--surface-3); appearance: none; }
     .phase-progress::-webkit-progress-bar { border-radius: 99px; background: var(--surface-3); }
-    .phase-progress::-webkit-progress-value { border-radius: 99px; background: var(--done); }
-    .phase-progress::-moz-progress-bar { border-radius: 99px; background: var(--done); }
+    .phase-progress::-webkit-progress-value { border-radius: 99px; background: var(--st-done); }
+    .phase-progress::-moz-progress-bar { border-radius: 99px; background: var(--st-done); }
     .phase-loading { display: grid; gap: 8px; padding: 4px 1px; }
     .phase-skeleton { height: 50px; border-radius: 8px; background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 220% 100%; animation: phase-shimmer 1.4s ease infinite; }
-    .phase-load-error { padding: 12px; border: 1px solid color-mix(in srgb, var(--danger) 32%, var(--line)); border-radius: 8px; background: color-mix(in srgb, var(--danger) 7%, var(--surface-2)); color: var(--text-2); font-size: 11px; line-height: 1.55; }
+    .phase-load-error { padding: 12px; border: 1px solid color-mix(in srgb, var(--st-error) 32%, var(--line)); border-radius: 8px; background: color-mix(in srgb, var(--st-error) 7%, var(--surface-2)); color: var(--text-2); font-size: 11px; line-height: 1.55; }
     @keyframes phase-shimmer { to { background-position: -220% 0; } }
     .progress-track { display: block; height: 3px; margin-top: 7px; overflow: hidden; border-radius: 99px; background: var(--surface-3); }
-    .progress-value { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--done); }
+    .progress-value { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--st-done); }
     .progress-100 { width: 100%; } .progress-57 { width: 57%; } .progress-33 { width: 33%; } .progress-25 { width: 25%; } .progress-14 { width: 14%; }
     .rail-legend { margin-top: 20px; padding: 15px 5px 0; border-top: 1px solid var(--line); }
     .legend-list { display: grid; gap: 9px; margin: 10px 0 0; padding: 0; list-style: none; }
     .legend-item { display: flex; align-items: center; gap: 9px; color: var(--text-3); font-size: 11.5px; }
     .status-mark { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; }
-    .status-mark.done { background: var(--done); }
-    .status-mark.progress { background: var(--progress); box-shadow: 0 0 0 3px var(--progress-soft); }
-    .status-mark.planned { border: 1.5px solid var(--planned); background: transparent; }
-    .status-mark.blocked { background: var(--danger); }
+    .status-mark.done { background: var(--st-done); }
+    .status-mark.progress { background: var(--st-partial); box-shadow: 0 0 0 3px var(--st-partial-soft); }
+    .status-mark.planned { border: 1.5px solid var(--st-open); background: transparent; }
+    .status-mark.blocked { background: var(--st-error); }
 
     .content-surface { min-width: 0; min-height: 0; overflow-y: auto; background: var(--surface); }
     .view-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; min-height: 80px; padding: 17px 20px 15px; border-bottom: 1px solid var(--line); }
@@ -292,7 +293,7 @@
     .graph-help { position: absolute; right: 14px; bottom: 12px; display: inline-flex; align-items: center; gap: 7px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: color-mix(in srgb, var(--bg-elevated) 92%, transparent); color: var(--text-3); font-size: 10.5px; pointer-events: none; }
 
     .timeline { padding: 8px 20px 30px; }
-    .preview-note { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 8px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--progress) 30%, var(--line)); border-radius: 9px; background: var(--progress-soft); color: var(--text-2); font-size: 11.5px; }
+    .preview-note { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 8px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--st-partial) 30%, var(--line)); border-radius: 9px; background: var(--st-partial-soft); color: var(--text-2); font-size: 11.5px; }
     .timeline-group { padding: 16px 0; border-bottom: 1px solid var(--line); }
     .timeline-group:last-child { border-bottom: 0; }
     .timeline-head { display: grid; grid-template-columns: 180px minmax(120px, 1fr) 52px; align-items: center; gap: 16px; }
@@ -321,7 +322,7 @@
     .queue-filter:hover { background: var(--surface-2); color: var(--text-2); }
     .queue-filter[aria-pressed="true"] { border-color: var(--line); background: var(--surface-2); color: var(--text); }
     .engine-state { display: inline-flex; align-items: center; gap: 7px; color: var(--text-3); font-size: 10.5px; white-space: nowrap; }
-    .engine-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--planned); }
+    .engine-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--st-open); }
     .issue-list { display: grid; }
     .issue-row { display: grid; grid-template-columns: 84px minmax(180px, 1.2fr) minmax(220px, 1.6fr) 110px 28px; align-items: center; gap: 14px; min-height: 66px; padding: 9px 7px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; transition: background 160ms ease; }
     .issue-row:hover { background: var(--surface-2); }
@@ -331,8 +332,8 @@
     .issue-path { display: block; margin-top: 3px; overflow: hidden; color: var(--text-3); font-family: ui-monospace, monospace; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
     .issue-rule { color: var(--text-2); font-size: 11px; }
     .severity { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 10.5px; }
-    .severity::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--planned); }
-    .severity.error::before { background: var(--danger); } .severity.warning::before { background: var(--progress); } .severity.note::before { background: var(--accent); }
+    .severity::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--st-open); }
+    .severity.error::before { background: var(--st-error); } .severity.warning::before { background: var(--st-partial); } .severity.note::before { background: var(--accent); }
     .issue-chevron { color: var(--text-3); }
 
     .inspector { position: relative; min-height: 0; padding: 18px 16px; overflow-y: auto; border-left: 1px solid var(--line); }
@@ -353,13 +354,13 @@
     .detail-section p { margin: 0 0 6px; color: var(--text-2); font-size: 11.5px; line-height: 1.6; }
     .source-disabled { width: 100%; margin-top: 18px; }
     .phase-detail-kicker { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
-    .source-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid color-mix(in srgb, var(--done) 26%, var(--line)); border-radius: 5px; background: color-mix(in srgb, var(--done) 7%, transparent); color: var(--done); font-size: 9px; font-weight: 680; }
-    .source-chip.snapshot { border-color: color-mix(in srgb, var(--progress) 30%, var(--line)); background: var(--progress-soft); color: var(--progress); }
+    .source-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid color-mix(in srgb, var(--st-done) 26%, var(--line)); border-radius: 5px; background: color-mix(in srgb, var(--st-done) 7%, transparent); color: var(--st-done); font-size: 9px; font-weight: 680; }
+    .source-chip.snapshot { border-color: color-mix(in srgb, var(--st-partial) 30%, var(--line)); background: var(--st-partial-soft); color: var(--st-partial); }
     .phase-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-top: 14px; }
     .phase-stat { min-width: 0; padding: 8px 6px 7px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); }
     .phase-stat strong { display: block; color: var(--text); font-size: 14px; font-weight: 690; }
     .phase-stat span { display: block; margin-top: 2px; overflow: hidden; color: var(--text-3); font-size: 8.5px; text-overflow: ellipsis; white-space: nowrap; }
-    .phase-truth-note { margin: 13px 0 0; padding: 9px 10px; border-left: 2px solid var(--progress); background: var(--progress-soft); color: var(--text-2); font-size: 10.5px; line-height: 1.5; }
+    .phase-truth-note { margin: 13px 0 0; padding: 9px 10px; border-left: 2px solid var(--st-partial); background: var(--st-partial-soft); color: var(--text-2); font-size: 10.5px; line-height: 1.5; }
     .phase-acceptance { margin-top: 15px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
     .phase-acceptance strong { display: block; margin-bottom: 5px; color: var(--text-3); font-size: 9px; font-weight: 720; letter-spacing: .07em; text-transform: uppercase; }
     .phase-acceptance p { margin: 0; color: var(--text-2); font-size: 10.5px; line-height: 1.55; }
@@ -417,7 +418,7 @@
     .connect-step::after { content: ""; position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: transparent; }
     .connect-step.is-current { color: var(--text); font-weight: 680; }
     .connect-step.is-current::after { background: var(--accent); }
-    .connect-step.is-complete { color: var(--done); }
+    .connect-step.is-complete { color: var(--st-done); }
     .connect-body { min-height: 330px; padding: 24px 22px 26px; }
     .connect-intro { margin: 0 0 16px; color: var(--text-2); font-size: 12px; }
     .source-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -436,15 +437,15 @@
     .permission-note .icon { color: var(--accent); }
     .scan-result { display: grid; gap: 7px; }
     .scan-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 9px; min-height: 44px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
-    .scan-row .icon { width: 16px; height: 16px; color: var(--done); }
+    .scan-row .icon { width: 16px; height: 16px; color: var(--st-done); }
     .scan-row strong { display: block; color: var(--text-2); font-size: 10.5px; }
     .scan-row span { display: block; margin-top: 2px; color: var(--text-3); font-size: 9px; }
     .scan-row small { color: var(--text-3); font-size: 9px; }
     .connect-success { display: grid; place-items: center; min-height: 270px; text-align: center; }
-    .success-mark { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid color-mix(in srgb, var(--done) 36%, var(--line)); border-radius: 15px; background: var(--done-soft); color: var(--done); }
+    .success-mark { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid color-mix(in srgb, var(--st-done) 36%, var(--line)); border-radius: 15px; background: var(--st-done-soft); color: var(--st-done); }
     .connect-success h3 { margin: 16px 0 0; font-size: 18px; font-weight: 680; letter-spacing: -.025em; }
     .connect-success p { max-width: 52ch; margin: 8px 0 0; color: var(--text-3); font-size: 10.5px; line-height: 1.6; }
-    .connect-error { min-height: 20px; color: var(--danger); font-size: 10px; }
+    .connect-error { min-height: 20px; color: var(--st-error); font-size: 10px; }
     .connect-foot { display: flex; align-items: center; gap: 8px; padding: 12px 22px; border-top: 1px solid var(--line); background: var(--bg-elevated); }
     .connect-foot .connect-cancel { margin-right: auto; }
     .toast { position: fixed; right: 18px; bottom: 18px; z-index: 90; max-width: 360px; padding: 10px 13px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface-2); color: var(--text-2); box-shadow: var(--shadow-float); font-size: 11.5px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
@@ -638,7 +639,7 @@
       <button class="inspector-scrim" id="inspectorScrim" type="button" aria-label="Denetçiyi kapat" tabindex="-1"></button>
     </main>
 
-    <footer class="statusbar"><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span id="planScope" data-i18n="planLoading">PLAN.md yükleniyor</span></span><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span id="previewGenerated">Kalıcı proje indeksi yükleniyor</span></span><span class="build-label">UI-SPEC v0.8 · persistent</span></footer>
+    <footer class="statusbar"><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span id="planScope" data-i18n="planLoading">PLAN.md yükleniyor</span></span><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span id="previewGenerated">Kalıcı proje indeksi yükleniyor</span></span><span class="build-label">UI-SPEC v0.9 · persistent</span></footer>
     </section>
 
     <section class="product-screen" id="compareScreen" hidden>
@@ -703,14 +704,14 @@
 
 ### v0.1 parlatma listesi (kabul sonrası)
 
-1. **phaseFiles hassasiyeti:** "Güvenlik Düzeltmeleri", "Terim düzeltmesi",
+1. [x] **phaseFiles hassasiyeti:** "Güvenlik Düzeltmeleri", "Terim düzeltmesi",
    "plan değildir", "Plan — dilimler" gibi başlıklar yanlış-pozitif üretiyor →
    olumsuzlama koruması (`değildir` öncesi token yasak) + yapısal başlık
    istisnası ("Runtime açma kapısı") + Düzeltme için ✅/🔧 emoji veya tarih şartı
-2. Çok satıra yayılan bold başlıklar (`**...**\n devam**`) başlığı kırpıyor →
+2. [x] Çok satıra yayılan bold başlıklar (`**...**\n devam**`) başlığı kırpıyor →
    blok-bazlı bold çözümleme
-3. `madde-N` kimlikleri dosya-geneli sayaçtan geliyor; faza-göre sıfırlama
-   değerlendirilecek
+3. [x] `madde-N` kimlikleri faza göre sıfırlanır; tüketici kimliği
+   `(phaseHeading, id)` bileşimidir ve bu birleşimin tekilliği nöbetçidir.
 
 ## Dilim 0.2 · Dış denetim yanıtı (2026-08-24)
 
@@ -747,9 +748,32 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `npx tsx kokpit/cli.ts --roadmap <yol> [--phases <dizin>] [--pretty]`;
       JSON anahtarları İngilizce sabit (makine sözleşmesi, bkz. DESIGN.md D1)
 - ✅ **Windows kabul koşumu tamamlandı (2026-08-24):** `npm test` → 18/18;
-  `npm run typecheck` → hata yok.
+  `npm run typecheck` → hata yok. **Bağımsız denetçi teyidi (aynı gün):**
+  codex sonrası toplam **26/26 test + typecheck exit 0 bizzat koşuldu** ·
+  tam kayıt: `docs/analiz/hazirlik-auditi-2026-08-24.md` §1.4.
+- ✅ **Düzeltme sonrası yeniden kabul (2026-08-25, Node 20.20.2):**
+  `npm run check:preview` + `npm run typecheck` + `npm test` → **37/37**;
+  statik sır yolları canlı kontrolde 404, yabancı Host 403. Kişisel yerel yol
+  içeren ekran görüntüleri yayımlanmadı. GitHub Actions iş akışı hazırdır;
+  ilk uzak iş kod adımlarına başlamadan hesap faturalama/harcama limiti nedeniyle
+  engellendi (`run 32842069439`) ve yeşil kanıt sayılmadı.
 - **Kabul:** MethodLogos_Pro ROADMAP'ine CLI ile bakıldığında P0–P5 ve S1I
   D0–D4 durumları doğru çıkar.
+
+## Dilim 2.0 · Saf diyagram motoru nakli (AI'sız) — [hazirlik-auditi §3]
+
+- [ ] `lib/diagram/graph-schema.ts` ← gitdiagram `features/diagram/graph.ts`
+      (141 satır; kaynak zod^4 strictObject kullanıyor → zod^3 uyum nöbetçisi)
+- [ ] `lib/diagram/compile.ts` ← `server/generate/graph.ts` validate+compile
+      +stripUnknownNodePaths (473 satır; saf — I/O yok)
+- [ ] `lib/diagram/mermaid-sanitize.ts` ← `mermaid-validator.ts` (343) + testleri
+- [ ] Adaptör: proje düğümleri (`IndexReceipt.nodes`) → `DiagramGraph`
+      *(eşleme tablosu: hazirlik-auditi §1.3/§4; status→tone sözlüğü §3.1
+      belirteçlerine bağlanır)*
+- **Kabul:** KokpitPro kendi reposunu AI çağrısı OLMADAN Mermaid haritası olarak
+  çizer; ≥3 durum aynı ekranda görünür (Dilim 2 kabulüyle birleşir).
+- Geçici köprü: UI'ya "GitDiagram'da aç" link-butonu [(a)=XS]; iframe istenirse
+  lite dalına 1 satır CSP yaması.
 
 ## Dilim 2 · Harita + Durum Boyaması
 
@@ -763,20 +787,48 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 
 ## Dilim 2.1 · Proje Merkezi + Repo Bağlantı Yaşam Döngüsü
 
-- [~] Proje Merkezi görünür önizlemesi
-- [~] Kaynak → Doğrula → İndeksle → Hazır bağlantı önizlemesi
-- [~] Proje seçici + bağlam izolasyonu önizlemesi
-- [~] Dinamik zaman çizgisi + tam-yükseklik kabuk
-- [~] Ayrık proje karşılaştırma önizlemesi
-- [ ] ProjectRecord kayıt defteri
-- [ ] Yerel repo izinli-kök yardımcısı
-- [ ] GitHub App · seçili repolar · Contents: read
-- [ ] Proje-bazlı gerçek indeks ve makbuz
-- [ ] Gerçek karşılaştırma adaptörü
-- [ ] E2E kabul ve veri-sızıntısı nöbetçisi
-- **Kabul:** en az bir yerel ve bir GitHub projesi kaydedilir; proje değişiminde
-  tüm analiz yüzeyleri aynı projectId'ye geçer; farklı projelerin plan, harita,
-  zaman ve kanıt kayıtları birleşmez.
+> **UI sözleşmesi:** `UI-SPEC.md` v0.8 §12. Ana HTML artık aynı-köken Node
+> servisine bağlıdır; proje kayıtları ve son başarılı indeks makbuzları
+> `.kokpit/data/projects.json` içinde kalıcıdır.
+
+- [x] **Proje Merkezi:** kayıtlı projeler; kaynak, dal,
+      plan dosyası, bağlantı ve son indeks alanları; seçili proje bağlam paneli.
+- [x] **Dört adımlı bağlantı:** Kaynak → Doğrula → İndeksle →
+      Hazır; Yerel ve GitHub seçenekleri; geri/iptal/hata/başarı durumları.
+- [x] **Proje seçici + bağlam izolasyonu:** KokpitPro, MethodLogos ve PageBlitz
+      kalıcı indeksleri aynı çalışma alanında karıştırılmaz; değişimde
+      faz/düğüm/denetçi sıfırlanır.
+- [x] **Dinamik zaman çizgisi + tam-yükseklik kabuk:** etkin projenin tüm
+      izlenebilir plan maddeleri üretilir; sabit 4 örnek satır ve alt boş bant yok.
+- [x] **Karşılaştırma:** en az iki proje ayrı satırda; bilinmeyen
+      değerler `—/ölçülemiyor`; tek birleşik sağlık yüzdesi yok.
+- [x] **`ProjectRecord` kayıt defteri:** projectId, yerel kök/GitHub kimliği,
+      dal, plan kaynakları, bağlantı durumu ve son indeks makbuzunu kalıcı tut.
+- [x] **Yerel repo yardımcısı:** yazılan kökü `realpath` ile sınırlar;
+      `.git`/dal/commit/plan doğrular; kök dışı plan yolu ve 2 MiB üstü planı reddeder.
+- [x] **Yerel sunucu güvenlik sınırı:** `.env`, `.git`, `.kokpit`,
+      `node_modules` ve `gitdiagram` statik servisten dışlanır; Host başlığı
+      yalnız yapılandırılan yerel adres/porttur; saf nöbetçi + canlı HTTP kabulü vardır.
+- [~] **GitHub App / GitHub Contents:** seçili repolar + `Contents: read` token
+      üretimi sunucuda kodlandı; anonim halka açık repo kabulü gerçek API ile
+      doğrulandı. Özel `gyildiz21` repoları için App ID/installation/private-key
+      dış kurulumu henüz yok; PAT/parola formu yok ve sır ön yüze gitmez.
+- [x] **Proje-bazlı gerçek indeks:** IR `projectId/repoRoot/branch/commit`
+      alanları; başarısız yeni koşumda son başarılı IR bayat etiketiyle korunur.
+- [x] **Gerçek karşılaştırma adaptörü:** proje özetleri aynı ölçüm sözleşmesinden
+      gelmiyorsa ölçülemez; proje satırı etkin bağlama drill-through yapar.
+- [~] **E2E kabul:** yerel ekle, halka açık GitHub doğrula, özel GitHub yetki
+      hatası, proje değişimi, yeniden yükleme kalıcılığı ve veri
+      sızıntısı nöbetçisi, 1440/1024/768 taşma ve klavye/odak senaryoları.
+- [x] **2026-08-24 canlı kanıt:** 3 kalıcı yerel repo; KokpitPro `7/31`,
+      MethodLogos `8/62` ham checkbox grubu, PageBlitz kanıt-defteri adaptörü
+      `51/1057` ham belge grubu (kanonik ürün fazı sayılmaz); halka
+      açık GitHub doğrula+kalıcı kaydet+yeniden yükle+temizle akışı; `26/26`
+      test, typecheck, HTML sözdizimi ve aynı-köken API health yeşil.
+- **Kabul:** kullanıcı en az bir yerel ve bir GitHub projesini kaydeder; proje
+  değişiminde tüm analiz yüzeyleri aynı projectId'ye geçer; KokpitPro ve
+  MethodLogos verisi aynı plan/harita/zaman/kanıt yüzeyinde birleşmez; bağlantı
+  ve indeks kanıtı yoksa UI bunu hazır ürün olarak sunmaz.
 
 ## Dilim 3 · Delta Ön-Görünümü
 
@@ -789,6 +841,19 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 
 - [ ] Büyük-dosya / ortak-import / eşleşmeyen-katman sezgileri
 - [ ] Öneri listesi UI paneli
+
+## Dilim 5 · Uyum Telemetrisi (UI-SPEC §10) — [hazirlik-auditi: SAHİPSİZ bulgusuna sahip çıktık]
+
+- [ ] IR v0.2 şema genişlemesi: `sync[]` · `violations[]` · `conflicts[]` ·
+      `health{}` (UI-SPEC §10.6 alanları, Zod'lu)
+- [ ] Denetçi modüller: `kokpit/check/sync.ts` (defter senkronu + near-miss
+      gerekçesi) · `kokpit/check/rules.ts` (başlangıç seti: koşumsuz-commit,
+      hardcode-metin, hex-in-component, sahte-kapı, bayat-kutu, ks-band)
+      · `kokpit/check/conflicts.ts` (karar-defteri ↔ ROADMAP çaprazı)
+- [ ] Uyum sekmesi mock → gerçek IR verisi; triage kuyrukları (Yeni/Regress/
+      Yükselen/Gerekçeyle-kapalı); kapatma akışı zorunlu gerekçe+kim+zaman
+- **Kabul:** MethodLogos verisinde pano ≥1 gerçek ihlal ve ≥1 çelişkiyi
+  yakalar; her çipten drill-through ≤2 tıklama (UI-SPEC §10.7).
 
 ## Sabit kurallar (bu projede de geçerli)
 
@@ -851,7 +916,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
     const t = key => I18N[language][key] ?? key;
     const activeProject = () => PROJECTS[activeProjectId];
-    const PHASE_NAMES_EN = { "D0": "Engine bootstrap", "D0.1": "Parser acceptance run", "D0.2": "External audit response", "D1": "Phase-document parser", "D2": "Map and status coloring", "D3": "Delta preview", "D4": "Remap suggestions" };
+    const PHASE_NAMES_EN = { "Dilim-0": "Engine bootstrap", "Dilim-0.1": "Parser acceptance run", "Dilim-0.2": "External audit response", "Dilim-1": "Phase-document parser", "Dilim-2.0": "Pure diagram engine port", "Dilim-2": "Map and status coloring", "Dilim-2.1": "Project hub and repository lifecycle", "Dilim-3": "Delta preview", "Dilim-4": "Remap suggestions", "Dilim-5": "Compliance telemetry" };
 
     function escapeHtml(value) {
       return String(value).replace(/[&<>"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]);
@@ -998,7 +1063,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     }
     function phaseIdFromHeading(heading, index) {
       const match = /^Dilim\s+([0-9]+(?:\.[0-9]+)?)/i.exec(heading);
-      if (match) return `D${match[1]}`;
+      if (match) return `Dilim-${match[1]}`;
       const explicit = /\b([PDF]\d+(?:\.\d+)?)\b/i.exec(heading);
       return explicit ? explicit[1].toLocaleUpperCase("en-US") : `F${index + 1}`;
     }

@@ -43,14 +43,14 @@
 
 ### v0.1 parlatma listesi (kabul sonrası)
 
-1. **phaseFiles hassasiyeti:** "Güvenlik Düzeltmeleri", "Terim düzeltmesi",
+1. [x] **phaseFiles hassasiyeti:** "Güvenlik Düzeltmeleri", "Terim düzeltmesi",
    "plan değildir", "Plan — dilimler" gibi başlıklar yanlış-pozitif üretiyor →
    olumsuzlama koruması (`değildir` öncesi token yasak) + yapısal başlık
    istisnası ("Runtime açma kapısı") + Düzeltme için ✅/🔧 emoji veya tarih şartı
-2. Çok satıra yayılan bold başlıklar (`**...**\n devam**`) başlığı kırpıyor →
+2. [x] Çok satıra yayılan bold başlıklar (`**...**\n devam**`) başlığı kırpıyor →
    blok-bazlı bold çözümleme
-3. `madde-N` kimlikleri dosya-geneli sayaçtan geliyor; faza-göre sıfırlama
-   değerlendirilecek
+3. [x] `madde-N` kimlikleri faza göre sıfırlanır; tüketici kimliği
+   `(phaseHeading, id)` bileşimidir ve bu birleşimin tekilliği nöbetçidir.
 
 ## Dilim 0.2 · Dış denetim yanıtı (2026-08-24)
 
@@ -87,9 +87,32 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `npx tsx kokpit/cli.ts --roadmap <yol> [--phases <dizin>] [--pretty]`;
       JSON anahtarları İngilizce sabit (makine sözleşmesi, bkz. DESIGN.md D1)
 - ✅ **Windows kabul koşumu tamamlandı (2026-08-24):** `npm test` → 18/18;
-  `npm run typecheck` → hata yok.
+  `npm run typecheck` → hata yok. **Bağımsız denetçi teyidi (aynı gün):**
+  codex sonrası toplam **26/26 test + typecheck exit 0 bizzat koşuldu** ·
+  tam kayıt: `docs/analiz/hazirlik-auditi-2026-08-24.md` §1.4.
+- ✅ **Düzeltme sonrası yeniden kabul (2026-08-25, Node 20.20.2):**
+  `npm run check:preview` + `npm run typecheck` + `npm test` → **37/37**;
+  statik sır yolları canlı kontrolde 404, yabancı Host 403. Kişisel yerel yol
+  içeren ekran görüntüleri yayımlanmadı. GitHub Actions iş akışı hazırdır;
+  ilk uzak iş kod adımlarına başlamadan hesap faturalama/harcama limiti nedeniyle
+  engellendi (`run 32842069439`) ve yeşil kanıt sayılmadı.
 - **Kabul:** MethodLogos_Pro ROADMAP'ine CLI ile bakıldığında P0–P5 ve S1I
   D0–D4 durumları doğru çıkar.
+
+## Dilim 2.0 · Saf diyagram motoru nakli (AI'sız) — [hazirlik-auditi §3]
+
+- [ ] `lib/diagram/graph-schema.ts` ← gitdiagram `features/diagram/graph.ts`
+      (141 satır; kaynak zod^4 strictObject kullanıyor → zod^3 uyum nöbetçisi)
+- [ ] `lib/diagram/compile.ts` ← `server/generate/graph.ts` validate+compile
+      +stripUnknownNodePaths (473 satır; saf — I/O yok)
+- [ ] `lib/diagram/mermaid-sanitize.ts` ← `mermaid-validator.ts` (343) + testleri
+- [ ] Adaptör: proje düğümleri (`IndexReceipt.nodes`) → `DiagramGraph`
+      *(eşleme tablosu: hazirlik-auditi §1.3/§4; status→tone sözlüğü §3.1
+      belirteçlerine bağlanır)*
+- **Kabul:** KokpitPro kendi reposunu AI çağrısı OLMADAN Mermaid haritası olarak
+  çizer; ≥3 durum aynı ekranda görünür (Dilim 2 kabulüyle birleşir).
+- Geçici köprü: UI'ya "GitDiagram'da aç" link-butonu [(a)=XS]; iframe istenirse
+  lite dalına 1 satır CSP yaması.
 
 ## Dilim 2 · Harita + Durum Boyaması
 
@@ -122,6 +145,9 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       dal, plan kaynakları, bağlantı durumu ve son indeks makbuzunu kalıcı tut.
 - [x] **Yerel repo yardımcısı:** yazılan kökü `realpath` ile sınırlar;
       `.git`/dal/commit/plan doğrular; kök dışı plan yolu ve 2 MiB üstü planı reddeder.
+- [x] **Yerel sunucu güvenlik sınırı:** `.env`, `.git`, `.kokpit`,
+      `node_modules` ve `gitdiagram` statik servisten dışlanır; Host başlığı
+      yalnız yapılandırılan yerel adres/porttur; saf nöbetçi + canlı HTTP kabulü vardır.
 - [~] **GitHub App / GitHub Contents:** seçili repolar + `Contents: read` token
       üretimi sunucuda kodlandı; anonim halka açık repo kabulü gerçek API ile
       doğrulandı. Özel `gyildiz21` repoları için App ID/installation/private-key
@@ -154,6 +180,19 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 
 - [ ] Büyük-dosya / ortak-import / eşleşmeyen-katman sezgileri
 - [ ] Öneri listesi UI paneli
+
+## Dilim 5 · Uyum Telemetrisi (UI-SPEC §10) — [hazirlik-auditi: SAHİPSİZ bulgusuna sahip çıktık]
+
+- [ ] IR v0.2 şema genişlemesi: `sync[]` · `violations[]` · `conflicts[]` ·
+      `health{}` (UI-SPEC §10.6 alanları, Zod'lu)
+- [ ] Denetçi modüller: `kokpit/check/sync.ts` (defter senkronu + near-miss
+      gerekçesi) · `kokpit/check/rules.ts` (başlangıç seti: koşumsuz-commit,
+      hardcode-metin, hex-in-component, sahte-kapı, bayat-kutu, ks-band)
+      · `kokpit/check/conflicts.ts` (karar-defteri ↔ ROADMAP çaprazı)
+- [ ] Uyum sekmesi mock → gerçek IR verisi; triage kuyrukları (Yeni/Regress/
+      Yükselen/Gerekçeyle-kapalı); kapatma akışı zorunlu gerekçe+kim+zaman
+- **Kabul:** MethodLogos verisinde pano ≥1 gerçek ihlal ve ≥1 çelişkiyi
+  yakalar; her çipten drill-through ≤2 tıklama (UI-SPEC §10.7).
 
 ## Sabit kurallar (bu projede de geçerli)
 

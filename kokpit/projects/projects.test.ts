@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,6 +32,10 @@ describe('persistent project registry', () => {
         expect(reloaded.activeProjectId).toBe(project.id);
         expect(reloaded.projects[0]?.index.commit).toBe(project.index.commit);
         expect(JSON.parse(readFileSync(registry.filePath, 'utf8')).version).toBe(1);
+
+        registry.write(reloaded);
+        expect(readdirSync(dataDir).filter((name) => name.endsWith('.tmp'))).toEqual([]);
+        expect(new ProjectRegistry(dataDir).read()).toEqual(reloaded);
     });
 
     it('rejects a plan path outside the selected repository root', async () => {
