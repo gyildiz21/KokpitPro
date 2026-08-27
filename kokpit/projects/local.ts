@@ -20,6 +20,89 @@ async function git(root: string, args: string[]): Promise<string> {
     return stdout.trim();
 }
 
+async function gitRaw(root: string, args: string[], maxBuffer = 16 * 1024 * 1024): Promise<string> {
+    const { stdout } = await execFileAsync('git', ['-C', root, ...args], {
+        encoding: 'utf8',
+        windowsHide: true,
+        maxBuffer,
+    });
+    return stdout;
+}
+
+export interface LocalRevision {
+    branch: string;
+    commit: string;
+    dirty: boolean;
+    kind: 'commit' | 'working-tree';
+    /** Commit SHA veya içerik-duyarlı `worktree-<sha256>` makbuzu. */
+    revision: string;
+}
+
+/**
+ * Kalıcı kayıt ile aynı anda okunan canlı Git makbuzundan tek bağlantı durumu
+ * üretir. Katalog, üst bağlam ve diyagram bu kararı paylaşır; kayıt dosyasındaki
+ * eski `ready` değeri canlı çalışma ağacı değişimini gizleyemez.
+ */
+export function withLocalFreshness(
+    project: ProjectRecordType,
+    current: LocalRevision,
+): ProjectRecordType {
+    if (project.source.type !== 'local') return project;
+    const expectedKind = project.index.revisionKind ?? 'commit';
+    const expectedRevision = project.index.revision ?? project.index.commit;
+    const fresh = current.branch === project.index.branch
+        && current.commit === project.index.commit
+        && current.kind === expectedKind
+        && current.revision === expectedRevision;
+    return ProjectRecord.parse({
+        ...project,
+        connectionState: fresh ? 'ready' : 'stale',
+        lastError: fresh ? null : 'stale-receipt',
+    });
+}
+
+export async function refreshProjectFreshness(project: ProjectRecordType): Promise<ProjectRecordType> {
+    if (project.source.type !== 'local') return project;
+    try {
+        return withLocalFreshness(project, await readLocalRevision(project.source.root));
+    } catch (error) {
+        return ProjectRecord.parse({
+            ...project,
+            connectionState: 'error',
+            lastError: `revision-check-failed:${error instanceof Error ? error.message : String(error)}`,
+        });
+    }
+}
+
+/**
+ * Yerel çalışma ağacının kanonik makbuzu. Kirli durumda yalnız dosya adlarını
+ * değil diff'i ve izlenmeyen dosya içeriklerini de hash'ler; böylece iki farklı
+ * çalışma ağacı aynı commit makbuzu gibi sunulamaz.
+ */
+export async function readLocalRevision(root: string): Promise<LocalRevision> {
+    const branch = (await git(root, ['branch', '--show-current'])) || 'DETACHED';
+    const commit = await git(root, ['rev-parse', 'HEAD']);
+    const status = await gitRaw(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all']);
+    if (!status) return { branch, commit, dirty: false, kind: 'commit', revision: commit };
+
+    const diff = await gitRaw(root, ['diff', '--binary', '--no-ext-diff', 'HEAD', '--', '.']);
+    const untrackedRaw = await gitRaw(root, ['ls-files', '--others', '--exclude-standard', '-z']);
+    const untracked = untrackedRaw.split('\0').filter(Boolean).sort();
+    const hash = createHash('sha256').update(commit).update('\0').update(status).update('\0').update(diff);
+    for (const relativePath of untracked) {
+        const fullPath = resolve(root, relativePath);
+        if (!isInside(root, fullPath) || !existsSync(fullPath) || !statSync(fullPath).isFile()) continue;
+        hash.update('\0').update(relativePath.replaceAll('\\', '/')).update('\0').update(readFileSync(fullPath));
+    }
+    return {
+        branch,
+        commit,
+        dirty: true,
+        kind: 'working-tree',
+        revision: `worktree-${hash.digest('hex').slice(0, 20)}`,
+    };
+}
+
 function isInside(root: string, target: string): boolean {
     const rel = relative(root, target);
     return rel === '' || (!rel.startsWith(`..${sep}`) && rel !== '..' && !isAbsolute(rel));
@@ -69,12 +152,15 @@ export interface LocalProjectInput {
 
 export async function indexLocalProject(input: LocalProjectInput, previous?: ProjectRecordType): Promise<ProjectRecordType> {
     if (!input.path?.trim()) throw new Error('Local repository path is required.');
-    const root = realpathSync(resolve(input.path.trim()));
+    // Windows'ta geçici klasör veya dosya seçici 8.3 kısa-yol döndürebilir;
+    // Git ise aynı kökü uzun Unicode yoluyla raporlar. İkisini native gerçek
+    // yola çevirerek aynı depoyu yanlışlıkla alt klasör gibi reddetmeyiz.
+    const root = realpathSync.native(resolve(input.path.trim()));
     if (!statSync(root).isDirectory()) throw new Error('Local repository path is not a directory.');
-    const gitRoot = realpathSync(await git(root, ['rev-parse', '--show-toplevel']));
+    const gitRoot = realpathSync.native(await git(root, ['rev-parse', '--show-toplevel']));
     if (gitRoot !== root) throw new Error(`Select the Git repository root: ${gitRoot}`);
-    const branch = (await git(root, ['branch', '--show-current'])) || 'DETACHED';
-    const commit = await git(root, ['rev-parse', 'HEAD']);
+    const localRevision = await readLocalRevision(root);
+    const { branch, commit } = localRevision;
     const remoteUrl = await git(root, ['remote', 'get-url', 'origin']).catch(() => '');
     const plan = resolvePlan(root, input.planPath);
     const planMarkdown = readFileSync(plan.path, 'utf8');
@@ -93,6 +179,8 @@ export async function indexLocalProject(input: LocalProjectInput, previous?: Pro
             indexedAt: now,
             commit,
             branch,
+            revisionKind: localRevision.kind,
+            revision: localRevision.revision,
             planPath: plan.relativePath,
             planMarkdown,
             groups: planIndex.groups,

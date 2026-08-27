@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const preview = readFileSync(resolve(root, 'arayuz-onizleme.html'), 'utf8');
+const mapFlowSource = readFileSync(resolve(root, 'kokpit/ui/map-flow.tsx'), 'utf8');
 const spec = readFileSync(resolve(root, 'UI-SPEC.md'), 'utf8');
 const plan = readFileSync(resolve(root, 'PLAN.md'), 'utf8');
 
@@ -15,7 +16,7 @@ describe('UI-SPEC v0.9 persistent project lifecycle', () => {
         expect(spec).toContain('### §12.6 Proje-bazlı veri izolasyonu');
         expect(spec).toContain('### §12.10 Kabul senaryoları');
         expect(plan).toContain('## Dilim 2.1 · Proje Merkezi + Repo Bağlantı Yaşam Döngüsü');
-        expect(plan).toContain('**GitHub App / GitHub Contents:** seçili repolar');
+        expect(plan).toContain('**GitHub App / GitHub Contents (`kokpit/projects/github.ts`):** seçili repolar');
         expect(plan).toContain('`Contents: read`');
     });
 
@@ -47,7 +48,7 @@ describe('UI-SPEC v0.9 persistent project lifecycle', () => {
         expect(activation).toContain('resetInspector();');
         expect(activation.indexOf('resetInspector();')).toBeLessThan(activation.indexOf('await loadPlanData();'));
         expect(preview).toContain('function resetInspector()');
-        expect(preview).toContain("$('#inspectorBody').innerHTML = `<div class=\"inspector-empty\"");
+        expect(preview).toContain('function renderEmptyInspector()');
     });
 
     it('keeps the file-mode PLAN snapshot and status tokens synchronized', () => {
@@ -57,5 +58,113 @@ describe('UI-SPEC v0.9 persistent project lifecycle', () => {
         expect(preview).toContain('--st-partial');
         expect(preview).toContain('--st-open');
         expect(preview).not.toMatch(/--(?:done|progress|planned|danger)(?:-soft)?\b/);
+    });
+});
+
+describe('Dilim 2 real-map wiring', () => {
+    it('fetches the measured project diagram and resets it on project switch', () => {
+        expect(preview).toContain('document.body.dataset.appReady = "true";');
+        expect(preview).toContain('document.body.dataset.appReady = "error";');
+        expect(preview).toContain('apiRequest(`/api/projects/${encodeURIComponent(projectId)}/diagram`)');
+        const activation = /async function activateProject\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
+        expect(activation).toContain('diagramState = null;');
+        expect(activation.indexOf('resetInspector();')).toBeLessThan(activation.indexOf('await loadPlanData();'));
+        expect(activation).toContain('await loadDiagramData();');
+        expect(preview).toContain('async function loadDiagramData()');
+    });
+
+    it('keeps sample nodes honestly labeled and paints statuses only through evidence kinds', () => {
+        expect(preview).toContain('<span class="sample-label">${escapeHtml(t("sample"))}</span>');
+        expect(preview).toContain('function mapNodeStatus(evidence)');
+        expect(preview).toContain("evidence.evidenceKind === \"plan-path-match\"");
+        expect(preview).toContain('t("unmeasuredStatus")');
+        expect(preview).not.toMatch(/style="[^"]*#[0-9a-fA-F]{3,8}/);
+    });
+
+    it('exposes the deterministic mermaid export and evidence receipt inspector', () => {
+        expect(preview).toContain('id="mermaidExport"');
+        expect(preview).toContain('id="mermaidSource"');
+        expect(preview).toContain('id="copyMermaid"');
+        expect(preview).toContain('function renderRealNodeInspector(id)');
+        expect(preview).toContain('evidenceKindLabel(evidence.evidenceKind)');
+        expect(preview).toContain('projectId:<code>${escapeHtml(evidence.projectId)}</code>');
+    });
+
+    it('uses a measured React Flow layout instead of recycling five absolute slots', () => {
+        expect(preview).toContain('/assets/map-flow.js');
+        expect(preview).toContain('window.KokpitMapFlow.render({');
+        expect(preview).toContain('groups: (receipt.graph.groups || []).map');
+        expect(preview).toContain('groupId: node.groupId');
+        expect(preview).toContain('edges: receipt.graph.edges.map');
+        expect(preview).toContain('function architectureGroupLabel(group)');
+        expect(preview).toContain('function architectureEdgeLabel(label)');
+        expect(preview).toContain('otherGroupLabel: t("architectureGroupShared")');
+        expect(mapFlowSource).toContain('<Handle type="target" position={Position.Left}');
+        expect(mapFlowSource).toContain('<Handle type="source" position={Position.Right}');
+        expect(mapFlowSource).toContain('fitViewOptions={{ padding: 0.12, minZoom: 0.25, maxZoom: 0.9 }}');
+        expect(preview).not.toContain('const slots = ["node-pos-1"');
+        expect(preview).not.toContain('function renderRealWires');
+    });
+
+    it('binds group/edge inspectors and receipt-scoped view persistence', () => {
+        expect(preview).toContain('onSelectGroup: selectMapGroup');
+        expect(preview).toContain('onSelectEdge: selectMapEdge');
+        expect(preview).toContain('function renderGroupInspector(id)');
+        expect(preview).toContain('function renderEdgeInspector(id)');
+        expect(preview).toContain('function mapStateKey()');
+        expect(preview).toContain('kokpit-map-state:${activeProjectId}:${revision}');
+        expect(preview).toContain('viewport: viewport || previous?.viewport || null');
+        expect(preview).toContain('search: mapSearchQuery');
+        expect(preview).toContain('function nodeMatchesMapSearch(node)');
+        expect(preview).toContain('id="mapSearch"');
+        expect(preview).toContain('restoreMapContext();');
+        expect(preview).toContain("if ($('#workspaceScreen').hidden) return;");
+        expect(mapFlowSource).toContain('data-map-group-id={groupId}');
+        expect(mapFlowSource).toContain('edgesFocusable');
+        expect(mapFlowSource).toContain('onViewportChange');
+        const renderApi = /render\(payload: MapFlowPayload\) \{[\s\S]+?\n    \},/.exec(mapFlowSource)?.[0] ?? '';
+        expect(renderApi).not.toContain('instance = null;');
+        expect(renderApi).toContain('next.setViewport(payload.initialViewport)');
+        expect(renderApi).toContain('instance.setViewport(payload.initialViewport)');
+    });
+
+    it('shows phase code/test mappings, GO gates, and stale-receipt recovery', () => {
+        expect(preview).toContain('receipt.itemMappings');
+        expect(preview).toContain('receipt.unmatchedPlanItems');
+        expect(preview).toContain('data-node-jump=');
+        expect(preview).toContain('group.gateStatus === "waiting-go"');
+        expect(preview).toContain('data-map-reindex=');
+        expect(preview).toContain('evidence.revisionKind === "commit"');
+    });
+});
+
+describe('Dilim 3 delta wiring', () => {
+    it('fetches the measured delta for the composite item id and never fakes failures', () => {
+        const loader = /async function loadDelta\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
+        expect(loader).toContain('/delta?phase=${encodeURIComponent(phaseHeading)}&item=${encodeURIComponent(itemId)}');
+        // HTTP hatası dürüst boş duruma döner; örnek payload gerçek gibi çizilmez.
+        expect(preview).not.toMatch(/"mode":\s*"measured"/);
+        expect(preview).toMatch(/status: "empty"/);
+    });
+
+    it('mirrors the roadmap gate rule: item-body legends are not gates', () => {
+        // Checkbox gövdesi işareti + boş satır/başlık sıfırlaması roadmap.ts nöbetçisinin aynasıdır.
+        expect(preview).toContain('insideItemBody = true;');
+        expect(preview).toContain('!insideItemBody && /\\bGO\\b');
+    });
+
+    it('scopes delta state to the active project and resets on switch', () => {
+        expect(preview).toContain('function activeDelta()');
+        const activation = /async function activateProject\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
+        expect(activation).toContain('deltaState = null;');
+        expect(activation.indexOf('resetInspector();')).toBeLessThan(activation.indexOf('await loadPlanData();'));
+    });
+
+    it('renders both inspector and panel delta surfaces with proposed-node honesty', () => {
+        expect(preview).toContain('[data-inspector-delta-card]');
+        expect(preview).toContain('is-proposed');
+        expect(preview).toContain('highlightNodeIds');
+        // Kesikli öneri düğümleri ÖNERİ/PROPOSED metni taşır; renk tek başına anlam vermez.
+        expect(preview).toContain('proposalBadge');
     });
 });

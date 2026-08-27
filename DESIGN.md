@@ -58,3 +58,21 @@ açacak şekilde tasarlanır (yazma izni ayrı GO konusu).
    (`personalEmailYasak` deseninin genellemesi).
 4. Bu karar tek-başına SaaS taahhüdü DEĞİLDİR — yalnızca bugünkü seçimlerin
    o kapıyı kapatmamasıdır.
+
+## D6 · Kanıt yaşam döngüsü ve etkileşim durumu
+
+1. **Tek güncellik gerçeği:** yerel proje için katalog, üst bağlam, harita,
+   delta ve denetçi `kokpit/projects/local.ts` tarafından canlı Git makbuzuyla
+   türetilen aynı `ready/stale/error` kararını tüketir; kalıcı kayıttaki eski
+   `ready` değeri arayüzde ayrı bir gerçek gibi sunulmaz.
+2. **Tarih-delta sınırı:** son iki ölçülmüş graf anlık görüntüsü proje bazında
+   `.kokpit/data/delta-history.json` altında atomik yazılır. Karşılaştırma yalnız
+   bu iki gerçek ölçüm arasında yapılır; taban yoksa `comparison-baseline-unavailable`
+   korunur ve ilişki uydurulmaz. Proje silindiğinde ona ait delta geçmişi de
+   aynı API yaşam döngüsünde silinir.
+3. **Etkileşim kanıtı:** grup açıklaması deterministik yol sınıflandırmasıdır;
+   kenar ayrıntısı yalnız ölçülmüş import kaydından gelir. Çalışma-zamanı akışı,
+   sahiplik veya ticari etki bu yüzeylerden çıkarılmaz.
+4. **Makbuz-kapsamlı görünüm:** zoom/pan, faz filtresi, harita araması ve seçili
+   düğüm/grup/kenar `projectId + revision` anahtarıyla oturumda tutulur. Proje
+   veya makbuz değişince eski bağlam yeni grafa taşınmaz.

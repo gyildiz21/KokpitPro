@@ -5,9 +5,10 @@
   "type": "module",
   "description": "Faz-farkındalı geliştirme kokpiti — faz belgelerinden okuyan, kod durumunu haritada gösteren araç",
   "scripts": {
-    "dev": "tsx watch kokpit/server.ts",
+    "dev": "tsx watch --include \"kokpit/ui/**/*\" kokpit/server.ts",
     "start": "tsx kokpit/server.ts",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "sync:preview": "node scripts/sync-preview.mjs",
@@ -15,12 +16,21 @@
     "kokpit": "tsx kokpit/cli.ts"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^3.1.1",
+    "@xyflow/react": "^12.11.5",
+    "esbuild": "^0.28.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^20.14.15",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "dependency-cruiser": "^18.2.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "vitest": "^4.1.11"
   }
 }

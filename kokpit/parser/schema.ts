@@ -33,6 +33,9 @@ export type PhaseItem = z.infer<typeof PhaseItem>;
 export const PhaseGroup = z.object({
     heading: z.string(),
     items: z.array(PhaseItem),
+    /** Başlık kapsamındaki açık insan/sağlayıcı onay kapısı. */
+    gateStatus: z.enum(['waiting-go']).optional(),
+    gateLine: z.number().int().positive().optional(),
 });
 export type PhaseGroup = z.infer<typeof PhaseGroup>;
 

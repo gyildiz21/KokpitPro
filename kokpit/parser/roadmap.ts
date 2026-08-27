@@ -20,6 +20,7 @@ const HEADING_RE = /^(#{1,6})\s+(.*)$/;
 const BOLD_TITLE_RE = /^\*\*(.+?)\*\*\s*:?\s*/;
 const ID_RE = /^#([A-Za-z0-9][\w.-]*)/;
 const DATE_RE = /(?:[Tt]amamlandı|[Kk]apandı)\s+(\d{4}-\d{2}-\d{2})/;
+const WAITING_GO_RE = /\b(?:harici\s+)?GO\s+(?:bekliyor|bekleniyor|waiting)\b/i;
 
 function statusOf(marker: string): ItemStatus {
     if (marker === 'x' || marker === 'X') return 'done';
@@ -90,6 +91,11 @@ export function scanRoadmapText(text: string, sourceFile = 'inline'): RoadmapSca
     // Gerekçe: Dilim 3 delta kimliği `madde-N`e oturur; erken satır ekleme
     // sonraki fazların kimliklerini kaydırmamalı (auditi §1.5).
     let counter = 0;
+    // GO kapısı yalnız maddenin GÖVDESİ DIŞINDAKI bağımsız bir bildirim satırından
+    // üretilir. Maddenin devam satırındaki sözlük/lejant anımı (örn. "GO
+    // bekliyor(mavi halka)" renk açıklaması) faz kapısı DEĞİLDİR — 2026-08-26
+    // nöbetçi düzeltmesi: Dilim 2 lejantı waiting-go sanılıyordu.
+    let insideItemBody = false;
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i] ?? '';
@@ -102,12 +108,23 @@ export function scanRoadmapText(text: string, sourceFile = 'inline'): RoadmapSca
             currentHeading = headingMatch[2]?.trim() ?? '';
             currentGroup = { heading: currentHeading, items: [] };
             counter = 0;
+            insideItemBody = false;
             groups.push(currentGroup);
             continue;
         }
 
         const cb = CHECKBOX_RE.exec(line);
-        if (!cb) continue;
+        if (!cb) {
+            if (!line.trim()) {
+                insideItemBody = false;
+            } else if (currentGroup && !insideItemBody && WAITING_GO_RE.test(line)) {
+                currentGroup.gateStatus = 'waiting-go';
+                currentGroup.gateLine ??= i + 1;
+            }
+            continue;
+        }
+
+        insideItemBody = true;
 
         counter += 1;
         const status = statusOf(cb[2] ?? ' ');

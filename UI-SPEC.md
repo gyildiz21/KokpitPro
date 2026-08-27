@@ -1,9 +1,13 @@
 # KokpitPro — Arayüz Sözleşmesi (UI-SPEC)
 
-> **Durum:** 🟢 **BAĞLAYICI v0.9** (Patron onayı 2026-08-24 — onay bloğu §son
-> imzalı). **Uygulama durumu sözleşmeden ayrıdır:** §12 proje yaşam döngüsü
-> büyük ölçüde bağlıdır; §1–§5 harita/delta yüzeyleri örnek veri taşır; §10 Uyum
-> motoru Dilim 5 kapsamında açıktır. Remap v2 backlog'tadır.
+> **Durum:** 🟢 **BAĞLAYICI v1.1** (Patron onayı 2026-08-24; mimari harita ve
+> etkileşimli mimari denetim onayı 2026-08-27 — onay bloğu §son imzalı).
+> **Uygulama durumu
+> sözleşmeden ayrıdır:** §12 proje yaşam döngüsü büyük ölçüde bağlıdır; Harita
+> güncel indeks makbuzunda ölçülmüş repo verisini, ölçüm yoksa açıkça etiketli
+> örnek durumu gösterir; Delta (§5.2) Dilim 3 ile gerçek modda açıldı — yalnız
+> seçili madde için ölçülmüş kanıt; kanıt yoksa ölçülemiyor. §10 Uyum motoru
+> Dilim 5 kapsamında hâlâ açıktır. Remap v2 backlog'tadır.
 > **Kapsam:** proje kataloğu, kalıcı yerel/GitHub bağlantı servisi, proje
 > değiştirici, veri izolasyonu, portföy karşılaştırması, tam-yükseklik kabuk,
 > Harita/Zaman/Delta/**Uyum** yüzeyleri.
@@ -308,16 +312,62 @@ eşlemesi ayrıca sunulur.
   her zaman görünürdür.
 - Faz↔kod yolu eşlemesi yoksa seçim harita düğümlerini filtrelemez. Denetçi
   `Kod kanıtı — eşleme bağlı değil` der; plan durumu kod gerçeğine çevrilmez.
+- Eşleşme varsa diğer düğümler soluklaşır; eşleşen kod yolu ve doğrudan ölçülen
+  test importları alt madde içinde haritaya geçiş eylemiyle görünür.
 - Düğüm seçimi denetçide yol, durum, faz referansı, ilgili testler ve kanıt
   kaynağını gösterir. Veri yoksa ilgili bölüm görünmez; `—` ile sahte dolgu
   yapılmaz.
-- `Kaynağı aç` ancak `sourcePath` ve satır aralığı doğrulanmışsa etkindir.
+- `Kaynağı aç` yalnız değişmez commit ve doğrulanmış repo yolu varsa etkindir.
+  Kirli yerel çalışma ağacında yanlış GitHub bağlantısı üretilmez; çalışma
+  ağacı makbuzu ve gerekçesi görünür.
 - Harita üstünde arama sonucu sayısı ve görünür/toplam düğüm sayısı yazılır.
 
-#### §5.0.1 Faz alt-madde incelemesi
+#### §5.0.1 Mimari grup ve ilişki dili
+
+- Düğümler repo yolundaki açık segmentlerden **deterministik** olarak Arayüz,
+  Backend ve API, Analiz motoru, Servisler ve entegrasyonlar, Veri ve depolama,
+  Otomasyon ve iş akışları, Derleme ve dağıtım veya Paylaşılan çekirdek
+  gruplarına ayrılır. Bu sınıflandırma AI yorumu veya işlev iddiası değildir.
+- Bir dizin adı dosya adından güçlü kanıttır: örneğin `services/api.ts`, yalnız
+  dosya adı `api` olduğu için Backend grubuna taşınmaz.
+- Her ok yalnız ölçülmüş import kenarından üretilir ve **kaynak dosyadan bağımlı
+  olduğu dosyaya** yönelir. Gruplar arası normal kenar `içe aktarır`; dinamik
+  import `dinamik yükler`; type-only import `tür bağımlılığı` etiketi taşır.
+  Dinamik ve type-only kenarlar kesiklidir. Çalışma-zamanı veri akışı, çağrı
+  sırası veya ticari etki bu ölçümden türetilmez.
+- Grup kapsayıcıları, ok uçları ve ilişki etiketleri React Flow haritasında;
+  aynı gruplar güvenli `subgraph` blokları olarak deterministik Mermaid
+  ihracında görünür. TR/EN metinleri sözlükten gelir.
+- Gelecekteki AI semantik zenginleştirme ayrı repo-bazlı GO ister; ölçülmüş
+  düğüm/kenarı değiştiremez ve arayüzde `AI yorumu` olarak ayrılır.
+
+#### §5.0.2 Etkileşimli mimari denetimi (Dilim 2.3)
+
+- Mimari grup kapsayıcısı klavye ve işaretçiyle seçilebilir. Seçim denetçide
+  grubun deterministik sorumluluk açıklamasını, içerdiği düğümleri, gelen/giden
+  ölçülmüş ilişki sayılarını ve kanıtlı faz dağılımını açar; yol sınıflandırması
+  çalışma-zamanı davranışı veya sahiplik iddiası olarak sunulmaz.
+- Ölçülmüş bir kenar seçildiğinde denetçi kaynak ve hedef yolu, ilişki türünü
+  (statik/dinamik/type-only), ilişkiyi üreten import kaydını ve ölçülebiliyorsa
+  etkilenen testleri gösterir. Kenar seçimi yeni ilişki veya ticari etki
+  uydurmaz; çözülemeyen import açıkça `ölçülemiyor` kalır.
+- Kullanıcı kaynak dosyayı açıp haritaya döndüğünde aynı proje için
+  viewport (zoom/pan), seçili grup/kenar/düğüm, faz filtresi ve arama korunur.
+  Proje veya makbuz değişirse bu durum güvenli biçimde sıfırlanır; eski seçim
+  yeni projeye taşınmaz.
+- Proje Merkezi, üst bağlam çubuğu, Harita, Delta ve denetçi aynı sunucu-taraflı
+  makbuz doğrulama sonucunu tüketir. Aynı anda `güncel` ve `bayat` gösteremez;
+  bayatlıkta bütün ilgili yüzeyler tek `Yeniden indeksle` eylemine yönelir.
+- Grup ve kenar denetçileri, görünüm geri-yükleme ve tek-güncellik davranışı
+  1440/1024/768, TR/EN ve klavye/Escape senaryolarını içeren gerçek-sunucu
+  Playwright kabulü olmadan tamamlanmış sayılmaz.
+
+#### §5.0.3 Faz alt-madde incelemesi
 
 - Kaynak plan sunucuda indekslenir; UI her yüklemede kalıcı kayıt defterini
-  `cache: no-store` ile okur ve son başarılı commit makbuzunu kullanır.
+  `cache: no-store` ile okur; temiz ağaçta değişmez commit, kirli ağaçta
+  içerik-duyarlı `working-tree` makbuzunu kullanır. Canlı ağaç makbuzdan
+  ayrılırsa harita çizilmez ve `Yeniden indeksle` eylemi gösterilir.
 - `## Dilim …` başlıkları faz; checkbox satırları alt madde olur. Denetim yanıtı
   gibi numaralı Markdown tabloları da açık/tamam durumlarıyla alt maddeye
   çevrilir.
@@ -369,8 +419,9 @@ metin; uygulama insan kararıdır.
 ## §6 · Teknoloji ve Dosya Yapısı (BAĞLI — gerçek stack, 2026-08-24)
 
 - **Mevcut çalışan stack:** Node/TypeScript aynı-köken HTTP+API sunucusu,
-  Zod sözleşmeleri ve bağımlılıksız HTML/CSS/JS ürün yüzeyi. React Flow ve
-  Mermaid, Dilim 2 gerçek import-grafı geldiğinde ayrı yükseltme adımıdır.
+  Zod sözleşmeleri, HTML/CSS/JS ürün kabuğu ve sunucuda paketlenen React Flow +
+  Dagre harita adası. Mermaid deterministik dışa aktarım kanalıdır; React Flow
+  gerçek import grafiğinin pan/zoom/klavye etkileşimini yürütür.
 - **Yerel erişim sınırı:** arayüz tarayıcıda çalışabilir; ancak kalıcı yerel
   repo erişimi, güvenli kimlik bilgisi saklama ve indeks süreçleri için dar
   yetkili yerel yardımcı servis gerekir. Bu rolü `kokpit/server.ts` ve
@@ -398,6 +449,7 @@ metin; uygulama insan kararıdır.
 | Görünüm | Kabul |
 |---|---|
 | Harita | MethodLogos reposu IR'iyle ≥30 düğüm akıcı gezilir; her düğümden kaynağa tıklama çalışır; lejant tüm durumları gösterir |
+| Etkileşimli mimari denetimi | Grup ve ölçülmüş kenar klavye/işaretçiyle seçilir; denetçi yalnız kanıtlı ilişkiyi açar; kaynaktan dönüşte aynı makbuzun viewport/seçim/filtre durumu korunur; tüm yüzeyler aynı güncellik kararını gösterir |
 | Proje kataloğu | En az bir yerel ve bir GitHub kaydı eklenebilir; kaynak, dal, plan dosyası, bağlantı durumu ve son indeks zamanı görünür; başarısız bağlantı diğer projeleri bozmaz |
 | Repo bağlantısı | Kaynak → Doğrula → İndeksle → Hazır adımlarında ileri/geri davranışı, bekleme, hata, yeniden deneme ve iptal çalışır; doğrulama öncesi proje kaydedilmez |
 | Proje geçişi | Proje değiştirildiğinde tüm ana yüzeyler aynı `projectId` verisini gösterir; önceki projenin fazı/düğümü/kanıtı kalmaz; URL veya kalıcı durum etkin projeyi geri yükler |
@@ -423,10 +475,13 @@ bağlantısından ayrıdır; ürün kullanıcı adına `git remote add`, push ve
 yapmaz.
 
 ---
-**Onay bloğu:** ✅ **Patron onayı VERİLDİ — 2026-08-24.** Bu sözleşme
-BAĞLAYICIDIR; değişiklikler Patron onayıyla sürüm artırarak yapılır.
-*(§6 bloğu 2026-08-24'te gerçek stack ile senkronlandı; Remap v2 backlog'a
-alındı; Uyum=Dilim 5 olarak PLAN.md'ye işlendi.)*
+**Onay bloğu:** ✅ **Patron onayı VERİLDİ — 2026-08-24; v1.1 mimari harita ve
+etkileşimli mimari denetim genişletmesi 2026-08-27'de onaylandı.** Bu sözleşme BAĞLAYICIDIR; değişiklikler
+Patron onayıyla sürüm artırarak yapılır. *(§6 bloğu 2026-08-24'te gerçek stack
+ile senkronlandı; Remap v2 backlog'a alındı; Uyum=Dilim 5 olarak PLAN.md'ye
+işlendi; §5.0.1 deterministik grup ve ölçülmüş ilişki dili, §5.0.2 grup/kenar
+denetimi, görünüm sürekliliği ve tek-güncellik sözleşmesi 2026-08-27'de
+eklendi.)*
 
 ---
 
@@ -669,8 +724,9 @@ Durum makinesi: `unverified → verified → indexing → ready`; yan dallar
 
 - Doğrulama ve indeksleme iki ayrı adımdır; bağlantı başarılı diye analiz hazır
   sayılmaz.
-- Her indeks makbuzu `projectId`, kaynak türü, repo kökü/kimliği, dal, commit,
-  bulunan plan dosyaları, başlangıç/bitiş zamanı, uyarı ve hata sayısını taşır.
+- Her indeks makbuzu `projectId`, kaynak türü, repo kökü/kimliği, dal, temel
+  commit, `revisionKind` (`commit|working-tree`) ve `revision`, bulunan plan
+  dosyaları, başlangıç/bitiş zamanı, uyarı ve hata sayısını taşır.
 - Yeni indeks başarısız olursa son başarılı IR korunur ve `bayat/son başarılı`
   olarak etiketlenir.
 - Aynı proje için eşzamanlı ikinci indeks kuyruklanır veya reddedilir; iki sonuç

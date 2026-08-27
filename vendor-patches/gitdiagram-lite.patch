@@ -1,0 +1,254 @@
+diff --git a/next.config.js b/next.config.js
+index cc33999..7920d91 100644
+--- a/next.config.js
++++ b/next.config.js
+@@ -1,4 +1,8 @@
++import { dirname } from "node:path";
++import { fileURLToPath } from "node:url";
++
+ const isDevelopment = process.env.NODE_ENV !== "production";
++const repositoryRoot = dirname(fileURLToPath(import.meta.url));
+
+ // Defence in depth behind the diagram sanitization pipeline: if a DOMPurify
+ // bypass ever lands, `connect-src 'self'` still denies the injected code any
+@@ -31,7 +35,7 @@ const config = {
+   reactStrictMode: false,
+   // [kokpit-lite] Bu repo, KokpitPro kökünde iç içe durur; Turbopack workspace
+   // kökünü bu dizine sabitler, yanlış-kök uyarı/çökmesini önler.
+-  turbopack: { root: __dirname },
++  turbopack: { root: repositoryRoot },
+   ...(process.env.RAILWAY_DOCKER_BUILD === "1" ? { output: "standalone" } : {}),
+   transpilePackages: ["@aws-sdk/client-s3"],
+   async rewrites() {
+diff --git a/src/app/api/generate/stream/route.test.ts b/src/app/api/generate/stream/route.test.ts
+index 17e96cb..66c12cd 100644
+--- a/src/app/api/generate/stream/route.test.ts
++++ b/src/app/api/generate/stream/route.test.ts
+@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
+   finalizeQuota: vi.fn(),
+   generateStructuredOutput: vi.fn(),
+   getGithubData: vi.fn(),
++  isUpstashConfigured: vi.fn(),
+   persistAudit: vi.fn(),
+   consumeInfrastructureRateLimit: vi.fn(),
+   consumeRateLimit: vi.fn(),
+@@ -84,6 +85,9 @@ vi.mock("~/server/generate/openai", () => ({
+ vi.mock("~/server/http/request-credentials", () => ({
+   resolveRequestCredentials: mocks.resolveRequestCredentials,
+ }));
++vi.mock("~/server/storage/upstash", () => ({
++  isUpstashConfigured: mocks.isUpstashConfigured,
++}));
+ vi.mock("~/server/generate/rate-limit", async (importOriginal) => ({
+   ...(await importOriginal<object>()),
+   consumeGenerationInfrastructureRateLimit:
+@@ -146,6 +150,7 @@ describe("POST /api/generate/stream", () => {
+       isPrivate: false,
+       stargazerCount: 10,
+     });
++    mocks.isUpstashConfigured.mockReturnValue(true);
+     mocks.consumeInfrastructureRateLimit.mockResolvedValue({
+       allowed: true,
+       retryAfterSeconds: 0,
+diff --git a/src/next-config.test.ts b/src/next-config.test.ts
+new file mode 100644
+index 0000000..0f2740d
+--- /dev/null
++++ b/src/next-config.test.ts
+@@ -0,0 +1,14 @@
++import { dirname } from "node:path";
++import { fileURLToPath } from "node:url";
++
++import { describe, expect, it } from "vitest";
++
++import config from "../next.config.js";
++
++describe("next config", () => {
++  it("resolves the Turbopack root in ESM mode", () => {
++    const repositoryRoot = dirname(dirname(fileURLToPath(import.meta.url)));
++
++    expect(config.turbopack?.root).toBe(repositoryRoot);
++  });
++});
+diff --git a/src/server/generate/request-admission.test.ts b/src/server/generate/request-admission.test.ts
+index b895583..dee9062 100644
+--- a/src/server/generate/request-admission.test.ts
++++ b/src/server/generate/request-admission.test.ts
+@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
+   consumeInfrastructureRateLimit: vi.fn(),
+   consumeRateLimit: vi.fn(),
+   getClientIp: vi.fn(),
++  isUpstashConfigured: vi.fn(),
+   refundInfrastructureRateLimit: vi.fn(),
+   refundRateLimit: vi.fn(),
+   registerActiveGeneration: vi.fn(),
+@@ -33,6 +34,9 @@ vi.mock("~/server/http/client-ip", () => ({
+ vi.mock("~/server/http/request-credentials", () => ({
+   resolveRequestCredentials: mocks.resolveRequestCredentials,
+ }));
++vi.mock("~/server/storage/upstash", () => ({
++  isUpstashConfigured: mocks.isUpstashConfigured,
++}));
+
+ import { admitGenerationRequest } from "./request-admission";
+
+@@ -59,6 +63,7 @@ describe("admitGenerationRequest", () => {
+       consumed: true,
+     });
+     mocks.getClientIp.mockReturnValue("203.0.113.10");
++    mocks.isUpstashConfigured.mockReturnValue(true);
+     mocks.refundRateLimit.mockResolvedValue(undefined);
+     mocks.registerActiveGeneration.mockResolvedValue(true);
+     mocks.resolveRequestCredentials.mockImplementation(
+@@ -145,6 +150,25 @@ describe("admitGenerationRequest", () => {
+     });
+   });
+
++  it("admits a cancellable client request in storage-less lite mode", async () => {
++    mocks.isUpstashConfigured.mockReturnValue(false);
++
++    const result = await admitGenerationRequest(
++      request({
++        session_id: "550e8400-e29b-41d4-a716-446655440000",
++        cancel_token: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
++      }),
++    );
++
++    expect(result).toMatchObject({
++      admitted: true,
++      value: {
++        cancellationRegistered: false,
++      },
++    });
++    expect(mocks.registerActiveGeneration).not.toHaveBeenCalled();
++  });
++
+   it("refunds the limiter when the requested session already exists", async () => {
+     mocks.registerActiveGeneration.mockResolvedValue(false);
+
+diff --git a/src/server/generate/request-admission.ts b/src/server/generate/request-admission.ts
+index d39cc28..a1f132d 100644
+--- a/src/server/generate/request-admission.ts
++++ b/src/server/generate/request-admission.ts
+@@ -12,6 +12,7 @@ import {
+ import { parseGenerateRequest } from "./types";
+ import { getClientIp } from "~/server/http/client-ip";
+ import { resolveRequestCredentials } from "~/server/http/request-credentials";
++import { isUpstashConfigured } from "~/server/storage/upstash";
+
+ interface AdmittedGenerationRequest {
+   username: string;
+@@ -157,7 +158,10 @@ export async function admitGenerationRequest(
+
+   const sessionId = requestedSessionId ?? randomUUID();
+   let cancellationRegistered = false;
+-  if (requestedSessionId && cancelToken) {
++  // A standalone/local lite checkout intentionally has no shared Redis.
++  // Keep fail-closed cancellation registration whenever Upstash is configured,
++  // while allowing one-process reference-engine runs to proceed without it.
++  if (requestedSessionId && cancelToken && isUpstashConfigured()) {
+     try {
+       cancellationRegistered = await registerActiveGeneration(
+         sessionId,
+diff --git a/src/server/storage/artifact-store.ts b/src/server/storage/artifact-store.ts
+index 845b280..5736d44 100644
+--- a/src/server/storage/artifact-store.ts
++++ b/src/server/storage/artifact-store.ts
+@@ -7,6 +7,7 @@ import {
+   getPublicPreviewKey,
+   getReadLocations,
+   getPublicLocation,
++  isPublicStorageConfigured,
+   getWriteLocation,
+   type StorageLocation,
+ } from "~/server/storage/cache-key";
+@@ -156,6 +157,9 @@ export async function getPublicDiagramPreview(params: {
+   lastSuccessfulAt: string;
+   source: "artifact" | "sidecar";
+ } | null> {
++  if (!isPublicStorageConfigured()) {
++    return null;
++  }
+   const location = getPublicLocation(params.username, params.repo);
+   if (params.expectedLastSuccessfulAt) {
+     const preview = await getJsonObject<PublicDiagramPreview>(
+diff --git a/src/server/storage/cache-key.test.ts b/src/server/storage/cache-key.test.ts
+index 06fcea4..8306f6d 100644
+--- a/src/server/storage/cache-key.test.ts
++++ b/src/server/storage/cache-key.test.ts
+@@ -113,4 +113,17 @@ describe("getReadLocations", () => {
+       "public",
+     ]);
+   });
++
++  it("treats missing R2 buckets as an empty cache in lite mode", () => {
++    delete process.env.R2_PUBLIC_BUCKET;
++    delete process.env.R2_PRIVATE_BUCKET;
++
++    expect(
++      getReadLocations({
++        username: "acme",
++        repo: "demo",
++        githubPat: "token",
++      }),
++    ).toEqual([]);
++  });
+ });
+diff --git a/src/server/storage/cache-key.ts b/src/server/storage/cache-key.ts
+index 51852b9..fe937e2 100644
+--- a/src/server/storage/cache-key.ts
++++ b/src/server/storage/cache-key.ts
+@@ -53,6 +53,15 @@ export function getPublicLocation(
+   };
+ }
+
++/**
++ * Storage-less lite mode may read repository pages without an R2 bucket.
++ * Write paths still call getPublicLocation and fail loudly so persistence
++ * cannot be reported as successful when it is unavailable.
++ */
++export function isPublicStorageConfigured(): boolean {
++  return Boolean(process.env.R2_PUBLIC_BUCKET?.trim());
++}
++
+ export function getPrivateLocation(
+   username: string,
+   repo: string,
+@@ -109,11 +118,17 @@ export function getReadLocations(params: {
+   githubPat?: string;
+ }): StorageLocation[] {
+   const locations: StorageLocation[] = [];
+-  if (params.githubPat?.trim()) {
++  if (
++    params.githubPat?.trim() &&
++    process.env.R2_PRIVATE_BUCKET?.trim() &&
++    process.env.CACHE_KEY_SECRET?.trim()
++  ) {
+     locations.push(
+       getPrivateLocation(params.username, params.repo, params.githubPat),
+     );
+   }
+-  locations.push(getPublicLocation(params.username, params.repo));
++  if (isPublicStorageConfigured()) {
++    locations.push(getPublicLocation(params.username, params.repo));
++  }
+   return locations;
+ }
+diff --git a/src/server/storage/upstash.ts b/src/server/storage/upstash.ts
+index b910380..5ebe480 100644
+--- a/src/server/storage/upstash.ts
++++ b/src/server/storage/upstash.ts
+@@ -5,6 +5,13 @@ import {
+
+ const UPSTASH_REQUEST_TIMEOUT_MS = 5_000;
+
++export function isUpstashConfigured(): boolean {
++  return Boolean(
++    process.env.UPSTASH_REDIS_REST_URL?.trim() &&
++      process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
++  );
++}
++
+ function getBaseUrl() {
+   return readRequiredEnv("UPSTASH_REDIS_REST_URL").replace(/\/$/, "");
+ }
