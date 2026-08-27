@@ -1680,7 +1680,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       renderComplianceView();
       paintCachedDeltaCards();
       if (phaseGroups.length) { renderPhaseRail(); updatePlanSourceLabels(); renderTimeline(); }
-      if (selectedNode) selectedNode.type === "phase" ? renderPhaseInspector(selectedNode.id) : renderInspector(selectedNode.id, selectedNode.type);
+      if (selectedNode) selectedNode.type === "phase" ? renderPhaseInspector(selectedNode.id) : selectedNode.type === "compliance-record" ? renderComplianceInspector("record", selectedNode.id) : renderInspector(selectedNode.id, selectedNode.type);
       else renderEmptyInspector();
       if (window.matchMedia("(max-width: 1199px)").matches && !narrowInspectorWasOpen) closeInspector();
       if ($('#connectDialog').open) renderConnectDialog();
@@ -1914,7 +1914,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     }
     function updateSignalChips(report) {
       const measurable = Boolean(report && report.measurement === "measured");
-      const pairs = [["#signalSyncStale", "#signalSyncCount", report?.health.syncStale, report?.sync.length], ["#signalViolationOpen", "#signalViolationCount", report ? report.health.vioErr + report.health.vioWarn : null, report?.violations.length], ["#signalDecisionOpen", "#signalDecisionCount", report?.health.conflictOpen, report?.conflicts.length]];
+      const pairs = [["#signalSyncStale", "#signalSyncCount", measurable && report ? report.health.syncStale : null, report?.sync.length], ["#signalViolationOpen", "#signalViolationCount", measurable && report ? report.health.vioErr + report.health.vioWarn : null, report?.violations.length], ["#signalDecisionOpen", "#signalDecisionCount", measurable && report ? report.health.conflictOpen : null, report?.conflicts.length]];
       for (const [strongId, smallId, band, listTotal] of pairs) {
         $(strongId).textContent = band === null || band === undefined ? "—" : String(band);
         $(smallId).textContent = measurable ? `${listTotal ?? 0} ${t("signalOpenCount")}` : "—";
