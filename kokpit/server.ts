@@ -6,7 +6,10 @@ import { buildProjectDiagram } from './diagram/diagram-service';
 import { computeDelta } from './delta/compute';
 import { DeltaHistoryStore } from './delta/history';
 import { DeltaResult, type BaseRevision } from './delta/schema';
-import { githubAuthConfiguration, indexGithubProject, type GithubProjectInput } from './projects/github';
+import { buildCompliance } from './check/index';
+import { applyClosures, ComplianceClosureStore } from './check/closures';
+import { ClosureRequest } from './check/schema';
+import { GithubVerificationError, githubAuthConfiguration, indexGithubProject, type GithubProjectInput } from './projects/github';
 import { indexLocalProject, refreshProjectFreshness, type LocalProjectInput } from './projects/local';
 import { ProjectRegistry } from './projects/registry';
 import type { ProjectRecord } from './projects/schema';
@@ -17,6 +20,7 @@ const PORT = Number.parseInt(process.env.PORT || '4173', 10);
 const HOST = process.env.HOST || '127.0.0.1';
 const registry = new ProjectRegistry();
 const deltaHistory = new DeltaHistoryStore(registry.dataDir);
+const complianceClosures = new ComplianceClosureStore(registry.dataDir);
 const MAX_BODY = 64 * 1024;
 let uiAssets: UiAssets | null = null;
 
@@ -31,7 +35,19 @@ const MIME: Record<string, string> = {
 };
 
 class HttpError extends Error {
-    constructor(readonly status: number, message: string) { super(message); }
+    constructor(readonly status: number, message: string, readonly code?: string) { super(message); }
+}
+
+/**
+ * Dilim 2.1: GitHub doğrulama hataları ALGILANABİLİR durum koduyla taşınır;
+ * anonim özel repo 404 olarak kalır (500'e gömülmez), UI dürüst yetki durumu
+ * gösterir. Kod alanı makine sözleşmesidir; sır taşımaz.
+ */
+function toHttpError(error: unknown): unknown {
+    if (error instanceof GithubVerificationError) {
+        return new HttpError(error.status, error.message, `github-${error.reasonCode}`);
+    }
+    return error;
 }
 
 export function isStaticPathBlocked(pathname: string): boolean {
@@ -255,6 +271,43 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
         json(response, 200, { delta: await buildProjectDelta(project, phase, item) });
         return true;
     }
+    // Dilim 5: canlı uyum raporu. cache:no-store; her çağrı canlı hesaplar ve
+    // kapatma denetim kayıtlarını uygular. Kapatılmış ihlaller aktif sağlık
+    // bantlarına sayılmaz; "Gerekçeyle kapalı" kuyruğuna düşer.
+    const complianceMatch = /^\/api\/projects\/([^/]+)\/compliance$/.exec(url.pathname);
+    if (request.method === 'GET' && complianceMatch?.[1]) {
+        const project = findProject(decodeURIComponent(complianceMatch[1]));
+        const report = await buildCompliance(project);
+        json(response, 200, { report: applyClosures(report, complianceClosures.list(project.id)) });
+        return true;
+    }
+    if (request.method === 'POST' && complianceMatch?.[1]) {
+        const project = findProject(decodeURIComponent(complianceMatch[1]));
+        let input: ClosureRequest;
+        try {
+            input = ClosureRequest.parse(await body(request));
+        } catch {
+            throw new HttpError(400, 'violationId, justification and by are required; justification cannot be empty.');
+        }
+        const report = await buildCompliance(project);
+        const violation = report.violations.find((candidate) => candidate.id === input.violationId);
+        if (!violation) throw new HttpError(404, `Violation not found: ${input.violationId}`);
+        if (violation.state === 'closed' || complianceClosures.list(project.id).some((closure) => closure.violationId === input.violationId)) {
+            throw new HttpError(409, `Violation is already closed: ${input.violationId}`);
+        }
+        complianceClosures.add({
+            projectId: project.id,
+            violationId: violation.id,
+            closedAt: new Date().toISOString(),
+            closedBy: input.by,
+            justification: input.justification,
+            rule: violation.rule,
+            targetPath: violation.targetPath,
+            severity: violation.severity,
+        });
+        json(response, 200, { report: applyClosures(report, complianceClosures.list(project.id)) });
+        return true;
+    }
     if (request.method === 'POST' && url.pathname === '/api/projects/verify/local') {
         json(response, 200, await indexLocalProject(await body<LocalProjectInput>(request)));
         return true;
@@ -343,8 +396,10 @@ export async function startServer(): Promise<void> {
             if (request.method !== 'GET' && request.method !== 'HEAD') throw new HttpError(405, 'Method not allowed.');
             serveStatic(request, response, url);
         } catch (error) {
-            const status = error instanceof HttpError ? error.status : 500;
-            json(response, status, { error: error instanceof Error ? error.message : String(error) });
+            const mapped = toHttpError(error);
+            const status = mapped instanceof HttpError ? mapped.status : 500;
+            const code = mapped instanceof HttpError ? mapped.code : undefined;
+            json(response, status, { error: mapped instanceof Error ? mapped.message : String(mapped), ...(code ? { code } : {}) });
         }
     });
     server.listen(PORT, HOST, () => {
