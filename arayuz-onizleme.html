@@ -406,6 +406,22 @@
     .issue-title { display: block; color: var(--text); font-size: 11.5px; font-weight: 640; }
     .issue-path { display: block; margin-top: 3px; overflow: hidden; color: var(--text-3); font-family: ui-monospace, monospace; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
     .issue-rule { color: var(--text-2); font-size: 11px; }
+    .queue-kind { display: inline-flex; align-items: center; justify-content: center; width: fit-content; min-height: 22px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--text-3); font-size: 9px; font-weight: 740; letter-spacing: .07em; text-transform: uppercase; }
+    .queue-count { margin-left: 5px; color: var(--text-3); font-variant-numeric: tabular-nums; font-size: 10px; }
+    .queue-track-note { margin: 6px 0 0; color: var(--text-3); font-size: 9.5px; }
+    .engine-state.is-ready::before { background: var(--st-done); }
+    .engine-state.is-unmeasured::before { background: var(--st-partial); }
+    .engine-state.is-error::before { background: var(--st-error); }
+    .closure-form { display: grid; gap: 9px; margin-top: 10px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+    .closure-form textarea { width: 100%; min-height: 64px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; outline: 0; background: var(--bg-elevated); color: var(--text); font: 11px/1.45 "Segoe UI Variable", sans-serif; resize: vertical; }
+    .closure-form textarea:focus, .closure-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .closure-form input { width: 100%; min-height: 38px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; outline: 0; background: var(--bg-elevated); color: var(--text); font: 11px/1.3 "Segoe UI Variable", sans-serif; }
+    .closure-field { display: grid; gap: 5px; }
+    .closure-field > span { color: var(--text-2); font-size: 10.5px; font-weight: 650; }
+    .sync-facts { display: grid; gap: 8px; margin: 0; }
+    .closure-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .compliance-empty { display: grid; justify-items: start; gap: 6px; padding: 26px 12px; }
+    .compliance-empty strong { font-size: 13px; }
     .severity { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 10.5px; }
     .severity::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--st-open); }
     .severity.error::before { background: var(--st-error); } .severity.warning::before { background: var(--st-partial); } .severity.note::before { background: var(--accent); }
@@ -676,7 +692,7 @@
 
     <section class="signal-strip" aria-label="Dikkat ve süreç sinyalleri" data-i18n-aria="signalRegion">
       <div class="signal-message"><span class="signal-symbol" aria-hidden="true"></span><div class="signal-copy"><strong id="attentionTitle" data-i18n="attentionTitle">Faz planı canlı; harita örnek veri kullanıyor</strong><span id="attentionBody" data-i18n="attentionBody">Faz ayrıntıları PLAN.md'den okunur. Kod eşlemesi olmayan alanlarda tahmin gösterilmez.</span></div></div>
-      <div class="signal-links"><button class="signal-link" type="button" data-compliance-filter="sync"><span data-i18n="signalSync">Defter</span><small data-i18n="sampleResult">örnek sonuç</small><strong>—</strong></button><button class="signal-link" type="button" data-compliance-filter="violation"><span data-i18n="signalViolation">İhlal</span><small data-i18n="sampleResult">örnek sonuç</small><strong>—</strong></button><button class="signal-link" type="button" data-compliance-filter="decision"><span data-i18n="signalDecision">Karar</span><small data-i18n="sampleResult">örnek sonuç</small><strong>—</strong></button></div>
+      <div class="signal-links"><button class="signal-link" type="button" data-compliance-filter="sync"><span data-i18n="signalSync">Defter</span><small id="signalSyncCount">—</small><strong id="signalSyncStale">—</strong></button><button class="signal-link" type="button" data-compliance-filter="violation"><span data-i18n="signalViolation">İhlal</span><small id="signalViolationCount">—</small><strong id="signalViolationOpen">—</strong></button><button class="signal-link" type="button" data-compliance-filter="decision"><span data-i18n="signalDecision">Karar</span><small id="signalDecisionCount">—</small><strong id="signalDecisionOpen">—</strong></button></div>
     </section>
 
     <main class="workspace" id="workspace">
@@ -704,12 +720,9 @@
 
         <section class="view-panel" id="view-delta" role="tabpanel" aria-labelledby="tab-delta" hidden><div class="delta-layout"><div class="delta-panel-body" id="deltaPanelBody" hidden></div><div class="delta-empty"><div class="empty-state"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-delta"></use></svg></div><p class="eyebrow" data-i18n="honestState">Dürüst boş durum</p><h2 data-i18n="noMapping">Bu madde için yol eşlemesi yok</h2><p data-i18n="noMappingBody">Kartopu maddesi seçildi; ancak doğrulanmış dosya veya test ilişkisi üretilmedi. Kokpit tahmin göstermeyecek.</p></div></div><aside class="delta-receipt"><p class="eyebrow" data-i18n="evidenceReceipt">Kanıt makbuzu</p><div class="receipt-block"><span class="receipt-label" data-i18n="selectedItem">Seçili madde</span><div class="receipt-value">P1 · <span data-i18n="snowballing">Kartopu</span> (snowballing)</div></div><div class="receipt-block"><span class="receipt-label" data-i18n="source">Kaynak</span><div class="receipt-value"><code>ROADMAP.md</code> · <span data-i18n="sampleRecord">örnek kayıt</span></div></div><div class="receipt-block"><span class="receipt-label" data-i18n="mapping">Yol eşlemesi</span><div class="receipt-value">— · <span data-i18n="unknown">bilinmiyor</span></div></div><div class="receipt-block"><button class="text-button" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span data-i18n="openSource">Kaynağı aç</span></button></div></aside></div></section>
 
-        <section class="view-panel" id="view-compliance" role="tabpanel" aria-labelledby="tab-compliance" hidden><div class="compliance"><div class="preview-note"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="compliancePreview">Uyum motoru bağlı değil. Aşağıdaki satırlar kuyruk, filtre ve denetçi davranışını gösteren örnek kayıtlardır.</span></div><div class="compliance-toolbar"><div class="queue-filters"><button class="queue-filter" type="button" data-queue-filter="all" aria-pressed="true" data-i18n="all">Tümü</button><button class="queue-filter" type="button" data-queue-filter="violation" aria-pressed="false" data-i18n="violations">İhlaller</button><button class="queue-filter" type="button" data-queue-filter="sync" aria-pressed="false" data-i18n="syncIssues">Defter senkronu</button><button class="queue-filter" type="button" data-queue-filter="decision" aria-pressed="false" data-i18n="decisions">Kararlar</button></div><span class="engine-state" data-i18n="engineOffline">Motor bağlı değil</span></div>
-          <div class="issue-list" aria-label="Örnek uyum kayıtları">
-            <button class="issue-row" type="button" data-issue="fake-gate" data-state="violation"><span class="sample-label" data-i18n="sample">Örnek</span><span><span class="issue-title">sahte-kapı</span><span class="issue-path">kokpit/ui/InviteButton.tsx</span></span><span class="issue-rule" data-i18n="fakeGateRule">D2#4 · capability olmadan yüzey çizilmez</span><span class="severity error" data-i18n="error">Hata</span><svg class="icon issue-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
-            <button class="issue-row" type="button" data-issue="stale-ledger" data-state="sync"><span class="sample-label" data-i18n="sample">Örnek</span><span><span class="issue-title">bayat-kutu</span><span class="issue-path">ROADMAP §5.7</span></span><span class="issue-rule" data-i18n="staleLedgerRule">Kod değişmiş, defter kaydı doğrulanmamış</span><span class="severity warning" data-i18n="warning">Uyarı</span><svg class="icon issue-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
-            <button class="issue-row" type="button" data-issue="decision-conflict" data-state="decision"><span class="sample-label" data-i18n="sample">Örnek</span><span><span class="issue-title">karar-çelişkisi</span><span class="issue-path">D5 ↔ ROADMAP §5.7</span></span><span class="issue-rule" data-i18n="decisionRule">İki otorite kaydı farklı yön bildiriyor</span><span class="severity note" data-i18n="review">İncele</span><svg class="icon issue-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></button>
-          </div>
+        <section class="view-panel" id="view-compliance" role="tabpanel" aria-labelledby="tab-compliance" hidden><div class="compliance"><div class="preview-note" id="complianceNote" hidden><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="complianceUnmeasuredNote">Uyum motoru bu projeyi ölçemedi; satırlar yalnız canlı uyum raporundan üretilir.</span><code id="complianceReason"></code></div><div class="compliance-toolbar"><div class="queue-filters" role="group" aria-label="Triage kuyrukları" data-i18n-aria="triageGroupAria"><button class="queue-filter" type="button" data-queue-filter="all" aria-pressed="true"><span data-i18n="all">Tümü</span><small class="queue-count" id="queueCountAll">0</small></button><button class="queue-filter" type="button" data-queue-filter="violation" aria-pressed="false"><span data-i18n="violations">İhlaller</span><small class="queue-count" id="queueCountViolation">0</small></button><button class="queue-filter" type="button" data-queue-filter="sync" aria-pressed="false"><span data-i18n="syncIssues">Defter senkronu</span><small class="queue-count" id="queueCountSync">0</small></button><button class="queue-filter" type="button" data-queue-filter="decision" aria-pressed="false"><span data-i18n="decisions">Kararlar</span><small class="queue-count" id="queueCountDecision">0</small></button><button class="queue-filter" type="button" data-queue-filter="closed" aria-pressed="false"><span data-i18n="queueClosed">Gerekçeyle kapalı</span><small class="queue-count" id="queueCountClosed">0</small></button><button class="queue-filter" type="button" data-queue-filter="regress" aria-pressed="false" aria-describedby="queueTrackNote"><span data-i18n="queueRegress">Regres</span><small class="queue-count">—</small></button><button class="queue-filter" type="button" data-queue-filter="rising" aria-pressed="false" aria-describedby="queueTrackNote"><span data-i18n="queueRising">Yükselen</span><small class="queue-count">—</small></button></div><span class="engine-state" id="complianceEngineState" data-i18n="engineOffline">Motor bağlı değil</span></div><p class="queue-track-note" id="queueTrackNote" data-i18n="trackNotTracked">Regres ve yükselen izleme v1'de tutulmuyor; kayıtlar koşumlar arasında karşılaştırılmaz.</p>
+          <div class="issue-list" id="issueList" role="list" aria-live="polite" data-i18n-aria="complianceQueueAria" aria-label="Uyum kuyruğu"></div>
+          <div class="compliance-empty" id="complianceEmpty" role="status" hidden><p class="eyebrow" data-i18n="honestState">Dürüst boş durum</p><strong data-i18n="emptyQueue">Bu kuyrukta kayıt yok</strong><p data-i18n="emptyQueueBody">Canlı uyum raporunda bu filtre için kayıt üretilmedi; tahmin gösterilmez.</p></div>
         </div></section>
       </section>
 
@@ -1159,6 +1172,36 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       deltaNotMeasurableTitle: "Bu madde için delta ölçülemedi", deltaReasonItemNotFound: "Madde bu indeks makbuzunda bulunamadı.", deltaReasonPathsNotMeasured: "Madde için ölçülmüş dosya yolu yok.",
       deltaReasonEdgesNotMeasurableYet: "Kenar değişimi henüz ölçülebilir değil; uydurma kenar üretilmez.", deltaReasonBaselineUnavailable: "Karşılaştırma taban çizgisi bulunamadı.", deltaReasonNoMapping: "Madde metni ölçümlü graf düğümleriyle eşleşmedi."
     });
+    Object.assign(I18N.tr, {
+      triageGroupAria: "Triage kuyrukları", complianceQueueAria: "Uyum kuyruğu",
+      complianceUnmeasuredNote: "Uyum motoru bu projeyi ölçemedi; satırlar yalnız canlı uyum raporundan üretilir.",
+      complianceTechnicalReason: "Ölçüm gerekçesi", engineReady: "Canlı uyum raporu", engineUnmeasured: "Motor ölçemedi", engineError: "Uyum raporu alınamadı", engineStaleBadge: "veri bayat",
+      queueClosed: "Gerekçeyle kapalı", queueRegress: "Regres", queueRising: "Yükselen", trackNotTracked: "Regres ve yükselen izleme v1'de tutulmuyor; kayıtlar koşumlar arasında karşılaştırılmaz.",
+      emptyQueue: "Bu kuyrukta kayıt yok", emptyQueueBody: "Canlı uyum raporunda bu filtre için kayıt üretilmedi; tahmin gösterilmez.", signalOpenCount: "açık",
+      kindViolation: "İhlal", kindSync: "Senkron", kindDecision: "Karar", kindClosed: "Kapalı",
+      ruleKosulsuzCommit: "Koşumsuz commit", ruleHardcodeMetin: "Hardcode metin", ruleHexInComponent: "Bileşende hex", ruleSahteKapi: "Sahte kapı", ruleBayatKutu: "Bayat kutu", ruleKsBand: "Sağlık bandı tutarsızlığı",
+      evidenceTarget: "Kanıt hedefi", technicalMessage: "Teknik mesaj", ruleReference: "Kural referansı", recordRule: "Kural", recordSeverity: "Ciddiyet", recordGenerated: "Rapor zamanı",
+      conflictTopic: "Konu", conflictAuthorityA: "Otorite A", conflictAuthorityB: "Otorite B", conflictObserved: "Görülme tarihi", conflictSuggestion: "Öneri (insan onayı gerekir)",
+      syncSlice: "Dilim", syncRoadmapBox: "ROADMAP kutusu", syncPhaseFile: "Faz dosyası", syncHandoff: "Handoff", syncNearMiss: "Near-miss gerekçesi",
+      syncStatusCurrent: "Güncel", syncStatusStale: "Bayat", syncStatusMissing: "Yok", syncStatusPartial: "Kısmi",
+      closureTitle: "Gerekçeyle kapat", closureJustificationLabel: "Gerekçe (zorunlu)", closureJustificationHelp: "Gerekçesiz kapatma kaydı üretilmez; gerekçe + kim + zaman denetim dosyasına yazılır.", closureByLabel: "Kim (oturum-dostu rumuz)", closureSave: "Kapatmayı kaydet", closureCancel: "Vazgeç",
+      closureSavedToast: "Kayıt gerekçeyle kapatıldı; denetim kaydı yazıldı.", closureFailedToast: "Kapatma başarısız", closureAlreadyClosed: "Bu kayıt zaten kapatılmış.", closureClosedReceipt: "Kapatma makbuzu", closureBy: "Kapatan"
+    });
+    Object.assign(I18N.en, {
+      triageGroupAria: "Triage queues", complianceQueueAria: "Compliance queue",
+      complianceUnmeasuredNote: "The compliance engine could not measure this project; rows are produced from the live compliance report only.",
+      complianceTechnicalReason: "Measurement reason", engineReady: "Live compliance report", engineUnmeasured: "Engine could not measure", engineError: "Compliance report unavailable", engineStaleBadge: "stale data",
+      queueClosed: "Closed with reason", queueRegress: "Regress", queueRising: "Rising", trackNotTracked: "Regress and rising tracking is not kept in v1; records are not compared across runs.",
+      emptyQueue: "No records in this queue", emptyQueueBody: "The live compliance report produced no records for this filter; no guesses are shown.", signalOpenCount: "open",
+      kindViolation: "Violation", kindSync: "Sync", kindDecision: "Decision", kindClosed: "Closed",
+      ruleKosulsuzCommit: "Unconditional commit", ruleHardcodeMetin: "Hardcoded text", ruleHexInComponent: "Hex in component", ruleSahteKapi: "Fake gate", ruleBayatKutu: "Stale box", ruleKsBand: "Health band inconsistency",
+      evidenceTarget: "Evidence target", technicalMessage: "Technical message", ruleReference: "Rule reference", recordRule: "Rule", recordSeverity: "Severity", recordGenerated: "Report time",
+      conflictTopic: "Topic", conflictAuthorityA: "Authority A", conflictAuthorityB: "Authority B", conflictObserved: "Observed on", conflictSuggestion: "Suggestion (human confirmation required)",
+      syncSlice: "Slice", syncRoadmapBox: "ROADMAP box", syncPhaseFile: "Phase file", syncHandoff: "Handoff", syncNearMiss: "Near-miss reason",
+      syncStatusCurrent: "Current", syncStatusStale: "Stale", syncStatusMissing: "Missing", syncStatusPartial: "Partial",
+      closureTitle: "Close with reason", closureJustificationLabel: "Justification (required)", closureJustificationHelp: "A closure without justification is never produced; reason + who + when are written to the audit file.", closureByLabel: "Who (session-friendly alias)", closureSave: "Save closure", closureCancel: "Discard",
+      closureSavedToast: "Record closed with justification; the audit entry was written.", closureFailedToast: "Closure failed", closureAlreadyClosed: "This record is already closed.", closureClosedReceipt: "Closure receipt", closureBy: "Closed by"
+    });
     Object.assign(I18N.en, {
       productSections: "Product sections", waitingGo: "Waiting for GO", gateWaitingBody: "The technical scope is visible; progress is waiting for external approval or a human decision.",
       mapLoading: "Preparing repository map", mapLoadingBody: "Verifying the index receipt and measured import graph.", mapUnavailable: "A verified map cannot be shown", mapRuntimeUnavailable: "The graph runtime could not load. Sample data was not shown as repository evidence.",
@@ -1172,11 +1215,6 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       deltaReasonEdgesNotMeasurableYet: "Edge changes are not measurable yet; invented links are never produced.", deltaReasonBaselineUnavailable: "Comparison baseline is unavailable.", deltaReasonNoMapping: "The item text did not match any measured graph node."
     });
     let PROJECTS = {};
-    const ISSUE_DATA = {
-      "fake-gate": { title: "sahte-kapı", path: "kokpit/ui/InviteButton.tsx", phase: "D2#4", status: "blocked", description: { tr: "Capability olmadan yüzey çizilmez kuralı için örnek ihlal kaydı.", en: "Sample violation for the rule that no surface is shown without capability." } },
-      "stale-ledger": { title: "bayat-kutu", path: "ROADMAP §5.7", phase: "SYNC", phaseName: { tr: "Defter senkronu", en: "Ledger sync" }, status: "inProgress", description: { tr: "Kod değişimi ile defter kaydı arasındaki örnek near-miss.", en: "Sample near-miss between a code change and its ledger entry." } },
-      "decision-conflict": { title: "karar-çelişkisi", path: "D5 ↔ ROADMAP §5.7", phase: "DECISION", phaseName: { tr: "Karar bütünlüğü", en: "Decision integrity" }, status: "planned", description: { tr: "İki otorite kaydının farklı yön bildirdiği örnek inceleme kaydı.", en: "Sample review record where two authorities point in different directions." } }
-    };
     const viewCopy = { map: ["viewMapTitle", "viewMapBody"], timeline: ["viewTimelineTitle", "viewTimelineBody"], delta: ["viewDeltaTitle", "viewDeltaBody"], compliance: ["viewComplianceTitle", "viewComplianceBody"] };
     let language = localStorage.getItem("kokpit-language") || "tr";
     let activeProjectId = null;
@@ -1190,6 +1228,9 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     let phaseGroups = [];
     let diagramState = null;
     let deltaState = null;
+    let complianceState = null;
+    let complianceRequestId = 0;
+    let complianceFilter = "all";
     let selectedPhaseItem = null;
     let deltaRequestId = 0;
     let mapRuntimeReady = false;
@@ -1400,8 +1441,10 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       resetInspector();
       diagramState = null;
       deltaState = null;
+      complianceState = null;
       selectedPhaseItem = null;
       resetDeltaPanel();
+      resetCompliancePanel();
       selectedPhase = "all";
       mapSearchQuery = "";
       $('#mapSearch').value = "";
@@ -1410,6 +1453,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       $('#projectMenu').hidden = true; $('#projectSwitcher').setAttribute("aria-expanded", "false");
       await loadPlanData();
       await loadDiagramData();
+      void loadCompliance();
       restoreMapContext();
       renderPhaseRail();
       updatePlanSourceLabels();
@@ -1633,6 +1677,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       updateViewCopy();
       renderGraph();
       renderDeltaView();
+      renderComplianceView();
       paintCachedDeltaCards();
       if (phaseGroups.length) { renderPhaseRail(); updatePlanSourceLabels(); renderTimeline(); }
       if (selectedNode) selectedNode.type === "phase" ? renderPhaseInspector(selectedNode.id) : renderInspector(selectedNode.id, selectedNode.type);
@@ -1816,6 +1861,164 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const key = compositeKeyFor(state.phaseHeading, state.itemId);
       $$(".phase-item").forEach(details => paintInspectorDeltaCard(details, details.dataset.compositeItemId === key ? state : null));
     }
+    // Dilim 5 · Uyum: yüzey yalnız canlı /api/projects/:id/compliance raporundan
+    // çizilir; örnek kayıt YOKTUR. Motor ölçemediğinde (measurement:'unmeasured')
+    // boş liste "temiz" gibi DEĞİL, açık ölçemezlikte kalır. Dört sağlık bandı
+    // asla tek yüzdeye katılmaz.
+    function activeCompliance() { return complianceState && complianceState.projectId === activeProjectId && complianceState.status !== "loading" ? complianceState : null; }
+    const RULE_LABEL_KEYS = { "koşumsuz-commit": "ruleKosulsuzCommit", "hardcode-metin": "ruleHardcodeMetin", "hex-in-component": "ruleHexInComponent", "sahte-kapı": "ruleSahteKapi", "bayat-kutu": "ruleBayatKutu", "ks-band": "ruleKsBand" };
+    const SYNC_STATUS_KEYS = { current: "syncStatusCurrent", stale: "syncStatusStale", missing: "syncStatusMissing", partial: "syncStatusPartial" };
+    function ruleLabel(rule) { return t(RULE_LABEL_KEYS[rule] || rule); }
+    function syncStatusLabel(status) { return t(SYNC_STATUS_KEYS[status] || status); }
+    function severityLabel(severity) { return severity === "error" ? t("error") : severity === "warning" ? t("warning") : t("review"); }
+    function resetCompliancePanel() {
+      complianceRequestId += 1;
+      complianceState = null;
+      complianceFilter = "all";
+      $$('.queue-filter').forEach(button => button.setAttribute("aria-pressed", String(button.dataset.queueFilter === "all")));
+      renderComplianceView();
+    }
+    async function loadCompliance() {
+      const projectId = activeProjectId;
+      if (!projectId) return;
+      const requestOrder = ++complianceRequestId;
+      try {
+        const payload = await apiRequest(`/api/projects/${encodeURIComponent(projectId)}/compliance`);
+        if (projectId !== activeProjectId || requestOrder !== complianceRequestId) return;
+        complianceState = payload && payload.report ? { projectId, status: "ready", report: payload.report } : { projectId, status: "empty" };
+      } catch (error) {
+        if (projectId !== activeProjectId || requestOrder !== complianceRequestId) return;
+        // Fetch hatasında önceki dürüst görünüm korunur; hata yoksa dürüst hata durumu.
+        const kept = complianceState && complianceState.projectId === projectId && complianceState.status === "ready" ? complianceState : null;
+        if (kept) { showToast(error.message); return; }
+        complianceState = { projectId, status: "error" };
+      }
+      renderComplianceView();
+    }
+    function complianceRecords(report) {
+      const records = [];
+      for (const violation of report.violations || []) records.push({ kind: violation.state === "closed" ? "closed" : "violation", severity: violation.severity, id: violation.id, violation });
+      for (const entry of report.sync || []) records.push({ kind: "sync", severity: entry.nearMiss ? "warning" : entry.phaseFile === "current" && entry.handoff === "current" ? "note" : "warning", id: `sync:${entry.sliceId}`, entry });
+      for (const conflict of report.conflicts || []) records.push({ kind: "decision", severity: conflict.status === "superseded-chain" ? "warning" : "note", id: conflict.id, conflict });
+      return records;
+    }
+    function updateQueueCounts(report) {
+      const total = value => { $(value).textContent = "0"; };
+      if (!report || report.measurement !== "measured") { ["#queueCountAll", "#queueCountViolation", "#queueCountSync", "#queueCountDecision", "#queueCountClosed"].forEach(total); return; }
+      const records = complianceRecords(report);
+      $("#queueCountAll").textContent = String(records.filter(record => record.kind !== "closed").length);
+      $("#queueCountViolation").textContent = String(records.filter(record => record.kind === "violation").length);
+      $("#queueCountSync").textContent = String(records.filter(record => record.kind === "sync").length);
+      $("#queueCountDecision").textContent = String(records.filter(record => record.kind === "decision").length);
+      $("#queueCountClosed").textContent = String(records.filter(record => record.kind === "closed").length);
+    }
+    function updateSignalChips(report) {
+      const measurable = Boolean(report && report.measurement === "measured");
+      const pairs = [["#signalSyncStale", "#signalSyncCount", report?.health.syncStale, report?.sync.length], ["#signalViolationOpen", "#signalViolationCount", report ? report.health.vioErr + report.health.vioWarn : null, report?.violations.length], ["#signalDecisionOpen", "#signalDecisionCount", report?.health.conflictOpen, report?.conflicts.length]];
+      for (const [strongId, smallId, band, listTotal] of pairs) {
+        $(strongId).textContent = band === null || band === undefined ? "—" : String(band);
+        $(smallId).textContent = measurable ? `${listTotal ?? 0} ${t("signalOpenCount")}` : "—";
+      }
+    }
+    function complianceRowMarkup(record) {
+      if (record.violation) {
+        const violation = record.violation;
+        const closed = violation.state === "closed";
+        return {
+          state: closed ? "closed" : "violation", kind: closed ? "closed" : "violation", id: violation.id,
+          kindLabel: closed ? t("kindClosed") : t("kindViolation"),
+          title: `${ruleLabel(violation.rule)}${closed ? ` · ${t("queueClosed")}` : ""}`,
+          path: `${violation.targetPath}${violation.targetLine ? ":" + violation.targetLine : ""}`,
+          rule: violation.ruleReference || ruleLabel(violation.rule), severity: violation.severity
+        };
+      }
+      if (record.entry) {
+        const entry = record.entry;
+        return {
+          state: "sync", kind: "sync", id: record.id, kindLabel: t("kindSync"),
+          title: entry.sliceId,
+          path: `${t("syncRoadmapBox")}: ${syncStatusLabel(entry.roadmapBox)} · ${t("syncPhaseFile")}: ${syncStatusLabel(entry.phaseFile)} · ${t("syncHandoff")}: ${syncStatusLabel(entry.handoff)}`,
+          rule: entry.nearMiss ? `${t("syncNearMiss")}: ${entry.nearMiss.reasonCode} — ${entry.nearMiss.message}` : t("syncSlice"),
+          severity: record.severity
+        };
+      }
+      const conflict = record.conflict;
+      return {
+        state: "decision", kind: "decision", id: record.id, kindLabel: t("kindDecision"),
+        title: `${t("conflictTopic")}: ${conflict.topic}`,
+        path: conflict.authorityB.slice(0, 96),
+        rule: conflict.authorityA.slice(0, 96),
+        severity: record.severity
+      };
+    }
+    function renderComplianceView() {
+      const list = $("#issueList");
+      const empty = $("#complianceEmpty");
+      const engine = $("#complianceEngineState");
+      const note = $("#complianceNote");
+      if (!list || !empty || !engine || !note) return;
+      const state = activeCompliance();
+      const report = state && state.status === "ready" ? state.report : null;
+      if (!report || report.measurement !== "measured") {
+        engine.textContent = state && state.status === "error" ? t("engineError") : report ? t("engineUnmeasured") : t("engineOffline");
+        engine.classList.toggle("is-error", Boolean(state && state.status === "error"));
+        engine.classList.toggle("is-unmeasured", Boolean(report));
+        engine.classList.remove("is-ready");
+        $("#complianceReason").textContent = report?.reasons?.[0]?.code ? `${t("complianceTechnicalReason")}: ${report.reasons[0].code}` : "";
+        note.hidden = !report;
+        list.innerHTML = "";
+        empty.hidden = false;
+        updateQueueCounts(report);
+        updateSignalChips(report);
+        return;
+      }
+      const staleMs = Date.now() - Date.parse(report.generatedAt);
+      const stale = Number.isFinite(staleMs) && staleMs > 7 * 86_400_000;
+      engine.textContent = `${t("engineReady")}${stale ? ` · ${t("engineStaleBadge")}` : ""}`;
+      engine.classList.add("is-ready");
+      engine.classList.remove("is-unmeasured", "is-error");
+      note.hidden = true;
+      updateQueueCounts(report);
+      updateSignalChips(report);
+      const filtered = complianceRecords(report).filter(record => complianceFilter === "all" ? true : record.kind === complianceFilter);
+      if (!filtered.length) { list.innerHTML = ""; empty.hidden = false; return; }
+      empty.hidden = true;
+      list.innerHTML = filtered.map(record => {
+        const row = complianceRowMarkup(record);
+        return `<button class="issue-row" type="button" role="listitem" data-record-kind="${escapeHtml(row.kind)}" data-record-id="${escapeHtml(row.id)}" data-state="${escapeHtml(row.state)}"><span class="queue-kind">${escapeHtml(row.kindLabel)}</span><span><span class="issue-title">${escapeHtml(row.title)}</span><span class="issue-path">${escapeHtml(row.path)}</span></span><span class="issue-rule">${escapeHtml(row.rule)}</span><span class="severity ${escapeHtml(row.severity)}"><span>${escapeHtml(severityLabel(row.severity))}</span></span><svg class="icon issue-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></button>`;
+      }).join("");
+    }
+    function closureFormMarkup(violationId) {
+      const savedBy = localStorage.getItem("kokpit-compliance-by") || "";
+      return `<form class="closure-form" data-closure-id="${escapeHtml(violationId)}"><strong>${escapeHtml(t("closureTitle"))}</strong><label class="closure-field"><span>${escapeHtml(t("closureJustificationLabel"))}</span><textarea id="closureJustification" required></textarea></label><p class="form-help">${escapeHtml(t("closureJustificationHelp"))}</p><label class="closure-field"><span>${escapeHtml(t("closureByLabel"))}</span><input id="closureBy" type="text" value="${escapeHtml(savedBy)}" autocomplete="off"></label><div class="closure-actions"><button class="text-button" type="button" data-closure-cancel>${escapeHtml(t("closureCancel"))}</button><button class="text-button primary" type="submit" disabled>${escapeHtml(t("closureSave"))}</button></div></form>`;
+    }
+    function closureReceiptMarkup(violation) {
+      if (violation.state !== "closed") return "";
+      return `<section class="detail-section"><h3>${escapeHtml(t("closureClosedReceipt"))}</h3><p>${escapeHtml(t("closureBy"))}: <strong>${escapeHtml(violation.closedBy || "—")}</strong></p><p>${escapeHtml(formatIndexDate(violation.closedAt || ""))}</p><p>${escapeHtml(violation.closureJustification || "")}</p></section>`;
+    }
+    function renderComplianceInspector(kind, id) {
+      const state = activeCompliance();
+      const report = state && state.status === "ready" ? state.report : null;
+      if (!report) return;
+      selectedNode = { id, type: "compliance-record" };
+      let body = "";
+      const violation = report.violations.find(candidate => candidate.id === id);
+      if (violation) {
+        const target = `${violation.targetPath}${violation.targetLine ? ":" + violation.targetLine : ""}`;
+        body = `<div class="detail-title">${escapeHtml(ruleLabel(violation.rule))}</div><div class="detail-path">${escapeHtml(target)}</div><div class="detail-status"><span class="severity ${escapeHtml(violation.severity)}"><span>${escapeHtml(severityLabel(violation.severity))}</span></span>${violation.state === "closed" ? `<span class="queue-kind">${escapeHtml(t("kindClosed"))}</span>` : ""}</div><section class="detail-section"><h3>${escapeHtml(t("evidenceTarget"))}</h3><p><code>${escapeHtml(target)}</code></p></section><section class="detail-section"><h3>${escapeHtml(t("technicalMessage"))}</h3><p>${escapeHtml(violation.message)}</p></section><section class="detail-section"><h3>${escapeHtml(t("ruleReference"))}</h3><p>${escapeHtml(violation.ruleReference)}</p><p><code>${escapeHtml(violation.rule)}</code></p></section>${closureReceiptMarkup(violation)}${violation.state === "open" ? closureFormMarkup(violation.id) : ""}`;
+      } else {
+        const entry = report.sync.find(candidate => `sync:${candidate.sliceId}` === id);
+        if (entry) {
+          body = `<div class="detail-title">${escapeHtml(entry.sliceId)}</div><div class="detail-path">${escapeHtml(t("syncSlice"))}</div><dl class="sync-facts"><div class="phase-fact"><dt>${escapeHtml(t("syncRoadmapBox"))}</dt><dd>${escapeHtml(syncStatusLabel(entry.roadmapBox))}</dd></div><div class="phase-fact"><dt>${escapeHtml(t("syncPhaseFile"))}</dt><dd>${escapeHtml(syncStatusLabel(entry.phaseFile))}</dd></div><div class="phase-fact"><dt>${escapeHtml(t("syncHandoff"))}</dt><dd>${escapeHtml(syncStatusLabel(entry.handoff))}</dd></div></dl>${entry.nearMiss ? `<section class="detail-section"><h3>${escapeHtml(t("syncNearMiss"))}</h3><p><code>${escapeHtml(entry.nearMiss.reasonCode)}</code></p><p>${escapeHtml(entry.nearMiss.message)}</p></section>` : ""}`;
+        } else {
+          const conflict = report.conflicts.find(candidate => candidate.id === id);
+          if (!conflict) return;
+          body = `<div class="detail-title">${escapeHtml(conflict.topic)}</div><div class="detail-path">${escapeHtml(conflict.status)}</div><section class="detail-section"><h3>${escapeHtml(t("conflictAuthorityA"))}</h3><p>${escapeHtml(conflict.authorityA)}</p><p>${escapeHtml(t("conflictObserved"))}: ${escapeHtml(conflict.observedAtA)}</p></section><section class="detail-section"><h3>${escapeHtml(t("conflictAuthorityB"))}</h3><p>${escapeHtml(conflict.authorityB)}</p><p>${escapeHtml(t("conflictObserved"))}: ${escapeHtml(conflict.observedAtB)}</p></section><section class="detail-section"><h3>${escapeHtml(t("conflictSuggestion"))}</h3><p>${escapeHtml(conflict.suggestion)}</p></section>`;
+        }
+      }
+      $('#inspectorBody').innerHTML = `${body}<section class="detail-section"><h3>${escapeHtml(t("recordGenerated"))}</h3><p>${escapeHtml(formatIndexDate(report.generatedAt))}</p></section>`;
+      openInspector();
+    }
     function renderGraph() {
       // React Flow görünmeyen katalog ekranında sıfır boyutla kurulursa kayıtlı
       // viewport'u minimum zoom ile ezebilir. Harita yalnız çalışma alanı
@@ -1973,7 +2176,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       if (type === "group") return renderGroupInspector(id);
       if (type === "edge") return renderEdgeInspector(id);
       if (type === "node" && activeDiagram() && activeDiagram().receipt.nodeEvidence[id]) return renderRealNodeInspector(id);
-      const data = type === "issue" ? ISSUE_DATA[id] : activeProject().nodes.find(node => node.id === id);
+      const data = activeProject().nodes.find(node => node.id === id);
       if (!data) return;
       selectedNode = { id, type };
       const phaseName = data.phaseName ? data.phaseName[language] : data.phase;
@@ -2078,13 +2281,23 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     function openCommand() { $('#commandDialog').showModal(); $('#commandInput').value = ""; filterCommands(""); requestAnimationFrame(() => $('#commandInput').focus()); }
     function filterCommands(query) { const normalized = query.trim().toLocaleLowerCase(language === "tr" ? "tr-TR" : "en-US"); let visible = 0; $$('.command-item').forEach(item => { const match = !normalized || `${item.dataset.search} ${item.textContent}`.toLocaleLowerCase().includes(normalized); item.hidden = !match; if (match) visible += 1; }); $('#commandEmpty').hidden = visible > 0; }
     function runCommand(command) { const [type, value] = command.split(":"); if (type === "section") showSection(value); if (type === "view") { showSection("workspace"); showView(value); } if (type === "node") { showSection("workspace"); showView("map"); selectMapNode(value); } $('#commandDialog').close(); }
-    function setQueueFilter(filter) { showView("compliance"); $$('.queue-filter').forEach(button => button.setAttribute("aria-pressed", String(button.dataset.queueFilter === filter))); $$('.issue-row').forEach(row => row.classList.toggle("is-filtered", filter !== "all" && row.dataset.state !== filter)); }
+    function setQueueFilter(filter) {
+      showView("compliance");
+      // Regres/Yükselen v1'de iz sürülmüyor: nöbetçi dürüstlük — buton görünür
+      // ama yargı üretmez, nedeni kullanıcıya yazılır.
+      if (filter === "regress" || filter === "rising") { showToast(t("trackNotTracked")); return; }
+      complianceFilter = filter;
+      $$('.queue-filter').forEach(button => button.setAttribute("aria-pressed", String(button.dataset.queueFilter === filter)));
+      renderComplianceView();
+    }
     function showToast(message) { const toast = $('#toast'); clearTimeout(toastTimer); toast.textContent = message; toast.classList.add("is-visible"); toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 2200); }
 
     $$('.view-tab').forEach(tab => { tab.addEventListener("click", () => showView(tab.dataset.view)); tab.addEventListener("keydown", event => { if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return; event.preventDefault(); const tabs = $$('.view-tab'); const current = tabs.indexOf(tab); const next = event.key === 'ArrowRight' ? (current + 1) % tabs.length : (current - 1 + tabs.length) % tabs.length; showView(tabs[next].dataset.view, { focusTab: true }); }); });
     $$('.primary-nav-button').forEach(button => button.addEventListener("click", () => showSection(button.dataset.section)));
     $('#phaseList').addEventListener("click", event => { const button = event.target.closest('.phase-filter'); if (button) setPhaseFilter(button.dataset.phase); });
     $('#inspectorBody').addEventListener("click", event => {
+      const closureCancel = event.target.closest('[data-closure-cancel]');
+      if (closureCancel) { closureCancel.closest('.closure-form')?.remove(); return; }
       const deltaReindexButton = event.target.closest('[data-map-reindex]');
       if (deltaReindexButton) { void reindexProject(deltaReindexButton.dataset.mapReindex, deltaReindexButton); return; }
       const phaseButton = event.target.closest('[data-phase-jump]');
@@ -2120,7 +2333,37 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       catch (error) { showToast(error.message); }
     });
     $('#timelineContent').addEventListener("click", event => { const button = event.target.closest('[data-timeline-phase]'); if (button) renderPhaseInspector(button.dataset.timelinePhase); });
-    $$('.issue-row').forEach(button => button.addEventListener("click", () => renderInspector(button.dataset.issue, "issue")));
+    $('#issueList').addEventListener("click", event => { const row = event.target.closest('.issue-row'); if (row) renderComplianceInspector(row.dataset.recordKind, row.dataset.recordId); });
+    $('#inspectorBody').addEventListener("submit", async event => {
+      const form = event.target instanceof Element ? event.target.closest('.closure-form') : null;
+      if (!form) return;
+      event.preventDefault();
+      const violationId = form.dataset.closureId || "";
+      const justification = form.querySelector('#closureJustification')?.value.trim() || "";
+      const by = form.querySelector('#closureBy')?.value.trim() || "";
+      if (!justification || !by) return;
+      const submit = form.querySelector('button[type="submit"]');
+      if (submit) { submit.disabled = true; submit.textContent = language === "tr" ? "Kaydediliyor…" : "Saving…"; }
+      try {
+        const payload = await apiRequest(`/api/projects/${encodeURIComponent(activeProjectId)}/compliance/close`, { method: "POST", body: JSON.stringify({ violationId, justification, by }) });
+        if (payload && payload.report && complianceState && complianceState.projectId === activeProjectId) complianceState.report = payload.report;
+        localStorage.setItem("kokpit-compliance-by", by);
+        renderComplianceView();
+        showToast(t("closureSavedToast"));
+        renderComplianceInspector("closed", violationId);
+      } catch (error) {
+        showToast(`${t("closureFailedToast")}: ${error.message}`);
+        if (submit) { submit.disabled = false; submit.textContent = t("closureSave"); }
+      }
+    });
+    $('#inspectorBody').addEventListener("input", event => {
+      const form = event.target instanceof Element ? event.target.closest('.closure-form') : null;
+      if (!form) return;
+      const justification = form.querySelector('#closureJustification')?.value.trim() || "";
+      const by = form.querySelector('#closureBy')?.value.trim() || "";
+      const submit = form.querySelector('button[type="submit"]');
+      if (submit) submit.disabled = !(justification && by);
+    });
     $$('.queue-filter').forEach(button => button.addEventListener("click", () => setQueueFilter(button.dataset.queueFilter)));
     $$('.signal-link').forEach(button => button.addEventListener("click", () => setQueueFilter(button.dataset.complianceFilter)));
     $$('.command-item').forEach(button => button.addEventListener("click", () => runCommand(button.dataset.command)));

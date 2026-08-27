@@ -138,6 +138,41 @@ describe('Dilim 2 real-map wiring', () => {
     });
 });
 
+describe('Dilim 5 compliance wiring', () => {
+    it('keeps full TR/EN dictionary parity across every i18n assign block', () => {
+        const blocks = [...preview.matchAll(/Object\.assign\(I18N\.(tr|en), \{([\s\S]*?)\}\);/g)];
+        const keys = { tr: new Set<string>(), en: new Set<string>() };
+        for (const block of blocks) {
+            const language = block[1] as 'tr' | 'en';
+            for (const match of (block[2] ?? '').matchAll(/([A-Za-z0-9_]+)\s*:\s*(?:"|'|`)/g)) keys[language].add(match[1] ?? '');
+        }
+        for (const key of keys.tr) expect(keys.en.has(key), `EN missing key: ${key}`).toBe(true);
+        for (const key of keys.en) expect(keys.tr.has(key), `TR missing key: ${key}`).toBe(true);
+        expect(keys.tr.has('queueClosed')).toBe(true);
+        expect(keys.tr.has('closureJustificationLabel')).toBe(true);
+    });
+
+    it('draws the compliance surface only from the live report; sample rows are gone', () => {
+        expect(preview).toContain('id="issueList"');
+        expect(preview).toContain('async function loadCompliance()');
+        expect(preview).toContain('/compliance/close`');
+        expect(preview).not.toContain('ISSUE_DATA');
+        expect(preview).not.toContain('data-issue=');
+        expect(preview).not.toContain('Örnek uyum kayıtları');
+        expect(preview).toContain("measurement !== \"measured\"");
+        const activation = /async function activateProject\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
+        expect(activation).toContain('complianceState = null;');
+        expect(activation).toContain('void loadCompliance();');
+    });
+
+    it('keeps the closure flow honest: justification and alias are mandatory, disabled until both exist', () => {
+        expect(preview).toContain('data-closure-id="${escapeHtml(violationId)}"');
+        expect(preview).toContain('submit.disabled = !(justification && by)');
+        expect(preview).toContain('kokpit-compliance-by');
+        expect(preview).toContain('closureSavedToast');
+    });
+});
+
 describe('Dilim 3 delta wiring', () => {
     it('fetches the measured delta for the composite item id and never fakes failures', () => {
         const loader = /async function loadDelta\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
