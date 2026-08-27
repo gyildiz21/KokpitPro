@@ -7,6 +7,8 @@ coverage/
 .codex-tmp/
 !kokpit/importgraph/__fixtures__/importgraph/excluded-folders/.codex-tmp/
 !kokpit/importgraph/__fixtures__/importgraph/excluded-folders/.codex-tmp/temporary.ts
+!kokpit/importgraph/__fixtures__/importgraph/excluded-folders/dist/
+!kokpit/importgraph/__fixtures__/importgraph/excluded-folders/dist/b.ts
 output/
 test-results/
 playwright-report/
