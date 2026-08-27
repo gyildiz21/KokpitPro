@@ -336,6 +336,14 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       maddesi → gerçek kod/test delta kartı; geçici gerçek Git reposunda ilk
       indeks → canlı kirlenme ile tek `stale` gerçeği → yeniden indeks → tarih
       baseline'lı measured delta akışı doğrulandı.
+- [x] **2026-08-27 dikiş nöbetçileri (kapanış turu):** sunucu desenindeki gerçek
+      halka (record→record→baselineFor→computeDelta) iki farklı makbuzla
+      sıralı `{added:[node_c→node_a], removed:[node_a→node_c]}` ölçer;
+      değişmeyen kenar kümesi listeleri BOŞ bırakır; son-iki pencere üçüncü
+      ölçümde dürüst kayar (`kokpit/delta/__tests__/tarih-delta-seam.test.ts`,
+      3 test) · tarayıcıda 'Eklenen kenarlar / Kaldırılan kenarlar' başlıkları
+      ayrı görünür ve panel aynı içeriği aynalar (e2e **S3b**, süre 8→8'li
+      süit) — toplam vitest **167/167**, playwright dilim-3 **8 passed**.
 - **Kabul:** bir plan adımı seçildiğinde ön-görünüm kartı ve harita vurgusu
   birlikte çalışır — ✅ gerçek repoda bizzat doğrulandı (yukarıdaki canlı
   DELTA[measured] çıktısı).

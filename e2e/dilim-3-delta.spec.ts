@@ -172,6 +172,18 @@ function staleDelta(projectId = 'mock-proj') {
     };
 }
 
+/** Dilim 3 kapanışı: iki gerçek ölçüm arası kenar farkı (DeltaHistoryStore dikişi). */
+function comparisonDelta(projectId = 'mock-proj') {
+    const payload = measuredDelta(projectId);
+    const delta = payload.delta as typeof payload.delta & {
+        addedEdges: Array<{ from: string; to: string }>;
+        removedEdges: Array<{ from: string; to: string }>;
+    };
+    delta.addedEdges = [{ from: 'n_parser', to: 'n_roadmap' }];
+    delta.removedEdges = [{ from: 'n_server', to: 'n_roadmap' }];
+    return payload;
+}
+
 interface MockOptions {
     readonly projects?: ReturnType<typeof projectRecord>[];
     readonly deltaSupplier?: () => unknown;
@@ -255,6 +267,31 @@ test.describe('Dilim 3 delta akışı (hermetik maskeler)', () => {
         await expect(panelBody).toContainText('Etkilenen testler');
         await expect(panelBody.getByRole('region')).toHaveAttribute('aria-label', 'Delta kanıt paneli');
         await page.screenshot({ path: resolve(artifacts, 's1-measured-1440.png'), fullPage: true });
+    });
+
+    test('S3b · Ölçülmüş karşılaştırma: eklenen/kaldırılan kenarlar ayrı listelerde ölçülür', async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await installMocks(page, { deltaSupplier: () => comparisonDelta() });
+        await openWorkspace(page, 'Mock Proje');
+
+        const details = await openPhaseItem(page, ITEM1_TEXT);
+        const card = details.locator('[data-inspector-delta-card]');
+        await expect(card.locator('[data-delta-mode="measured"]')).toBeVisible({ timeout: 15_000 });
+        // İki liste başlığı da ayrı görünür; hiçbiri uydurma satır içermez.
+        await expect(card.getByText('Eklenen kenarlar')).toBeVisible();
+        await expect(card.getByText('Kaldırılan kenarlar')).toBeVisible();
+        await expect(card).toContainText('n_parser → n_roadmap');
+        await expect(card).toContainText('n_server → n_roadmap');
+        const listed = card.locator('.delta-edge-list li');
+        expect(await listed.count()).toBe(2);
+
+        // Panel aynı dikişi aynalar (tek gerçeklik kaynağı deltaState).
+        await dismissModalInspector(page);
+        await page.locator('#tab-delta').click();
+        const panelBody = page.locator('#deltaPanelBody');
+        await expect(panelBody.locator('[data-delta-status="ready"]')).toBeVisible();
+        await expect(panelBody).toContainText('Eklenen kenarlar');
+        await expect(panelBody).toContainText('Kaldırılan kenarlar');
     });
 
     test('S2 · Yalnız-bildirim delta: kesikli ÖNERİ düğümü, uydurma kenar yok', async ({ page }) => {
