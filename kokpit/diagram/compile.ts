@@ -1,9 +1,8 @@
 // Saf diyagram derleyicisi — Dilim 2.0, adım 2 (PLAN.md).
 //
 // DiagramGraph → deterministik Mermaid. Referans: gitdiagram
-// `server/generate/graph.ts` compileDiagramGraph (subgraph/classDef katmanı
-// hariç: sanitizer'ımız bu yönergeleri enjeksiyon sinyali olarak reddeder;
-// grup bilgisi sözleşmede yaşar, UI tarafında kullanılır — dürüst sapma).
+// `server/generate/graph.ts` compileDiagramGraph. `classDef` dışarıda kalır;
+// güvenli ve dengeli `subgraph` blokları artık mimari kümeleri ihraca taşır.
 //
 // Saflık sözleşmesi: I/O yok, ağ yok, model çağrısı yok, global durum yok.
 // Aynı girdi her koşumda aynı çıktıyı üretir (düğümler ve kenarlar kanonik
@@ -12,6 +11,7 @@
 import {
     validateDiagramGraph,
     type DiagramGraphEdge,
+    type DiagramGroup,
     type DiagramGraphNode,
     type GraphIssue,
 } from './graph-schema';
@@ -78,6 +78,10 @@ function compareNodes(left: DiagramGraphNode, right: DiagramGraphNode): number {
     return compareStrings(left.id, right.id);
 }
 
+function compareGroups(left: DiagramGroup, right: DiagramGroup): number {
+    return compareStrings(left.id, right.id);
+}
+
 function compareEdges(left: DiagramGraphEdge, right: DiagramGraphEdge): number {
     return (
         compareStrings(left.from, right.from) ||
@@ -121,8 +125,20 @@ export function compileDiagramMermaid(
 
     const lines: string[] = ['flowchart TD'];
     const sortedNodes = [...graph.nodes].sort(compareNodes);
+    const groupedNodeIds = new Set<string>();
+    for (const group of [...graph.groups].sort(compareGroups)) {
+        const groupNodes = sortedNodes.filter((node) => node.groupId === group.id);
+        if (groupNodes.length === 0) continue;
+        lines.push(`subgraph group_${group.id}["${escapeMermaidLabel(group.label)}"]`);
+        lines.push('direction TB');
+        for (const node of groupNodes) {
+            groupedNodeIds.add(node.id);
+            lines.push(renderNodeLine(node));
+        }
+        lines.push('end');
+    }
     for (const node of sortedNodes) {
-        lines.push(renderNodeLine(node));
+        if (!groupedNodeIds.has(node.id)) lines.push(renderNodeLine(node));
     }
 
     const sortedEdges = [...graph.edges].sort(compareEdges);

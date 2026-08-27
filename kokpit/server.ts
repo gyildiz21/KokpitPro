@@ -3,16 +3,20 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { extname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildProjectDiagram } from './diagram/diagram-service';
+import { computeDelta } from './delta/compute';
+import { DeltaResult, type BaseRevision } from './delta/schema';
 import { githubAuthConfiguration, indexGithubProject, type GithubProjectInput } from './projects/github';
 import { indexLocalProject, type LocalProjectInput } from './projects/local';
 import { ProjectRegistry } from './projects/registry';
 import type { ProjectRecord } from './projects/schema';
+import { buildUiAssets, type UiAssets } from './ui/assets';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const PORT = Number.parseInt(process.env.PORT || '4173', 10);
 const HOST = process.env.HOST || '127.0.0.1';
 const registry = new ProjectRegistry();
 const MAX_BODY = 64 * 1024;
+let uiAssets: UiAssets | null = null;
 
 const MIME: Record<string, string> = {
     '.html': 'text/html; charset=utf-8',
@@ -84,6 +88,84 @@ function findProject(id: string): ProjectRecord {
     return project;
 }
 
+function diagramInputFor(project: ProjectRecord) {
+    return {
+        projectId: project.id,
+        sourceRoot: project.source.type === 'local' ? project.source.root : undefined,
+        remoteUrl:
+            project.source.type === 'local'
+                ? project.source.remoteUrl
+                : `https://github.com/${project.source.owner}/${project.source.repo}`,
+        branch: project.index.branch,
+        commit: project.index.commit,
+        revisionKind: project.index.revisionKind,
+        revision: project.index.revision,
+        verifyLocalRevision: project.source.type === 'local',
+        groups: project.index.groups,
+    };
+}
+
+function receiptBaseRevision(project: ProjectRecord): BaseRevision {
+    const kind = project.index.revisionKind ?? 'commit';
+    const revision = project.index.revision ?? project.index.commit;
+    return { kind, revision, commit: project.index.commit, branch: project.index.branch };
+}
+
+/**
+ * Dilim 3 delta hesabı. Ölçüm aynı diyagram disipliniyle (canlı makbuz
+ * doğrulaması) alınır; ölçülemez durumlar sahte boş başarı olarak GİZLENMEZ.
+ */
+async function buildProjectDelta(project: ProjectRecord, phaseHeading: string, itemKey: string) {
+    const receipt = {
+        branch: project.index.branch,
+        commit: project.index.commit,
+        revisionKind: project.index.revisionKind,
+        revision: project.index.revision,
+        groups: project.index.groups,
+    };
+    if (project.source.type !== 'local') {
+        return computeDelta({
+            projectId: project.id, phaseHeading, itemKey,
+            receipt, diagram: null, liveRevision: null,
+        });
+    }
+    const basis = await buildProjectDiagram(diagramInputFor(project));
+    if (basis.measurable) {
+        // verifyLocalRevision:true tazeliği kanıtladı → canlı == temel revizyon.
+        return computeDelta({
+            projectId: project.id, phaseHeading, itemKey,
+            receipt, diagram: basis.receipt, liveRevision: receiptBaseRevision(project),
+        });
+    }
+    if (basis.reason === 'stale-receipt' && basis.currentRevision) {
+        const current = basis.currentRevision;
+        return computeDelta({
+            projectId: project.id, phaseHeading, itemKey,
+            receipt, diagram: null,
+            liveRevision: { kind: current.kind, revision: current.revision, commit: current.commit, branch: current.branch },
+        });
+    }
+    // Diğer ölçülememe nedenleri dürüst sözleşmeyle taşınır; sahte içerik yok.
+    return DeltaResult.parse({
+        schemaVersion: 1,
+        projectId: project.id,
+        itemId: `${phaseHeading}::${itemKey}`,
+        phaseHeading,
+        mode: 'unmeasurable',
+        baseRevision: receiptBaseRevision(project),
+        declaredPaths: [],
+        affectedNodeIds: [],
+        affectedPaths: [],
+        affectedTests: [],
+        proposedNodes: [],
+        addedEdges: [],
+        removedEdges: [],
+        evidenceKind: 'none',
+        reasons: [{ code: 'no-mapping', message: `delta-basis-unavailable:${basis.reason}` }],
+        durationMs: 0,
+    });
+}
+
 async function reindex(project: ProjectRecord): Promise<ProjectRecord> {
     try {
         const updated = project.source.type === 'local'
@@ -122,17 +204,19 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
     const diagramMatch = /^\/api\/projects\/([^/]+)\/diagram$/.exec(url.pathname);
     if (request.method === 'GET' && diagramMatch?.[1]) {
         const project = findProject(decodeURIComponent(diagramMatch[1]));
-        json(response, 200, await buildProjectDiagram({
-            projectId: project.id,
-            sourceRoot: project.source.type === 'local' ? project.source.root : undefined,
-            remoteUrl:
-                project.source.type === 'local'
-                    ? project.source.remoteUrl
-                    : `https://github.com/${project.source.owner}/${project.source.repo}`,
-            branch: project.index.branch,
-            commit: project.index.commit,
-            groups: project.index.groups,
-        }));
+        json(response, 200, await buildProjectDiagram(await diagramInputFor(project)));
+        return true;
+    }
+    // Dilim 3: seçili bileşik plan maddesinin kanıta dayalı delta ön-görünümü.
+    // Bayat makbuz HTTP hatası DEĞİLDİR: 200 + mode:'unmeasurable' +
+    // code:'stale-receipt' döner; UI yeniden indeks eylemi sunar.
+    const deltaMatch = /^\/api\/projects\/([^/]+)\/delta$/.exec(url.pathname);
+    if (request.method === 'GET' && deltaMatch?.[1]) {
+        const project = findProject(decodeURIComponent(deltaMatch[1]));
+        const phase = url.searchParams.get('phase');
+        const item = url.searchParams.get('item');
+        if (!phase || !item) throw new HttpError(400, 'phase and item query parameters are required.');
+        json(response, 200, { delta: await buildProjectDelta(project, phase, item) });
         return true;
     }
     if (request.method === 'POST' && url.pathname === '/api/projects/verify/local') {
@@ -174,6 +258,17 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
 
 function serveStatic(request: IncomingMessage, response: ServerResponse, url: URL): void {
     const pathname = decodeURIComponent(url.pathname === '/' ? '/arayuz-onizleme.html' : url.pathname);
+    if (pathname === '/assets/map-flow.js' || pathname === '/assets/map-flow.css') {
+        if (!uiAssets) throw new HttpError(503, 'UI assets are not ready.');
+        const javascript = pathname.endsWith('.js');
+        const content = javascript ? uiAssets.mapFlowJs : uiAssets.mapFlowCss;
+        response.writeHead(200, {
+            'Content-Type': javascript ? 'text/javascript; charset=utf-8' : 'text/css; charset=utf-8',
+            'Cache-Control': 'no-store',
+        });
+        response.end(request.method === 'HEAD' ? undefined : content);
+        return;
+    }
     // K1 güvenlik yaması (hazirlik-auditi §1.5): gizli anahtar/bağımlılık ağaçları
     // asla servis edilmez. Referans motorun .env dosyası da bu sınıra dahildir.
     if (isStaticPathBlocked(pathname)) throw new HttpError(404, 'Not found.');
@@ -192,6 +287,7 @@ async function bootstrap(): Promise<void> {
 }
 
 export async function startServer(): Promise<void> {
+    uiAssets = await buildUiAssets(ROOT);
     await bootstrap();
     // K1: Host header doğrulaması — DNS-rebinding'e karşı (auditi §1.5).
     const server = createServer(async (request, response) => {

@@ -80,6 +80,20 @@ function isInScopePath(posixRelative: string, excludeRegExp: RegExp): boolean {
     );
 }
 
+function isRepositoryFile(rootNative: string, posixRelative: string): boolean {
+    const candidate = join(rootNative, ...posixRelative.split('/'));
+    if (!existsSync(candidate)) return false;
+    let realCandidate: string;
+    try { realCandidate = realpathSync(candidate); }
+    catch { return false; }
+    const nativeRelative = relative(rootNative, realCandidate);
+    return nativeRelative !== ''
+        && nativeRelative !== '..'
+        && !nativeRelative.startsWith(`..${sep}`)
+        && !isAbsolute(nativeRelative)
+        && statSync(realCandidate).isFile();
+}
+
 function edgeFromDependency(
     fromPath: string,
     dependency: IDependency,
@@ -185,7 +199,10 @@ export async function scanImportGraph(input: ScanInput): Promise<ImportScanResul
         // scanned files, so they never become nodes.
         if (moduleEntry.couldNotResolve === true) continue;
         const fromPath = toPosixPath(moduleEntry.source);
-        if (!isInScopePath(fromPath, excludeRegExp)) continue;
+        // dependency-cruiser çekirdek Node modüllerini (`path`, `fs`, `os`…)
+        // module girdisi olarak da döndürebilir. Yalnız repo kökü içinde gerçekten
+        // var olan dosyalar mimari düğüm olur; paket/çekirdek adları olmaz.
+        if (!isInScopePath(fromPath, excludeRegExp) || !isRepositoryFile(rootNative, fromPath)) continue;
         nodePaths.add(fromPath);
         for (const dependency of moduleEntry.dependencies) {
             const { edge, unresolvedDelta } = edgeFromDependency(fromPath, dependency, excludeRegExp);

@@ -25,14 +25,14 @@ const MERMAID_ID_PATTERN = /^[a-z][a-z0-9_]*$/;
 const INVISIBLE_CHAR_PATTERN = /[\p{Cf}\p{Cc}\u2028\u2029]/gu;
 
 /**
- * Kaçış sırası kritiktir: önce `&` ve `;` etkisizleştirilir ki modülün kendi
- * eklediği `#...;` varlık kodları ikinci turda bozulmasın. Hedef küme
+ * Kaçış sırası kritiktir: önce ham `;`, ardından `&` etkisizleştirilir ki
+ * modülün daha sonra eklediği `#...;` varlık kodları ikinci turda bozulmasın. Hedef küme
  * Mermaid'in anlam yüklediği her karakterdir: tırnak, köşeli/normal parantez,
  * süslü parantez, açı parantezi (HTML), ayraç `;`, kenar ayracı `|`, yorum `%`.
  */
 const LABEL_ESCAPE_STEPS: ReadonlyArray<readonly [RegExp, string]> = [
-    [/&/g, '#38;'],
     [/;/g, '#59;'],
+    [/&/g, '#38;'],
     [/"/g, '#quot;'],
     [/</g, '#60;'],
     [/>/g, '#62;'],
@@ -55,12 +55,18 @@ const FLOWCHART_HEADER_PATTERN = /^flowchart[ \t]+(?:TB|TD|BT|RL|LR)$/;
 const SAFE_CLICK_PATTERN =
     /^click[ \t]+[a-z][a-z0-9_]*[ \t]+"https?:\/\/[^"\s]+"$/;
 
+/** Derleyicinin üretebildiği tek alt-graf biçimi: güvenli kimlik + kaçmış etiket. */
+const SAFE_SUBGRAPH_PATTERN =
+    /^subgraph[ \t]+group_[a-z][a-z0-9_]*\["[^"\r\n]*"\]$/;
+const SAFE_DIRECTION_PATTERN = /^direction[ \t]+(?:TB|TD|BT|RL|LR)$/;
+
 /**
  * Derleyicinin hiçbir koşumda üretlemediği üst-seviye yönergeler: config
- * blokları, stil/sınıf tanımı, alt graf, ikinci başlık, yorum.
+ * blokları, stil/sınıf tanımı, ikinci başlık ve yorum. `subgraph`, `direction`
+ * ve `end` yalnız aşağıdaki dengeli beyaz-listeli durum makinesiyle kabul edilir.
  */
 const FORBIDDEN_STATEMENT_PATTERN =
-    /^(?:%%|(?:classDef|class|style|linkStyle|subgraph|end|init|graph|flowchart|direction|accTitle|accDescr|config)\b)/;
+    /^(?:%%|(?:classDef|class|style|linkStyle|init|graph|flowchart|accTitle|accDescr|config)\b)/;
 
 const BRACKET_CLOSER_TO_OPENER: ReadonlyMap<string, string> = new Map([
     [')', '('],
@@ -203,9 +209,10 @@ function structuralLineIssue(line: string): StructuralLineIssue | null {
 /**
  * Üretilmiş Mermaid kaynağının yapısal güvenlik denetimi. Etiketlerin hepsi
  * escapeMermaidLabel'dan geçtiği varsayılır; bu katman, tahrif edilmiş ya
- * da el yazımı kaynakta satır enjeksiyonunu (click/classDef/subgraph/config),
+ * da el yazımı kaynakta satır enjeksiyonunu (click/classDef/config),
  * null byte, CR, dengesiz tırnak/parantez ve satır içi ayraç kaçışlarını
- * reddeder. Saftır: hiçbir şey çalıştırmaz, yalnızca okur.
+ * reddeder. Alt-graf yalnız derleyicinin dar ve dengeli sözdiziminde kabul
+ * edilir. Saftır: hiçbir şey çalıştırmaz, yalnızca okur.
  */
 export function validateMermaidSource(source: string): MermaidSourceValidation {
     if (source.includes('\u0000')) {
@@ -235,6 +242,8 @@ export function validateMermaidSource(source: string): MermaidSourceValidation {
         return { ok: false, reason: 'missing_flowchart_header' };
     }
 
+    let subgraphOpen = false;
+    let directionSeen = false;
     for (const [index, rawLine] of lines.entries()) {
         const line = rawLine.trim();
         if (line.length === 0 || index === headerIndex) {
@@ -247,6 +256,31 @@ export function validateMermaidSource(source: string): MermaidSourceValidation {
             }
             continue;
         }
+        if (line.startsWith('subgraph')) {
+            if (subgraphOpen || !SAFE_SUBGRAPH_PATTERN.test(line)) {
+                return { ok: false, reason: 'forbidden_directive' };
+            }
+            const structural = structuralLineIssue(line);
+            if (structural !== null) return { ok: false, reason: structural };
+            subgraphOpen = true;
+            directionSeen = false;
+            continue;
+        }
+        if (line.startsWith('direction')) {
+            if (!subgraphOpen || directionSeen || !SAFE_DIRECTION_PATTERN.test(line)) {
+                return { ok: false, reason: 'forbidden_directive' };
+            }
+            directionSeen = true;
+            continue;
+        }
+        if (line.startsWith('end')) {
+            if (!subgraphOpen || line !== 'end') {
+                return { ok: false, reason: 'forbidden_directive' };
+            }
+            subgraphOpen = false;
+            directionSeen = false;
+            continue;
+        }
         if (FORBIDDEN_STATEMENT_PATTERN.test(line)) {
             return { ok: false, reason: 'forbidden_directive' };
         }
@@ -256,6 +290,8 @@ export function validateMermaidSource(source: string): MermaidSourceValidation {
             return { ok: false, reason: structural };
         }
     }
+
+    if (subgraphOpen) return { ok: false, reason: 'unclosed_subgraph' };
 
     return { ok: true };
 }

@@ -20,6 +20,8 @@ describe('persistent project registry', () => {
         const project = await indexLocalProject({ path: root, planPath: 'PLAN.md', name: 'KokpitPro' });
         expect(project.source.type).toBe('local');
         expect(project.index.commit).toMatch(/^[0-9a-f]{40}$/);
+        expect(project.index.revisionKind).toMatch(/^(commit|working-tree)$/);
+        expect(project.index.revision).toMatch(/^(?:[0-9a-f]{40}|worktree-[0-9a-f]{20})$/);
         expect(project.index.summary.itemCount).toBeGreaterThan(0);
         expect(project.index.nodes.length).toBeGreaterThan(0);
 

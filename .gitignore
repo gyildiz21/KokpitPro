@@ -5,6 +5,8 @@ coverage/
 .env.local
 .kokpit/
 output/
+test-results/
+playwright-report/
 *.log
 # referans motor — kendi .git'i var, bu repoya girmez
 gitdiagram/

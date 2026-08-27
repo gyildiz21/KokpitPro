@@ -54,6 +54,12 @@ describe('buildReceiptDiagram makbuz ve kanıt hiyerarşisi', () => {
     it('gerçek taramadan graf üretir; ölçüm sayıları dürüstçe raporlanır', () => {
         const receipt = buildReceiptDiagram({ ...BASE_INPUT, scan: fakeScan(), groups: [] });
         expect(receipt.graph.schemaVersion).toBe(1);
+        expect(receipt.graph.groups.map((group) => group.id)).toEqual([
+            'runtime',
+            'analysis',
+            'integration',
+        ]);
+        expect(receipt.graph.nodes.every((node) => Boolean(node.groupId))).toBe(true);
         expect(receipt.measurements.scannedFileCount).toBe(5);
         expect(receipt.measurements.totalEdgeCount).toBe(4);
         expect(receipt.measurements.unresolvedCount).toBe(1);
@@ -124,11 +130,58 @@ describe('buildReceiptDiagram makbuz ve kanıt hiyerarşisi', () => {
         expect(unmatched?.mentionedPath).toBe('docs/hayal.md');
     });
 
-    it('plan bağlantısı olmayan düğümler unmeasured kalır', () => {
+    it('plan bağlantısı olmayan taranmış düğümler measured-import olarak kalır', () => {
         const receipt = buildReceiptDiagram({ ...BASE_INPUT, scan: fakeScan(), groups: [] });
         for (const evidence of Object.values(receipt.nodeEvidence)) {
-            expect(evidence.evidenceKind).toBe('unmeasured');
+            expect(evidence.evidenceKind).toBe('measured-import');
         }
+    });
+
+    it('ölçülmüş kenarlara yalnız doğrulanabilir import dili ve dinamik/tip stili ekler', () => {
+        const receipt = buildReceiptDiagram({ ...BASE_INPUT, scan: fakeScan(), groups: [] });
+        const crossGroup = receipt.graph.edges.find((edge) => edge.from !== edge.to && edge.label === 'imports');
+        expect(crossGroup).toBeDefined();
+        const typeImport = receipt.graph.edges.find((edge) => edge.label === 'type import');
+        expect(typeImport).toMatchObject({ style: 'dashed' });
+        expect(receipt.graph.edges.every((edge) => !edge.label || ['imports', 'type import', 'dynamic import'].includes(edge.label))).toBe(true);
+    });
+
+    it('test/fixture dosyalarını mimari düğüm yapmaz; doğrudan test importunu madde kanıtına bağlar', () => {
+        const scan = fakeScan({
+            nodes: [
+                { path: 'src/service.ts' },
+                { path: 'src/service.test.ts' },
+                { path: 'src/__fixtures__/sample.ts' },
+            ],
+            edges: [
+                { from: 'src/service.test.ts', to: 'src/service.ts', resolved: true, dynamic: false, typeOnly: false },
+            ],
+            scannedFileCount: 3,
+            unresolvedCount: 0,
+        });
+        const groups: PhaseGroup[] = [{
+            heading: 'Dilim 2',
+            items: [{ id: 'madde-1', title: 'src/service.ts üretim servisi', status: 'partial', phaseHeading: 'Dilim 2', line: 3 }],
+        }];
+        const receipt = buildReceiptDiagram({ ...BASE_INPUT, scan, groups });
+        expect(receipt.graph.nodes.map((node) => node.path)).toEqual(['src/service.ts']);
+        const mapping = receipt.itemMappings['Dilim 2::madde-1'];
+        expect(mapping?.paths).toEqual(['src/service.ts']);
+        expect(mapping?.testPaths).toEqual(['src/service.test.ts']);
+    });
+
+    it('test yoğunluğunu üretim mimarisi merkeziliği gibi sıralamaz', () => {
+        const production = Array.from({ length: 35 }, (_, index) => ({ path: `src/${String(index).padStart(2, '0')}.ts` }));
+        const tests = Array.from({ length: 8 }, (_, index) => ({ path: `tests/z-${index}.test.ts` }));
+        const scan = fakeScan({
+            nodes: [...production, ...tests],
+            edges: tests.map((test) => ({ from: test.path, to: 'src/34.ts', resolved: true, dynamic: false, typeOnly: false })),
+            scannedFileCount: production.length + tests.length,
+            unresolvedCount: 0,
+        });
+        const receipt = buildReceiptDiagram({ ...BASE_INPUT, scan, groups: [] });
+        expect(receipt.graph.nodes.map((node) => node.path)).not.toContain('src/34.ts');
+        expect(receipt.graph.nodes.some((node) => node.path?.includes('.test.'))).toBe(false);
     });
 
     it('aynı girdi deterministik graf üretir (durationMs hariç alan)', () => {

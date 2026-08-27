@@ -6,6 +6,7 @@
 
 import type { PhaseGroup } from '../parser/schema';
 import { scanImportGraph } from '../importgraph/scan';
+import { readLocalRevision, type LocalRevision } from '../projects/local';
 import {
     buildReceiptDiagram,
     type ReceiptDiagram,
@@ -20,6 +21,10 @@ export interface ProjectDiagramInput {
     remoteUrl?: string;
     branch: string;
     commit: string;
+    revisionKind?: 'commit' | 'working-tree';
+    revision?: string;
+    /** Sunucu yolu: canlı Git çalışma ağacı makbuzla birebir doğrulanır. */
+    verifyLocalRevision?: boolean;
     groups: PhaseGroup[];
 }
 
@@ -31,7 +36,13 @@ export type ProjectDiagramResult =
         mermaid: string;
         fileLinkBase?: string;
     }
-    | { measurable: false; projectId: string; reason: string };
+    | {
+        measurable: false;
+        projectId: string;
+        reason: string;
+        expectedRevision?: string;
+        currentRevision?: LocalRevision;
+    };
 
 /** Yalnız github.com uzak adresleri dosya linki temeli olur; diğerleri undefined. */
 export function githubFileLinkBase(remoteUrl: string | undefined): string | undefined {
@@ -51,6 +62,34 @@ export async function buildProjectDiagram(input: ProjectDiagramInput): Promise<P
             reason: 'no-local-checkout',
         };
     }
+    let currentRevision: LocalRevision | undefined;
+    if (input.verifyLocalRevision) {
+        try {
+            currentRevision = await readLocalRevision(input.sourceRoot);
+        } catch (error) {
+            return {
+                measurable: false,
+                projectId: input.projectId,
+                reason: `revision-check-failed:${error instanceof Error ? error.message : String(error)}`,
+            };
+        }
+        const expectedKind = input.revisionKind ?? 'commit';
+        const expectedRevision = input.revision ?? input.commit;
+        if (
+            currentRevision.branch !== input.branch ||
+            currentRevision.commit !== input.commit ||
+            currentRevision.kind !== expectedKind ||
+            currentRevision.revision !== expectedRevision
+        ) {
+            return {
+                measurable: false,
+                projectId: input.projectId,
+                reason: 'stale-receipt',
+                expectedRevision,
+                currentRevision,
+            };
+        }
+    }
     let scan;
     try {
         scan = await scanImportGraph({ rootDir: input.sourceRoot });
@@ -66,15 +105,18 @@ export async function buildProjectDiagram(input: ProjectDiagramInput): Promise<P
         projectId: input.projectId,
         branch: input.branch,
         commit: input.commit,
+        revisionKind: input.revisionKind ?? currentRevision?.kind ?? 'commit',
+        revision: input.revision ?? currentRevision?.revision ?? input.commit,
         generatedAt: new Date().toISOString(),
         scan,
         groups: input.groups,
     });
 
-    const fileLinkBase = githubFileLinkBase(input.remoteUrl);
+    const revisionKind = input.revisionKind ?? currentRevision?.kind ?? 'commit';
+    const fileLinkBase = revisionKind === 'commit' ? githubFileLinkBase(input.remoteUrl) : undefined;
     const compiled = compileDiagramMermaid(
         receipt.graph,
-        fileLinkBase ? { fileLinkBase, branch: input.branch } : {},
+        fileLinkBase ? { fileLinkBase, branch: input.commit } : {},
     );
     if (!compiled.ok) {
         return {

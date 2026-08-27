@@ -16,6 +16,11 @@ import {
     validateDiagramGraph,
     type DiagramGraph,
 } from './graph-schema';
+import {
+    architectureGroupIdForPath,
+    architectureGroupsForPaths,
+    measuredImportPresentation,
+} from './architecture';
 import { safeMermaidId } from './mermaid-sanitize';
 
 /** Düğüm başına kanıt makbuzu — denetçi bu türleri aynen göstermek zorundadır. */
@@ -25,18 +30,25 @@ export interface NodeEvidence {
     projectId: string;
     branch: string;
     commit: string;
+    revisionKind: 'commit' | 'working-tree';
+    revision: string;
     path: string;
     phaseHeading?: string;
     itemId?: string;
     /** Yalnız plan bilgisi; tek başına kod kanıtı DEĞİLDİR. */
     itemStatus?: 'done' | 'partial' | 'open';
+    gateStatus?: 'waiting-go';
     evidenceKind: NodeEvidenceKind;
+    /** Ölçülmüş import kenarıyla bu kaynağa bağlı test dosyaları. */
+    testPaths: string[];
 }
 
 export interface ReceiptDiagramInput {
     projectId: string;
     branch: string;
     commit: string;
+    revisionKind?: 'commit' | 'working-tree';
+    revision?: string;
     generatedAt: string;
     scan: ImportScanResult;
     groups: PhaseGroup[];
@@ -60,6 +72,8 @@ export interface ReceiptDiagram {
         status: 'done' | 'partial' | 'open';
         mentionedPath: string;
     }>;
+    /** Bileşik plan maddesi kimliği → doğrulanmış kod/test yüzeyi. */
+    itemMappings: Record<string, { nodeIds: string[]; paths: string[]; testPaths: string[] }>;
 }
 
 function posixBasename(path: string): string {
@@ -73,6 +87,7 @@ function intraDegree(path: string, scan: ImportScanResult): number {
     let degree = 0;
     for (const edge of scan.edges) {
         if (!edge.resolved || edge.to === null) continue;
+        if (isTestPath(edge.from) || isFixturePath(edge.from) || isTestPath(edge.to) || isFixturePath(edge.to)) continue;
         if (edge.from === path || edge.to === path) degree += 1;
     }
     return degree;
@@ -101,16 +116,38 @@ function compare(left: string, right: string): number {
     return left < right ? -1 : left > right ? 1 : 0;
 }
 
+export function isTestPath(path: string): boolean {
+    return /(^|\/)(__tests__|test|tests)(\/|$)|\.(?:test|spec)\.[^.]+$/i.test(path);
+}
+
+function isFixturePath(path: string): boolean {
+    return /(^|\/)__fixtures__(\/|$)/i.test(path);
+}
+
+function linkedTestPaths(path: string, scan: ImportScanResult): string[] {
+    const tests = new Set<string>();
+    for (const edge of scan.edges) {
+        if (!edge.resolved || edge.to !== path || !isTestPath(edge.from)) continue;
+        tests.add(edge.from);
+    }
+    return [...tests].sort(compare);
+}
+
 export function buildReceiptDiagram(input: ReceiptDiagramInput): ReceiptDiagram {
     const { scan } = input;
 
     // Düğüm seçimi ölçüme dayanır: graf-içi derece, eşitlikte alfabetik yol.
     // Sessiz uydurma yok; kırpılan düğümler measurements'ta dürüstçe raporlanır.
-    const ranked = [...scan.nodes]
+    const productionNodes = scan.nodes.filter((node) => !isTestPath(node.path) && !isFixturePath(node.path));
+    const architectureNodes = productionNodes.length > 0 ? productionNodes : scan.nodes;
+    const ranked = architectureNodes
         .map((node) => ({ path: node.path, degree: intraDegree(node.path, scan) }))
         .sort((left, right) => right.degree - left.degree || compare(left.path, right.path));
     const selectedPaths = ranked.slice(0, MAX_GRAPH_NODES).map((entry) => entry.path);
     const selectedSet = new Set(selectedPaths);
+    const groupIdByPath = new Map(
+        selectedPaths.map((path) => [path, architectureGroupIdForPath(path)]),
+    );
 
     const idByPath = new Map<string, string>();
     for (const path of selectedPaths) idByPath.set(path, safeMermaidId(path));
@@ -121,11 +158,15 @@ export function buildReceiptDiagram(input: ReceiptDiagramInput): ReceiptDiagram 
             itemId: `${group.heading}::${item.id}`,
             status: item.status,
             title: item.title,
+            gateStatus: group.gateStatus,
         })),
     );
 
     const nodeEvidence: Record<string, NodeEvidence> = {};
     const unmatchedPlanItems: ReceiptDiagram['unmatchedPlanItems'] = [];
+    const itemMappings: ReceiptDiagram['itemMappings'] = {};
+    const revisionKind = input.revisionKind ?? 'commit';
+    const revision = input.revision ?? input.commit;
 
     for (const item of flatItems) {
         const mentioned = longestMentionedPath(item.title, selectedPaths);
@@ -138,19 +179,28 @@ export function buildReceiptDiagram(input: ReceiptDiagramInput): ReceiptDiagram 
             });
             continue;
         }
-        // İlk eşleşen madde kazanır — flatItems plan sırasındadır, deterministiktir.
         const nodeId = idByPath.get(mentioned);
-        if (nodeId !== undefined && !nodeEvidence[nodeId]) {
-            nodeEvidence[nodeId] = {
-                projectId: input.projectId,
-                branch: input.branch,
-                commit: input.commit,
-                path: mentioned,
-                phaseHeading: item.phaseHeading,
-                itemId: item.itemId,
-                itemStatus: item.status,
-                evidenceKind: 'plan-path-match',
-            };
+        if (nodeId !== undefined) {
+            const testPaths = linkedTestPaths(mentioned, scan);
+            // Her plan maddesi kendi eşlemesini alır. Düğüm denetçisinde ise
+            // plan sırasındaki ilk açık eşleşme deterministik birincil kanıttır.
+            if (!nodeEvidence[nodeId]) {
+                nodeEvidence[nodeId] = {
+                    projectId: input.projectId,
+                    branch: input.branch,
+                    commit: input.commit,
+                    revisionKind,
+                    revision,
+                    path: mentioned,
+                    phaseHeading: item.phaseHeading,
+                    itemId: item.itemId,
+                    itemStatus: item.status,
+                    ...(item.gateStatus ? { gateStatus: item.gateStatus } : {}),
+                    evidenceKind: 'plan-path-match',
+                    testPaths,
+                };
+            }
+            itemMappings[item.itemId] = { nodeIds: [nodeId], paths: [mentioned], testPaths };
         }
     }
 
@@ -158,6 +208,7 @@ export function buildReceiptDiagram(input: ReceiptDiagramInput): ReceiptDiagram 
         id: idByPath.get(path)!,
         label: posixBasename(path),
         type: 'box' as const,
+        groupId: groupIdByPath.get(path)!,
         path,
     }));
 
@@ -179,10 +230,14 @@ export function buildReceiptDiagram(input: ReceiptDiagramInput): ReceiptDiagram 
         .map((edge) => ({
             from: idByPath.get(edge.from)!,
             to: idByPath.get(edge.to)!,
-            style: 'solid' as const,
+            ...measuredImportPresentation(
+                edge,
+                groupIdByPath.get(edge.from)!,
+                groupIdByPath.get(edge.to)!,
+            ),
         }));
-    // Ölçümü/plan bağlantısı olmayan düğümler 'unmeasured' kalır — durum boyaması
-    // UI katmanının dürüstlük kuralıdır (renk tek başına durum taşımaz).
+    // Bu düğümlerin import varlığı ölçülmüştür; yalnız durum/faz eşlemesi yoktur.
+    // Dolayısıyla `measured-import`, kod kanıtını durum kanıtından ayırır.
     for (const path of selectedPaths) {
         const nodeId = idByPath.get(path)!;
         if (!nodeEvidence[nodeId]) {
@@ -190,8 +245,11 @@ export function buildReceiptDiagram(input: ReceiptDiagramInput): ReceiptDiagram 
                 projectId: input.projectId,
                 branch: input.branch,
                 commit: input.commit,
+                revisionKind,
+                revision,
                 path,
-                evidenceKind: 'unmeasured',
+                evidenceKind: 'measured-import',
+                testPaths: linkedTestPaths(path, scan),
             };
         }
     }
@@ -202,9 +260,11 @@ export function buildReceiptDiagram(input: ReceiptDiagramInput): ReceiptDiagram 
             projectId: input.projectId,
             branch: input.branch,
             commit: input.commit,
+            revisionKind,
+            revision,
             generatedAt: input.generatedAt,
         },
-        groups: [],
+        groups: architectureGroupsForPaths(selectedPaths),
         nodes: graphNodes,
         edges: renderedEdges,
     });
@@ -228,5 +288,6 @@ export function buildReceiptDiagram(input: ReceiptDiagramInput): ReceiptDiagram 
             durationMs: scan.durationMs,
         },
         unmatchedPlanItems,
+        itemMappings,
     };
 }

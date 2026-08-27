@@ -113,6 +113,31 @@ describe('kenar durumlar', () => {
         expect(scan.groups[0]?.items[0]?.title).toBe('Çok satıra yayılan akademik doğruluk kapısı');
     });
 
+    it('faz içindeki açık GO kapısını satırıyla birlikte korur', () => {
+        const scan = scanRoadmapText('## Dilim 0\n\nHarici GO bekliyor.\n\n- [ ] motor kabulü\n');
+        expect(scan.groups[0]).toMatchObject({ gateStatus: 'waiting-go', gateLine: 3 });
+    });
+
+    it('madde gövdesindeki sözlük anımı kapı sanmaz (Dilim 2 lejant nöbetçisi)', () => {
+        const text = [
+            '## Dilim 2 · Harita',
+            '',
+            '- [x] **Renk ve etkileşim:** kodlandı(yeşil) / sürüyor(amber) / planda(gri) / GO bekliyor(mavi halka) yalnız --st-* belirteçleriyle',
+            '  devam satırı; gövdede kalır.',
+            '- [ ] başka madde',
+        ].join('\n');
+        const scan = scanRoadmapText(text);
+        expect(scan.groups[0]?.gateStatus).toBeUndefined();
+        expect(scan.groups[0]?.gateLine).toBeUndefined();
+    });
+
+    it('boş satırdan sonraki bağımsız durum bildirimi yeniden kapı üretir', () => {
+        const text = '## F\n\n- [x] biten iş\n\nDurum: harici GO bekleniyor.\n';
+        const scan = scanRoadmapText(text);
+        expect(scan.groups[0]).toMatchObject({ gateStatus: 'waiting-go' });
+        expect(scan.groups[0]?.gateLine).toBe(5);
+    });
+
     it('scanRoadmapPath dizindeki .md dosyalarını tarar', () => {
         const results = scanRoadmapPath(join(__dirname, '__fixtures__'));
         expect(results.length).toBeGreaterThanOrEqual(1);

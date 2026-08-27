@@ -81,6 +81,14 @@ describe('scanImportGraph', () => {
         expect(result.unresolvedCount).toBe(1);
     });
 
+    it('Node çekirdek modüllerini repo dosyası gibi düğümleştirmez', async () => {
+        const result = await scanImportGraph({ rootDir: fixtureRoot('core-module') });
+        expect(result.nodes).toEqual([{ path: 'a.ts' }]);
+        expect(result.edges).toEqual([
+            { from: 'a.ts', to: null, resolved: true, dynamic: false, typeOnly: false, raw: 'path' },
+        ]);
+    });
+
     it('excluded-folders: varsayılan hariç tutulan dist/ düğüm ne kenar üretir', async () => {
         const result = await scanImportGraph({ rootDir: fixtureRoot('excluded-folders') });
 
@@ -105,6 +113,7 @@ describe('scanImportGraph', () => {
         'alias-resolution',
         'unresolved',
         'excluded-folders',
+        'core-module',
     ])('%s: makullük kontrolleri — sıralı, tekil, pozitif sayımlar', async (name) => {
         const result = await scanImportGraph({ rootDir: fixtureRoot(name) });
 

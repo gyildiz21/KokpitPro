@@ -285,20 +285,29 @@ describe('validateMermaidSource', () => {
         }
     });
 
-    it('classDef/subgraph/init/style yönerge enjeksiyonu reddedilir', () => {
+    it('yalnız beyaz-listeli ve dengeli subgraph biçimini kabul eder', () => {
+        const safe = [
+            'flowchart TD',
+            'subgraph group_analysis["Analysis Engine"]',
+            'direction TB',
+            'node_parser["Parser"]',
+            'end',
+        ].join('\n');
+        expect(validateMermaidSource(safe)).toEqual({ ok: true });
+
         const bads = [
             'flowchart TD\nA["x"]\nclassDef evil fill:#f00',
             'flowchart TD\nsubgraph Z\nA["x"]\nend',
+            'flowchart TD\nsubgraph group_safe["Safe"]\nsubgraph group_nested["Nested"]\nend\nend',
+            'flowchart TD\nsubgraph group_safe["Safe"]\ndirection TB\ndirection LR\nend',
+            'flowchart TD\nsubgraph group_safe["Safe"]\nA["x"]',
             'flowchart TD\n%%{init: {"securityLevel":"loose"}}%%',
             'flowchart TD\nstyle A fill:red',
             'flowchart TD\nflowchart LR',
             'flowchart TD\n%% gizli not',
         ];
         for (const bad of bads) {
-            expect(validateMermaidSource(bad)).toEqual({
-                ok: false,
-                reason: 'forbidden_directive',
-            });
+            expect(validateMermaidSource(bad).ok).toBe(false);
         }
     });
 

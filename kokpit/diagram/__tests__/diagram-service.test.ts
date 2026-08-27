@@ -68,9 +68,42 @@ describe('buildProjectDiagram dürüstlük sözleşmesi', () => {
         for (const evidence of matched) {
             expect(evidence.projectId).toBe('p-fixture');
         }
-        // Mermaid çıktısı güvenli kaynak linkini taşır (dal segmentleri korunur).
+        // Mermaid çıktısı değişmez commit referanslı güvenli kaynak linkini taşır.
         expect(result.mermaid).toContain('click node_');
-        expect(result.mermaid).toContain('blob/main/');
+        expect(result.mermaid).toContain('blob/8821a1e36da3d164137f36e43978c7a01fd06bd1/');
+    });
+
+    it('canlı çalışma ağacı makbuzdan farklıysa tarama yapmadan bayat makbuz döndürür', async () => {
+        const result = await buildProjectDiagram({
+            projectId: 'p-stale',
+            sourceRoot: root,
+            branch: 'impossible-branch',
+            commit: '0000000000000000000000000000000000000000',
+            revisionKind: 'commit',
+            revision: '0000000000000000000000000000000000000000',
+            verifyLocalRevision: true,
+            groups: [],
+        });
+        expect(result.measurable).toBe(false);
+        if (!result.measurable) {
+            expect(result.reason).toBe('stale-receipt');
+            expect(result.currentRevision).toBeDefined();
+        }
+    });
+
+    it('working-tree makbuzunda yanıltıcı GitHub dosya linki üretmez', async () => {
+        const result = await buildProjectDiagram({
+            projectId: 'p-working-tree',
+            sourceRoot: staticFixture,
+            remoteUrl: 'https://github.com/owner/repo.git',
+            branch: 'main',
+            commit: 'abc',
+            revisionKind: 'working-tree',
+            revision: 'worktree-test',
+            groups: GROUPS,
+        });
+        expect(result.measurable).toBe(true);
+        if (result.measurable) expect(result.fileLinkBase).toBeUndefined();
     });
 
     it('aynı girdiyle servis çıktısı deterministiktir (zaman damgaları hariç)', async () => {

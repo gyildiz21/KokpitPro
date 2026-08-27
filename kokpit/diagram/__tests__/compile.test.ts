@@ -83,6 +83,25 @@ describe('compileDiagramMermaid determinizm ve sözleşme', () => {
         expect(result.mermaid).toContain('node_server -.-> node_parser');
         expect(result.mermaid).toContain('|"import eder"|');
     });
+
+    it('mimari grupları güvenli ve deterministik subgraph bloklarıyla dışa aktarır', () => {
+        const graph = baseGraph();
+        graph.groups = [
+            { id: 'analysis', label: 'Analysis Engine', description: 'Measured analyzers.' },
+            { id: 'runtime', label: 'Backend & API', description: 'Server runtime.' },
+        ];
+        graph.nodes = [
+            { ...graph.nodes[0]!, groupId: 'runtime' },
+            { ...graph.nodes[1]!, groupId: 'analysis' },
+        ];
+        const result = compileDiagramMermaid(graph);
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        expect(result.mermaid).toContain('subgraph group_analysis["Analysis Engine"]');
+        expect(result.mermaid).toContain('subgraph group_runtime["Backend #38; API"]');
+        expect(result.mermaid.match(/^end$/gm)).toHaveLength(2);
+        expect(validateMermaidSource(result.mermaid)).toEqual({ ok: true });
+    });
 });
 
 describe('compileDiagramMermaid enjeksiyon ve özel karakter', () => {

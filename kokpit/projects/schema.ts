@@ -40,6 +40,14 @@ export const IndexReceipt = z.object({
     indexedAt: z.string().datetime(),
     commit: z.string().min(1),
     branch: z.string().min(1),
+    /**
+     * `commit` yalnız temiz bir çalışma ağacını; `working-tree` ise yeniden
+     * üretilebilir yerel parmak izini temsil eder. Eski kayıtlar bu alanları
+     * taşımayabilir; tüketici onları temiz-commit varsaymak yerine canlı Git
+     * durumuyla doğrular.
+     */
+    revisionKind: z.enum(['commit', 'working-tree']).optional(),
+    revision: z.string().min(1).optional(),
     planPath: z.string().min(1),
     planMarkdown: z.string(),
     groups: z.array(PhaseGroup).default([]),

@@ -102,6 +102,8 @@ export const DiagramGraphMetadata = z
         projectId: z.string().min(1),
         branch: z.string().min(1),
         commit: z.string().min(1),
+        revisionKind: z.enum(['commit', 'working-tree']).optional(),
+        revision: z.string().min(1).optional(),
         generatedAt: z.string().datetime(),
     })
     .strict();
