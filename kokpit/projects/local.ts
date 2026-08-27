@@ -39,6 +39,42 @@ export interface LocalRevision {
 }
 
 /**
+ * Kalıcı kayıt ile aynı anda okunan canlı Git makbuzundan tek bağlantı durumu
+ * üretir. Katalog, üst bağlam ve diyagram bu kararı paylaşır; kayıt dosyasındaki
+ * eski `ready` değeri canlı çalışma ağacı değişimini gizleyemez.
+ */
+export function withLocalFreshness(
+    project: ProjectRecordType,
+    current: LocalRevision,
+): ProjectRecordType {
+    if (project.source.type !== 'local') return project;
+    const expectedKind = project.index.revisionKind ?? 'commit';
+    const expectedRevision = project.index.revision ?? project.index.commit;
+    const fresh = current.branch === project.index.branch
+        && current.commit === project.index.commit
+        && current.kind === expectedKind
+        && current.revision === expectedRevision;
+    return ProjectRecord.parse({
+        ...project,
+        connectionState: fresh ? 'ready' : 'stale',
+        lastError: fresh ? null : 'stale-receipt',
+    });
+}
+
+export async function refreshProjectFreshness(project: ProjectRecordType): Promise<ProjectRecordType> {
+    if (project.source.type !== 'local') return project;
+    try {
+        return withLocalFreshness(project, await readLocalRevision(project.source.root));
+    } catch (error) {
+        return ProjectRecord.parse({
+            ...project,
+            connectionState: 'error',
+            lastError: `revision-check-failed:${error instanceof Error ? error.message : String(error)}`,
+        });
+    }
+}
+
+/**
  * Yerel çalışma ağacının kanonik makbuzu. Kirli durumda yalnız dosya adlarını
  * değil diff'i ve izlenmeyen dosya içeriklerini de hash'ler; böylece iki farklı
  * çalışma ağacı aynı commit makbuzu gibi sunulamaz.
@@ -116,9 +152,12 @@ export interface LocalProjectInput {
 
 export async function indexLocalProject(input: LocalProjectInput, previous?: ProjectRecordType): Promise<ProjectRecordType> {
     if (!input.path?.trim()) throw new Error('Local repository path is required.');
-    const root = realpathSync(resolve(input.path.trim()));
+    // Windows'ta geçici klasör veya dosya seçici 8.3 kısa-yol döndürebilir;
+    // Git ise aynı kökü uzun Unicode yoluyla raporlar. İkisini native gerçek
+    // yola çevirerek aynı depoyu yanlışlıkla alt klasör gibi reddetmeyiz.
+    const root = realpathSync.native(resolve(input.path.trim()));
     if (!statSync(root).isDirectory()) throw new Error('Local repository path is not a directory.');
-    const gitRoot = realpathSync(await git(root, ['rev-parse', '--show-toplevel']));
+    const gitRoot = realpathSync.native(await git(root, ['rev-parse', '--show-toplevel']));
     if (gitRoot !== root) throw new Error(`Select the Git repository root: ${gitRoot}`);
     const localRevision = await readLocalRevision(root);
     const { branch, commit } = localRevision;

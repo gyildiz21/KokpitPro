@@ -1,7 +1,8 @@
 # KokpitPro — Arayüz Sözleşmesi (UI-SPEC)
 
-> **Durum:** 🟢 **BAĞLAYICI v1.0** (Patron onayı 2026-08-24 ve mimari harita
-> genişletme onayı 2026-08-27 — onay bloğu §son imzalı). **Uygulama durumu
+> **Durum:** 🟢 **BAĞLAYICI v1.1** (Patron onayı 2026-08-24; mimari harita ve
+> etkileşimli mimari denetim onayı 2026-08-27 — onay bloğu §son imzalı).
+> **Uygulama durumu
 > sözleşmeden ayrıdır:** §12 proje yaşam döngüsü büyük ölçüde bağlıdır; Harita
 > güncel indeks makbuzunda ölçülmüş repo verisini, ölçüm yoksa açıkça etiketli
 > örnek durumu gösterir; Delta (§5.2) Dilim 3 ile gerçek modda açıldı — yalnız
@@ -340,7 +341,28 @@ eşlemesi ayrıca sunulur.
 - Gelecekteki AI semantik zenginleştirme ayrı repo-bazlı GO ister; ölçülmüş
   düğüm/kenarı değiştiremez ve arayüzde `AI yorumu` olarak ayrılır.
 
-#### §5.0.2 Faz alt-madde incelemesi
+#### §5.0.2 Etkileşimli mimari denetimi (Dilim 2.3)
+
+- Mimari grup kapsayıcısı klavye ve işaretçiyle seçilebilir. Seçim denetçide
+  grubun deterministik sorumluluk açıklamasını, içerdiği düğümleri, gelen/giden
+  ölçülmüş ilişki sayılarını ve kanıtlı faz dağılımını açar; yol sınıflandırması
+  çalışma-zamanı davranışı veya sahiplik iddiası olarak sunulmaz.
+- Ölçülmüş bir kenar seçildiğinde denetçi kaynak ve hedef yolu, ilişki türünü
+  (statik/dinamik/type-only), ilişkiyi üreten import kaydını ve ölçülebiliyorsa
+  etkilenen testleri gösterir. Kenar seçimi yeni ilişki veya ticari etki
+  uydurmaz; çözülemeyen import açıkça `ölçülemiyor` kalır.
+- Kullanıcı kaynak dosyayı açıp haritaya döndüğünde aynı proje için
+  viewport (zoom/pan), seçili grup/kenar/düğüm, faz filtresi ve arama korunur.
+  Proje veya makbuz değişirse bu durum güvenli biçimde sıfırlanır; eski seçim
+  yeni projeye taşınmaz.
+- Proje Merkezi, üst bağlam çubuğu, Harita, Delta ve denetçi aynı sunucu-taraflı
+  makbuz doğrulama sonucunu tüketir. Aynı anda `güncel` ve `bayat` gösteremez;
+  bayatlıkta bütün ilgili yüzeyler tek `Yeniden indeksle` eylemine yönelir.
+- Grup ve kenar denetçileri, görünüm geri-yükleme ve tek-güncellik davranışı
+  1440/1024/768, TR/EN ve klavye/Escape senaryolarını içeren gerçek-sunucu
+  Playwright kabulü olmadan tamamlanmış sayılmaz.
+
+#### §5.0.3 Faz alt-madde incelemesi
 
 - Kaynak plan sunucuda indekslenir; UI her yüklemede kalıcı kayıt defterini
   `cache: no-store` ile okur; temiz ağaçta değişmez commit, kirli ağaçta
@@ -427,6 +449,7 @@ metin; uygulama insan kararıdır.
 | Görünüm | Kabul |
 |---|---|
 | Harita | MethodLogos reposu IR'iyle ≥30 düğüm akıcı gezilir; her düğümden kaynağa tıklama çalışır; lejant tüm durumları gösterir |
+| Etkileşimli mimari denetimi | Grup ve ölçülmüş kenar klavye/işaretçiyle seçilir; denetçi yalnız kanıtlı ilişkiyi açar; kaynaktan dönüşte aynı makbuzun viewport/seçim/filtre durumu korunur; tüm yüzeyler aynı güncellik kararını gösterir |
 | Proje kataloğu | En az bir yerel ve bir GitHub kaydı eklenebilir; kaynak, dal, plan dosyası, bağlantı durumu ve son indeks zamanı görünür; başarısız bağlantı diğer projeleri bozmaz |
 | Repo bağlantısı | Kaynak → Doğrula → İndeksle → Hazır adımlarında ileri/geri davranışı, bekleme, hata, yeniden deneme ve iptal çalışır; doğrulama öncesi proje kaydedilmez |
 | Proje geçişi | Proje değiştirildiğinde tüm ana yüzeyler aynı `projectId` verisini gösterir; önceki projenin fazı/düğümü/kanıtı kalmaz; URL veya kalıcı durum etkin projeyi geri yükler |
@@ -452,11 +475,12 @@ bağlantısından ayrıdır; ürün kullanıcı adına `git remote add`, push ve
 yapmaz.
 
 ---
-**Onay bloğu:** ✅ **Patron onayı VERİLDİ — 2026-08-24; v1.0 mimari harita
-genişletmesi 2026-08-27'de onaylandı.** Bu sözleşme BAĞLAYICIDIR; değişiklikler
+**Onay bloğu:** ✅ **Patron onayı VERİLDİ — 2026-08-24; v1.1 mimari harita ve
+etkileşimli mimari denetim genişletmesi 2026-08-27'de onaylandı.** Bu sözleşme BAĞLAYICIDIR; değişiklikler
 Patron onayıyla sürüm artırarak yapılır. *(§6 bloğu 2026-08-24'te gerçek stack
 ile senkronlandı; Remap v2 backlog'a alındı; Uyum=Dilim 5 olarak PLAN.md'ye
-işlendi; §5.0.1 deterministik grup ve ölçülmüş ilişki dili 2026-08-27'de
+işlendi; §5.0.1 deterministik grup ve ölçülmüş ilişki dili, §5.0.2 grup/kenar
+denetimi, görünüm sürekliliği ve tek-güncellik sözleşmesi 2026-08-27'de
 eklendi.)*
 
 ---

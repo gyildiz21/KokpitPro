@@ -89,7 +89,7 @@ describe('scanImportGraph', () => {
         ]);
     });
 
-    it('excluded-folders: varsayılan hariç tutulan dist/ düğüm ne kenar üretir', async () => {
+    it('excluded-folders: dist/ ve .codex-tmp/ düğüm ya da kenar üretmez', async () => {
         const result = await scanImportGraph({ rootDir: fixtureRoot('excluded-folders') });
 
         expect(result.scannedFileCount).toBe(1);

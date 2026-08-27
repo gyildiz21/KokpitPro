@@ -275,7 +275,12 @@
     .view-title-wrap p { max-width: 68ch; margin: 6px 0 0; color: var(--text-3); font-size: 12px; text-wrap: pretty; }
     .view-actions { flex: 0 0 auto; gap: 7px; }
     .view-panel { min-height: 560px; }
-    .map-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 6px 10px 6px 16px; border-bottom: 1px solid var(--line); background: var(--bg-elevated); color: var(--text-3); font-size: 11px; }
+    .map-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; padding: 6px 10px 6px 16px; border-bottom: 1px solid var(--line); background: var(--bg-elevated); color: var(--text-3); font-size: 11px; }
+    .map-search { display: flex; align-items: center; gap: 7px; width: min(280px, 34vw); min-height: 30px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+    .map-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .map-search .icon { width: 14px; height: 14px; color: var(--text-3); }
+    .map-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; }
+    .map-search input::placeholder { color: var(--text-3); }
     .map-tools { gap: 4px; }
     .map-tools .icon-button { min-width: 30px; min-height: 30px; border-color: transparent; background: transparent; }
     .map-tools .icon-button:hover { border-color: var(--line); background: var(--surface-2); }
@@ -328,7 +333,8 @@
     .map-flow-node__evidence { max-width: 96px; overflow: hidden; color: var(--text-3); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
     .map-flow-node__go { padding: 2px 5px; border: 1px solid var(--st-go); border-radius: 99px; color: var(--st-go); font-size: 8px; font-weight: 800; letter-spacing: .08em; }
     .map-flow-handle { width: 8px; height: 8px; border: 2px solid var(--surface); background: var(--line-strong); }
-    .map-flow-group { width: 100%; height: 100%; border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--surface-2) 54%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 14%, transparent); pointer-events: none; }
+    .map-flow-group { width: 100%; height: 100%; border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--surface-2) 54%, transparent); color: inherit; box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 14%, transparent); font: inherit; text-align: left; cursor: pointer; }
+    .map-flow-group:hover, .map-flow-group:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
     .map-flow-group__title { position: absolute; top: 17px; left: 20px; color: var(--text-2); font-size: 11px; font-weight: 780; letter-spacing: .035em; text-transform: uppercase; }
     .map-flow-group__count { position: absolute; top: 15px; right: 18px; min-width: 24px; padding: 2px 6px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--text-3); font-size: 9px; font-weight: 700; text-align: center; }
     .react-flow__edge-path { stroke: var(--line-strong); stroke-width: 1.35; }
@@ -336,6 +342,7 @@
     .react-flow__edge.is-dashed .react-flow__edge-path { stroke-dasharray: 7 5; }
     .react-flow__edge-text { fill: var(--text-3); font-size: 9px; font-weight: 650; }
     .react-flow__edge-textbg { fill: var(--surface); fill-opacity: .92; }
+    .react-flow__edge:focus-visible .react-flow__edge-path, .react-flow__edge.selected .react-flow__edge-path { stroke: var(--accent); stroke-width: 2.5; }
     .react-flow__arrowhead polyline { stroke: var(--line-strong); fill: var(--line-strong); }
     .react-flow__background { color: var(--line-strong); }
     .react-flow__attribution { display: none; }
@@ -556,6 +563,8 @@
       .phase-filter { min-width: 158px; }
       .rail-legend { display: none; }
       .view-header { min-height: 74px; padding-inline: 15px; }
+      .map-toolbar { flex-wrap: wrap; }
+      .map-search { order: 3; width: 100%; }
       .timeline { padding-inline: 15px; }
       .delta-layout { grid-template-columns: 1fr; }
       .delta-empty { min-height: 340px; border-right: 0; border-bottom: 1px solid var(--line); }
@@ -683,7 +692,7 @@
         <header class="view-header"><div class="view-title-wrap"><p class="eyebrow" data-i18n="workspaceLabel">Çalışma alanı</p><h1 id="viewTitle">Mimari harita</h1><p id="viewDescription">Faz ile kod yüzeyini aynı bağlamda inceleyin; bir düğüm seçerek kanıta inin.</p></div><div class="view-actions"><button class="text-button" id="resetPhase" type="button" data-i18n-aria="resetFilter" aria-label="Filtreyi sıfırla"><svg class="icon" aria-hidden="true"><use href="#i-fit"></use></svg><span data-i18n="resetFilter">Filtreyi sıfırla</span></button><button class="text-button primary" id="inspectorToggle" type="button" aria-pressed="true" data-i18n-aria="inspector" aria-label="Denetçi"><svg class="icon" aria-hidden="true"><use href="#i-panel"></use></svg><span data-i18n="inspector">Denetçi</span></button></div></header>
 
         <section class="view-panel" id="view-map" role="tabpanel" aria-labelledby="tab-map">
-          <div class="map-toolbar"><span id="mapCount" aria-live="polite">5 / 30 örnek düğüm</span><div class="map-tools"><button class="icon-button" id="zoomOut" type="button" data-i18n-aria="zoomOut" aria-label="Uzaklaştır"><svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button><button class="icon-button" id="zoomIn" type="button" data-i18n-aria="zoomIn" aria-label="Yakınlaştır"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button><button class="icon-button" id="zoomFit" type="button" data-i18n-aria="fit" aria-label="Haritayı sığdır"><svg class="icon" aria-hidden="true"><use href="#i-fit"></use></svg></button></div></div>
+          <div class="map-toolbar"><span id="mapCount" aria-live="polite">5 / 30 örnek düğüm</span><label class="map-search" for="mapSearch"><svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><span class="sr-only" data-i18n="mapSearchLabel">Haritada ara</span><input id="mapSearch" type="search" autocomplete="off" data-i18n-placeholder="mapSearchPlaceholder" placeholder="Dosya veya düğüm ara…"></label><div class="map-tools"><button class="icon-button" id="zoomOut" type="button" data-i18n-aria="zoomOut" aria-label="Uzaklaştır"><svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button><button class="icon-button" id="zoomIn" type="button" data-i18n-aria="zoomIn" aria-label="Yakınlaştır"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button><button class="icon-button" id="zoomFit" type="button" data-i18n-aria="fit" aria-label="Haritayı sığdır"><svg class="icon" aria-hidden="true"><use href="#i-fit"></use></svg></button></div></div>
           <div class="graph-viewport"><div class="graph-layer" id="graphLayer">
             <div id="graphNodes"></div><div class="graph-state" id="graphState" role="status" aria-live="polite"><div class="graph-state-card"><strong data-i18n="mapLoading">Repo haritası hazırlanıyor</strong><p data-i18n="mapLoadingBody">İndeks makbuzu ve ölçümlü import grafiği doğrulanıyor.</p></div></div>
             <div class="graph-help"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="mapHelp">Ok, kaynak dosyadan bağımlı olduğu dosyaya gider; kesikli çizgi dinamik veya tür importudur.</span></div>
@@ -708,7 +717,7 @@
       <button class="inspector-scrim" id="inspectorScrim" type="button" aria-label="Denetçiyi kapat" data-i18n-aria="closeInspector" tabindex="-1"></button>
     </main>
 
-    <footer class="statusbar"><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span id="planScope" data-i18n="planLoading">PLAN.md yükleniyor</span></span><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span id="previewGenerated">Kalıcı proje indeksi yükleniyor</span></span><span class="build-label">UI-SPEC v1.0 · persistent</span></footer>
+    <footer class="statusbar"><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span id="planScope" data-i18n="planLoading">PLAN.md yükleniyor</span></span><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span id="previewGenerated">Kalıcı proje indeksi yükleniyor</span></span><span class="build-label">UI-SPEC v1.1 · persistent</span></footer>
     </section>
 
     <section class="product-screen" id="compareScreen" hidden>
@@ -751,11 +760,14 @@
 > `lite` dalında storage'sız çalışır. Uretilen diyagram önbelleklenmez, her
 > ziyarette yeniden üretilir — Dilim 2 UI'sı için yeterli.
 
-- [x] **`lite` dalı hazır** (`gitdiagram`, commit `1e1e8e9`):
+- [x] **`lite` dalı hazır** (`gitdiagram`, taban `1e1e8e9`, yerel doğrulama
+      commiti `d2bdfc9`):
       R2 okumaları "yapılandırılmamış = artefakt yok" sayar; Turbopack kökü
       sabitlendi; persistence zaten fail-safe'ti (uyarı bandı normaldir)
 - [x] `cd gitdiagram && git checkout lite` — dal/HEAD doğrulandı:
-      `lite · 1e1e8e9`
+      `lite · d2bdfc9`; üçüncü kişiye ait `upstream` remote'una push yapılmadı.
+      Değişiklikler KokpitPro içinde `vendor-patches/gitdiagram-lite.patch`
+      ve uygulama/doğrulama tarifiyle yeniden üretilebilir hâle getirildi.
 - [x] `.env.example` → `.env`; zorunlu tek alan: **`OPENAI_API_KEY`**
       *(alternatif: `AI_PROVIDER=openrouter` + `OPENROUTER_API_KEY`;
       önerilir: `GITHUB_PAT` — GitHub API limitini yükseltir)* — anahtar değeri
@@ -997,6 +1009,37 @@ KAPANMIŞ sayılmaz (koşum disiplini).
   gruplar arası yönlü import ilişkisi ve TR/EN etiketleri aynı haritada; Mermaid
   ihracı aynı grupları taşır; graf içinde ölçülmemiş kenar bulunmaz.
 
+## Dilim 2.3 · Etkileşimli Mimari Denetimi
+
+> **UI sözleşmesi:** `UI-SPEC.md` v1.1 §5.0.2. Bu dilim GitDiagram'ın okunur
+> haritasını KokpitPro'nun kanıt denetçisi ve proje/makbuz bağlamıyla birleştirir;
+> ölçülmeyen çalışma-zamanı davranışı, sahiplik veya ticari etki uydurmaz.
+
+- [x] **Grup denetçisi:** mimari grup kapsayıcısı klavye/işaretçiyle seçilir;
+      sorumluluk açıklaması, içerdiği düğümler, gelen/giden ölçülmüş ilişkiler
+      ve kanıtlı faz dağılımı sağ denetçide açılır.
+- [x] **Kenar denetçisi:** ölçülmüş kenar seçilince kaynak/hedef yolu, statik ·
+      dinamik · type-only türü, import kanıtı ve ölçülebilen ilgili testler
+      açılır; çözülemeyen veya ölçülmeyen etki açıkça bilinmeyen kalır.
+- [x] **Görünüm durumu sürekliliği:** kaynak dosyayı açıp aynı proje/makbuza
+      dönünce zoom/pan, seçili grup/kenar/düğüm, faz filtresi ve arama korunur;
+      proje ya da makbuz değişiminde güvenli biçimde sıfırlanır.
+- [x] **Tek güncellik gerçeği:** Proje Merkezi, üst bağlam, Harita, Delta ve
+      denetçi aynı sunucu-taraflı makbuz doğrulama sonucunu tüketir; eşzamanlı
+      `güncel`/`bayat` çelişkisi mümkün değildir ve tek yeniden-indeks eylemi vardır.
+- [x] **Gerçek-sunucu E2E kabulü:** 1440/1024/768, TR/EN, klavye/Escape,
+      grup+kenar seçimi, geri dönüşte görünüm korunması ve yüzeyler-arası
+      güncellik paritesi Playwright ile doğrulanır.
+- **2026-08-27 kabul kanıtı (Node 20.20.2):** 16 dosyada **166/166** Vitest,
+  TypeScript 0 hata ve Playwright **9/9** geçti. Gerçek sunucu turu harita
+  aramasını, grup/kenar denetçisini, seçim+zoom geri yüklemeyi, gerçek
+  plan→kod→test delta kartını ve kısa/uzun Windows yoluyla eklenen geçici Git
+  reposunda `ready → stale → yeniden indeks → baseline'lı measured` akışını
+  kapsar.
+- **Kabul:** gerçek indeksli bir repoda kullanıcı bir gruptan ve bir ölçülmüş
+  kenardan kanıta iner; kaynağı açıp döndüğünde bağlamını kaybetmez; bütün
+  yüzeylerde tek ve tutarlı güncellik durumu görür.
+
 ## Dilim 3 · Delta Ön-Görünümü
 
 - [x] **Delta motoru (`kokpit/delta`):** sürümlü `.strict()` sözleşme +
@@ -1018,14 +1061,20 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       bölümler ayrı (kod/test/öneri/kenar-değişimi/ölçülemeyen-gerekçe);
       proje değişiminde delta+vurgu sıfır; HTTP hatasında önceki dürüst boşluk
       korunur. TR/EN parite sözlükte; renk yalnız `--st-*`.
-- [~] **Karşılaştırmalı tarih-delta:** motor hazır (baseline parametreli);
-      kalıcı ikinci ölçüm saklama alanı olmadığından uç nokta şimdilik
-      `comparison-baseline-unavailable` raporlar — kalıcı karşılaştırma deposu
-      ayrı iş.
+- [x] **Karşılaştırmalı tarih-delta:** `DeltaHistoryStore` son iki gerçek graf
+      anlık görüntüsünü proje bazında `.kokpit/data/delta-history.json` altında
+      atomik saklar; ikinci indeks sonrası eklenen/kaldırılan ölçülmüş kenarlar
+      baseline ile hesaplanır. İlk ölçümde taban yoksa dürüst
+      `comparison-baseline-unavailable` sınırı korunur; proje silme aynı
+      yaşam döngüsünde o projeye ait geçmişi de kaldırır.
 - [x] **2026-08-26 E2E kabulü:** Playwright hermetik mock'larla S1 measured
       vurgu+test listesi · S2 önerilen kesikli+uydurma-kenar-yok · S4 bayat→CTA
       · S5 proje-sıfırlama · S6 TR/EN parite · S7 klavye+Escape odak iadesi
       · S8 1440/1024/768 taşmasız — **7 passed**.
+- [x] **2026-08-27 gerçek-sunucu kabulü:** maskesiz KokpitPro indeksinde plan
+      maddesi → gerçek kod/test delta kartı; geçici gerçek Git reposunda ilk
+      indeks → canlı kirlenme ile tek `stale` gerçeği → yeniden indeks → tarih
+      baseline'lı measured delta akışı doğrulandı.
 - **Kabul:** bir plan adımı seçildiğinde ön-görünüm kartı ve harita vurgusu
   birlikte çalışır — ✅ gerçek repoda bizzat doğrulandı (yukarıdaki canlı
   DELTA[measured] çıktısı).
@@ -1058,7 +1107,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
   <script>
     const I18N = {
       tr: {
-        skip: "Ana içeriğe geç", search: "Proje, faz, dosya veya madde ara", mixedMode: "Karma veri", themeDark: "Açık temaya geç", themeLight: "Koyu temaya geç",
+        skip: "Ana içeriğe geç", search: "Proje, faz, dosya veya madde ara", mapSearchLabel: "Haritada ara", mapSearchPlaceholder: "Dosya veya düğüm ara…", mapSearchResults: "arama sonucu", mixedMode: "Karma veri", themeDark: "Açık temaya geç", themeLight: "Koyu temaya geç",
         tabMap: "Harita", tabTimeline: "Zaman", tabDelta: "Delta", tabCompliance: "Uyum", planHeaderLabel: "PLAN.md kapsamı · faz / madde / tamam", viewTabs: "Kokpit görünümleri", signalRegion: "Dikkat ve süreç sinyalleri", phaseNav: "Faz planları",
         attentionTitle: "Faz planı canlı; harita örnek veri kullanıyor", attentionBody: "Faz ayrıntıları PLAN.md'den okunur. Kod eşlemesi olmayan alanlarda tahmin gösterilmez.", snapshotAttentionTitle: "Fazlar görünür; plan gömülü anlık görüntüden okunuyor", snapshotAttentionBody: "Dosya doğrudan açıldığı için canlı PLAN.md erişimi yok. Sunucu adresinde otomatik olarak güncel kaynağa geçilir.", signalSync: "Defter", signalViolation: "İhlal", signalDecision: "Karar", sampleResult: "örnek sonuç",
         navigator: "Gezinme", phases: "Faz planları", phaseHint: "Seçin; alt maddeler ve beklenen çıktı denetçide açılsın", livePlanSource: "PLAN.md canlı kaynağı", snapshotPlanSource: "PLAN.md gömülü anlık görüntüsü", allPhases: "Tüm fazlar", p0: "Güven", p1: "Altyapı", p2: "Analiz", p25: "Öneriler", p3: "İş akışı", p4: "Yazım", p5: "Yayın",
@@ -1068,13 +1117,13 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         compliancePreview: "Uyum motoru bağlı değil. Aşağıdaki satırlar kuyruk, filtre ve denetçi davranışını gösteren örnek kayıtlardır.", all: "Tümü", violations: "İhlaller", syncIssues: "Defter senkronu", decisions: "Kararlar", engineOffline: "Motor bağlı değil", sample: "Örnek", error: "Hata", warning: "Uyarı", review: "İncele", fakeGateRule: "D2#4 · capability olmadan yüzey çizilmez", staleLedgerRule: "Kod değişmiş, defter kaydı doğrulanmamış", decisionRule: "İki otorite kaydı farklı yön bildiriyor", context: "Bağlam", closeInspector: "Denetçiyi kapat", nothingSelected: "Henüz seçim yok", nothingSelectedBody: "Haritada bir düğüm veya listede bir kayıt seçin. Kaynak, durum ve kanıt burada açılır.",
         planLoading: "PLAN.md yükleniyor", previewGenerated: "Canlı plan · örnek harita", snapshotPreviewGenerated: "Plan anlık görüntüsü · örnek harita", commandTitle: "Komut ve arama", commandPlaceholder: "Görünüm veya düğüm ara…", commandMap: "Haritayı aç", commandTimeline: "Zamanı aç", commandDelta: "Delta'yı aç", commandCompliance: "Uyumu aç", noResults: "Sonuç bulunamadı", navigate: "gezin", open: "aç", close: "kapat", status: "Durum", phase: "Faz", evidence: "Kanıt", demoEvidence: "Bu bilgi demo veri setinden gelir; repo kanıtı değildir.", sourceUnavailable: "Demo modunda doğrulanmış kaynak yolu yok.", filterCleared: "Faz seçimi sıfırlandı",
         unmeasuredStatus: "Durum kanıtı yok", evidenceMeasuredImport: "Ölçülmüş import grafiği", evidencePlanPathMatch: "Plan maddesi + yol eşleşmesi", evidenceNoClaim: "Kanıt yok — tahmin üretilmez", measuredEdgesLabel: "ölçümlü kenar", unresolvedImportsLabel: "çözülemeyen import", scannedFilesLabel: "taranan dosya", mermaidSourceTitle: "Deterministik Mermaid kaynağı", copyMermaidAction: "Mermaid'i kopyala", copiedToast: "Mermaid kaynağı kopyalandı.", openSourceOnGithub: "Kaynağı GitHub'da aç", sourceLocalNote: "Yerel kök tarayıcıdan açılamaz; bağlantı yalnız GitHub uzak adresiyle üretilir.", sampleNodeCount: "örnek düğüm", realNodeCount: "ölçümlü düğüm", diagramUnavailableNote: "Diyagram motoru bu proje için ölçüm yapamadı; harita örnek veriyle kalır.",
-        architectureGroupInterface: "Arayüz", architectureGroupRuntime: "Backend ve API", architectureGroupAnalysis: "Analiz motoru", architectureGroupIntegration: "Servisler ve entegrasyonlar", architectureGroupData: "Veri ve depolama", architectureGroupAutomation: "Otomasyon ve iş akışları", architectureGroupDelivery: "Derleme ve dağıtım", architectureGroupShared: "Paylaşılan çekirdek", architectureEdgeImports: "içe aktarır", architectureEdgeDynamic: "dinamik yükler", architectureEdgeType: "tür bağımlılığı",
+        architectureGroupInterface: "Arayüz", architectureGroupRuntime: "Backend ve API", architectureGroupAnalysis: "Analiz motoru", architectureGroupIntegration: "Servisler ve entegrasyonlar", architectureGroupData: "Veri ve depolama", architectureGroupAutomation: "Otomasyon ve iş akışları", architectureGroupDelivery: "Derleme ve dağıtım", architectureGroupShared: "Paylaşılan çekirdek", architectureEdgeImports: "içe aktarır", architectureEdgeDynamic: "dinamik yükler", architectureEdgeType: "tür bağımlılığı", groupResponsibility: "Deterministik sorumluluk", groupNodes: "Grup düğümleri", inboundRelations: "Gelen ölçülmüş ilişkiler", outboundRelations: "Giden ölçülmüş ilişkiler", phaseDistribution: "Kanıtlı faz dağılımı", edgeRelation: "Ölçülmüş ilişki", edgeSource: "Kaynak dosya", edgeTarget: "Hedef dosya", importEvidence: "Import kanıtı", noPhaseEvidence: "Bu grupta faz kanıtı yok.", measuredOnlyNote: "Bu açıklama yol sınıflandırması ve ölçülmüş importlardan gelir; çalışma-zamanı davranışı veya sahiplik iddiası değildir.",
         planLoadError: "PLAN.md okunamadı ve gömülü anlık görüntü kullanılamadı.", planOverview: "Plan özeti", planItems: "Alt maddeler", planLive: "canlı", planSnapshot: "anlık görüntü", planTruthNote: "Sayaçlar PLAN.md işaretlerini özetler. ‘Tamamlandı’ kaydı tek başına kod kanıtı değildir; doğrulanmış dosya ve test eşlemesi ayrıca gösterilir.", planDone: "Tamamlandı", planPartial: "Kısmi", planOpen: "Açık", planBlocked: "Engelli", acceptance: "Beklenen kabul", currentRecord: "Mevcut kayıt", expectedOutput: "Beklenen çıktı", codeEvidence: "Kod kanıtı", noCodeMapping: "— Kod dosyası veya test eşlemesi henüz bağlı değil.", sourceLocation: "Kaynak konumu", openPlan: "PLAN.md dosyasını aç", planDoneRecord: "PLAN.md bu maddeyi tamamlandı olarak işaretliyor.", planPartialRecord: "PLAN.md bu madde için kısmi ilerleme bildiriyor.", planOpenRecord: "PLAN.md bu maddeyi açık bırakıyor; tamamlanma kaydı yok.", planBlockedRecord: "PLAN.md bu madde için engel bildiriyor.", expectedUnspecified: "Plan maddesi ayrı bir sonuç açıklaması vermiyor; başlıktaki işin tamamlanması bekleniyor.", noAcceptance: "Bu faz için ayrı bir kabul cümlesi bulunamadı.", planSourceLanguage: "Kaynak metin Türkçe kalır", planGroups: "faz", planItemCount: "madde", remaining: "bekleyen",
         viewMapTitle: "Mimari harita", viewMapBody: "Faz ile kod yüzeyini aynı bağlamda inceleyin; bir düğüm seçerek kanıta inin.", viewTimelineTitle: "Faz zaman çizgisi", viewTimelineBody: "Yol haritası maddelerini faz ve durum bağlamında tarayın.", viewDeltaTitle: "Delta ön-görünümü", viewDeltaBody: "Plan maddesinin kod yüzeyinde doğrulanmış etkisi varsa görün; yoksa tahmin yerine boş durum alın.", viewComplianceTitle: "Uyum kuyruğu", viewComplianceBody: "Defter, kural ve karar kayıtlarını aynı kanıt hiyerarşisinde inceleyin.",
         recentProjects: "Son projeler", addProject: "Proje ekle", projectsNav: "Projeler", workspaceNav: "Çalışma alanı", compareNav: "Karşılaştır", projectHubLabel: "Proje merkezi", projectHubTitle: "Tüm repolar, tek güvenilir bağlam.", projectHubBody: "Yerel ve GitHub projelerini kaydedin; hangi dalın, plan kaynağının ve indeks sonucunun açık olduğunu proje değiştirmeden önce görün.", refresh: "Yenile", registeredProjects: "Kayıtlı projeler", previewRecords: "Kayıtlar diskte kalıcıdır", activeContext: "Etkin bağlam", sourceType: "Kaynak türü", branch: "Dal", planSource: "Plan kaynağı", lastIndex: "Son indeks", sourceStep: "Kaynak", sourceStepBody: "Yerel klasör veya GitHub reposu.", verifyStep: "Doğrula", verifyStepBody: "Repo kökü, dal ve erişim sınırı.", indexStep: "İndeksle", indexStepBody: "PLAN/ROADMAP, faz ve kod yüzeyi.", readyStep: "Hazır", readyStepBody: "Projeyi tek bağlamda çalışma alanına aç.", portfolioLabel: "Portföy görünümü", compareTitle: "Projeleri karıştırmadan karşılaştırın.", compareBody: "Kaynak, dal, güncellik ve plan kapsamı ayrı kalır. Bilinmeyen değerler sıfıra çevrilmez; tek bir yanıltıcı sağlık yüzdesi üretilmez.", openWorkspace: "Etkin projeyi aç", project: "Proje", sourceBranch: "Kaynak / dal", connection: "Bağlantı", planCoverage: "Plan kapsamı", nextAction: "Sonraki eylem", compareNote: "Karşılaştırma yalnız özet düzeyindedir. Bir projeyi açtığınızda çalışma alanı o projectId için baştan yüklenir.", timelineProjectScoped: "Zaman çizgisi yalnız etkin projenin kalıcı indeks makbuzundan üretilir.", interactivePreview: "Gerçek bağlantı", connectTitle: "Projeyi KokpitPro'ya ekle", connectIntro: "Repo doğrulanır, plan kaynağı gerçek parser ile indekslenir ve kayıt diskte kalıcı tutulur.", cancel: "İptal", back: "Geri", continue: "Devam", localRepo: "Yerel repo", localRepoBody: "Bu bilgisayardaki izinli bir repo kökünü seçin; dosya erişimi yalnız o kökle sınırlanır.", githubRepo: "GitHub", githubRepoBody: "GitHub App ile yalnız seçtiğiniz repolara ve salt okunur içeriğe erişin.", verifyConnection: "Bağlantıyı doğrula", startIndex: "İndeksi kaydet", addPreviewRecord: "Kalıcı kaydı oluştur", finish: "Bitir", openProject: "Çalışma alanında aç", repairConnection: "Bağlantıyı onar", sourceLabel: "Kaynak", statusLabel: "Durum", planLabel: "Plan", noRealConnection: "Repo doğrulandı, indekslendi ve kalıcı kaydedildi."
       },
       en: {
-        skip: "Skip to main content", search: "Search projects, phases, files, or items", mixedMode: "Mixed data", themeDark: "Switch to light theme", themeLight: "Switch to dark theme",
+        skip: "Skip to main content", search: "Search projects, phases, files, or items", mapSearchLabel: "Search the map", mapSearchPlaceholder: "Search files or nodes…", mapSearchResults: "search results", mixedMode: "Mixed data", themeDark: "Switch to light theme", themeLight: "Switch to dark theme",
         tabMap: "Map", tabTimeline: "Timeline", tabDelta: "Delta", tabCompliance: "Compliance", planHeaderLabel: "PLAN.md scope · phases / items / complete", viewTabs: "Kokpit views", signalRegion: "Attention and process signals", phaseNav: "Phase plans",
         attentionTitle: "Phase plan is live; the map uses sample data", attentionBody: "Phase details are read from PLAN.md. Areas without code mapping never show guesses.", snapshotAttentionTitle: "Phases are visible; the plan uses an embedded snapshot", snapshotAttentionBody: "Direct file access cannot read live PLAN.md. The server URL automatically switches to the current source.", signalSync: "Ledger", signalViolation: "Violation", signalDecision: "Decision", sampleResult: "sample result",
         navigator: "Navigation", phases: "Phase plans", phaseHint: "Select one to inspect its items and expected outcome", livePlanSource: "Live PLAN.md source", snapshotPlanSource: "Embedded PLAN.md snapshot", allPhases: "All phases", p0: "Trust", p1: "Infrastructure", p2: "Analysis", p25: "Suggestions", p3: "Workflow", p4: "Writing", p5: "Publication",
@@ -1084,7 +1133,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         compliancePreview: "The compliance engine is not connected. The rows below are samples for queue, filter, and inspector behavior.", all: "All", violations: "Violations", syncIssues: "Ledger sync", decisions: "Decisions", engineOffline: "Engine not connected", sample: "Sample", error: "Error", warning: "Warning", review: "Review", fakeGateRule: "D2#4 · do not draw a surface without capability", staleLedgerRule: "Code changed; the ledger entry is not verified", decisionRule: "Two authority records point in different directions", context: "Context", closeInspector: "Close inspector", nothingSelected: "Nothing selected", nothingSelectedBody: "Select a node on the map or a record in a list. Source, status, and evidence open here.",
         planLoading: "Loading PLAN.md", previewGenerated: "Live plan · sample map", snapshotPreviewGenerated: "Plan snapshot · sample map", commandTitle: "Commands and search", commandPlaceholder: "Search views or nodes…", commandMap: "Open map", commandTimeline: "Open timeline", commandDelta: "Open delta", commandCompliance: "Open compliance", noResults: "No results found", navigate: "navigate", open: "open", close: "close", status: "Status", phase: "Phase", evidence: "Evidence", demoEvidence: "This information comes from the demo dataset; it is not repository evidence.", sourceUnavailable: "No verified source path is available in demo mode.", filterCleared: "Phase selection reset",
         unmeasuredStatus: "No status evidence", evidenceMeasuredImport: "Measured import graph", evidencePlanPathMatch: "Plan item + path match", evidenceNoClaim: "No evidence — no guess produced", measuredEdgesLabel: "measured edges", unresolvedImportsLabel: "unresolved imports", scannedFilesLabel: "scanned files", mermaidSourceTitle: "Deterministic Mermaid source", copyMermaidAction: "Copy Mermaid", copiedToast: "Mermaid source copied.", openSourceOnGithub: "Open source on GitHub", sourceLocalNote: "A local root cannot be opened from the browser; links require a GitHub remote.", sampleNodeCount: "sample nodes", realNodeCount: "measured nodes", diagramUnavailableNote: "The diagram engine could not measure this project; the map keeps sample data.",
-        architectureGroupInterface: "Interface", architectureGroupRuntime: "Backend & API", architectureGroupAnalysis: "Analysis engine", architectureGroupIntegration: "Services & integrations", architectureGroupData: "Data & storage", architectureGroupAutomation: "Automation & workflows", architectureGroupDelivery: "Build & delivery", architectureGroupShared: "Shared core", architectureEdgeImports: "imports", architectureEdgeDynamic: "dynamic import", architectureEdgeType: "type dependency",
+        architectureGroupInterface: "Interface", architectureGroupRuntime: "Backend & API", architectureGroupAnalysis: "Analysis engine", architectureGroupIntegration: "Services & integrations", architectureGroupData: "Data & storage", architectureGroupAutomation: "Automation & workflows", architectureGroupDelivery: "Build & delivery", architectureGroupShared: "Shared core", architectureEdgeImports: "imports", architectureEdgeDynamic: "dynamic import", architectureEdgeType: "type dependency", groupResponsibility: "Deterministic responsibility", groupNodes: "Group nodes", inboundRelations: "Measured inbound relations", outboundRelations: "Measured outbound relations", phaseDistribution: "Evidence-backed phase distribution", edgeRelation: "Measured relation", edgeSource: "Source file", edgeTarget: "Target file", importEvidence: "Import evidence", noPhaseEvidence: "No phase evidence exists in this group.", measuredOnlyNote: "This description comes from path classification and measured imports; it is not a runtime-behavior or ownership claim.",
         planLoadError: "PLAN.md could not be read and the embedded snapshot was unavailable.", planOverview: "Plan overview", planItems: "Sub-items", planLive: "live", planSnapshot: "snapshot", planTruthNote: "Counts summarize PLAN.md markers. A ‘complete’ record is not code evidence on its own; verified file and test mappings are shown separately.", planDone: "Complete", planPartial: "Partial", planOpen: "Open", planBlocked: "Blocked", acceptance: "Expected acceptance", currentRecord: "Current record", expectedOutput: "Expected outcome", codeEvidence: "Code evidence", noCodeMapping: "— Code file or test mapping is not connected yet.", sourceLocation: "Source location", openPlan: "Open PLAN.md", planDoneRecord: "PLAN.md marks this item as complete.", planPartialRecord: "PLAN.md reports partial progress for this item.", planOpenRecord: "PLAN.md leaves this item open; there is no completion record.", planBlockedRecord: "PLAN.md reports a blocker for this item.", expectedUnspecified: "The plan item has no separate outcome statement; the work named in the title is expected to be completed.", noAcceptance: "No separate acceptance statement was found for this phase.", planSourceLanguage: "Source content remains in Turkish", planGroups: "phases", planItemCount: "items", remaining: "remaining",
         viewMapTitle: "Architecture map", viewMapBody: "Inspect phase and code surfaces in the same context, then select a node to reach its evidence.", viewTimelineTitle: "Phase timeline", viewTimelineBody: "Scan roadmap items in phase and status context.", viewDeltaTitle: "Delta preview", viewDeltaBody: "See a plan item's verified code impact when available; receive an honest empty state instead of a guess when it is not.", viewComplianceTitle: "Compliance queue", viewComplianceBody: "Review ledger, rule, and decision records in one evidence hierarchy.",
         recentProjects: "Recent projects", addProject: "Add project", projectsNav: "Projects", workspaceNav: "Workspace", compareNav: "Compare", projectHubLabel: "Project hub", projectHubTitle: "Every repository, one reliable context.", projectHubBody: "Register local and GitHub projects, then verify the branch, plan source, and index state before switching context.", refresh: "Refresh", registeredProjects: "Registered projects", previewRecords: "Records persist on disk", activeContext: "Active context", sourceType: "Source type", branch: "Branch", planSource: "Plan source", lastIndex: "Last index", sourceStep: "Source", sourceStepBody: "A local folder or GitHub repository.", verifyStep: "Verify", verifyStepBody: "Repository root, branch, and access boundary.", indexStep: "Index", indexStepBody: "PLAN/ROADMAP, phases, and code surface.", readyStep: "Ready", readyStepBody: "Open the project in one isolated workspace.", portfolioLabel: "Portfolio view", compareTitle: "Compare projects without mixing them.", compareBody: "Source, branch, freshness, and plan scope remain separate. Unknown values do not become zero and no misleading health score is produced.", openWorkspace: "Open active project", project: "Project", sourceBranch: "Source / branch", connection: "Connection", planCoverage: "Plan coverage", nextAction: "Next action", compareNote: "Comparison stays at summary level. Opening a project reloads the workspace for that projectId.", timelineProjectScoped: "The timeline is generated from the active project's persistent index receipt only.", interactivePreview: "Live connection", connectTitle: "Add a project to KokpitPro", connectIntro: "The repository is verified, its plan is indexed by the real parser, and the record persists on disk.", cancel: "Cancel", back: "Back", continue: "Continue", localRepo: "Local repository", localRepoBody: "Choose an approved repository root on this computer; file access stays within that root.", githubRepo: "GitHub", githubRepoBody: "Use a GitHub App with read-only content access to repositories you select.", verifyConnection: "Verify connection", startIndex: "Save index", addPreviewRecord: "Create persistent record", finish: "Finish", openProject: "Open workspace", repairConnection: "Repair connection", sourceLabel: "Source", statusLabel: "Status", planLabel: "Plan", noRealConnection: "The repository was verified, indexed, and saved persistently."
@@ -1129,6 +1178,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     let activeView = "map";
     let selectedNode = null;
     let selectedPhase = "all";
+    let mapSearchQuery = "";
     let phaseGroups = [];
     let diagramState = null;
     let deltaState = null;
@@ -1144,7 +1194,45 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
     const t = key => I18N[language][key] ?? key;
     const activeProject = () => PROJECTS[activeProjectId];
-    const PHASE_NAMES_EN = { "Dilim-0": "Engine bootstrap", "Dilim-0.1": "Parser acceptance run", "Dilim-0.2": "External audit response", "Dilim-1": "Phase-document parser", "Dilim-2.0": "Pure diagram engine port", "Dilim-2": "Map and status coloring", "Dilim-2.1": "Project hub and repository lifecycle", "Dilim-3": "Delta preview", "Dilim-4": "Remap suggestions", "Dilim-5": "Compliance telemetry" };
+    const PHASE_NAMES_EN = { "Dilim-0": "Engine bootstrap", "Dilim-0.1": "Parser acceptance run", "Dilim-0.2": "External audit response", "Dilim-1": "Phase-document parser", "Dilim-2.0": "Pure diagram engine port", "Dilim-2": "Map and status coloring", "Dilim-2.1": "Project hub and repository lifecycle", "Dilim-2.2": "Evidence-backed semantic architecture", "Dilim-2.3": "Interactive architecture inspection", "Dilim-3": "Delta preview", "Dilim-4": "Remap suggestions", "Dilim-5": "Compliance telemetry" };
+
+    function mapStateKey() {
+      const metadata = activeDiagram()?.receipt?.graph?.metadata;
+      const revision = metadata?.revision || metadata?.commit;
+      return activeProjectId && revision ? `kokpit-map-state:${activeProjectId}:${revision}` : null;
+    }
+    function readMapState() {
+      const key = mapStateKey();
+      if (!key) return null;
+      try { return JSON.parse(sessionStorage.getItem(key) || "null"); }
+      catch { return null; }
+    }
+    function persistMapState(viewport = window.KokpitMapFlow?.getViewport?.()) {
+      const key = mapStateKey();
+      if (!key) return;
+      const previous = readMapState();
+      const selection = selectedNode && ["node", "group", "edge"].includes(selectedNode.type)
+        ? { id: selectedNode.id, type: selectedNode.type }
+        : null;
+      // Denetçi, harita henüz mount olmadan geri yüklenebilir. Bu anda viewport
+      // null ise aynı makbuzun daha önce kaydedilmiş görünümünü silme.
+      try { sessionStorage.setItem(key, JSON.stringify({ viewport: viewport || previous?.viewport || null, selectedPhase, search: mapSearchQuery, selection })); }
+      catch { /* Görünüm kalıcılığı kullanılamıyorsa ürün davranışı çalışmaya devam eder. */ }
+    }
+    function restoreMapContext() {
+      const saved = readMapState();
+      if (!saved) return;
+      if (saved.selectedPhase === "all" || phaseGroups.some(group => group.id === saved.selectedPhase)) selectedPhase = saved.selectedPhase;
+      mapSearchQuery = typeof saved.search === "string" ? saved.search : "";
+      $('#mapSearch').value = mapSearchQuery;
+      const selection = saved.selection;
+      const receipt = activeDiagram()?.receipt;
+      const valid = selection?.type === "node" ? Boolean(receipt?.nodeEvidence?.[selection.id])
+        : selection?.type === "group" ? receipt?.graph?.groups?.some(group => group.id === selection.id)
+          : selection?.type === "edge" ? /^edge-\d+$/.test(selection.id) && Boolean(receipt?.graph?.edges?.[Number(selection.id.slice(5))])
+            : false;
+      if (valid) selectedNode = selection;
+    }
 
     function escapeHtml(value) {
       return String(value).replace(/[&<>"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]);
@@ -1307,13 +1395,18 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       selectedPhaseItem = null;
       resetDeltaPanel();
       selectedPhase = "all";
+      mapSearchQuery = "";
+      $('#mapSearch').value = "";
       phaseGroups = [];
       renderProjectChrome(); renderProjectMenu(); renderProjectCatalog(); renderProjectContext(); renderCompare();
       $('#projectMenu').hidden = true; $('#projectSwitcher').setAttribute("aria-expanded", "false");
       await loadPlanData();
       await loadDiagramData();
+      restoreMapContext();
+      renderPhaseRail();
       updatePlanSourceLabels();
       renderGraph();
+      if (selectedNode && selectedNode.type !== "phase") renderInspector(selectedNode.id, selectedNode.type);
       if (options.openWorkspace) showSection("workspace");
     }
     function phaseIdFromHeading(heading, index) {
@@ -1551,7 +1644,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       if (selectedPhase !== phase) { selectedPhaseItem = null; resetDeltaPanel(); }
       selectedPhase = phase;
       $$('.phase-filter').forEach(button => button.setAttribute("aria-pressed", String(button.dataset.phase === phase)));
-      showView("map"); renderGraph(); renderPhaseInspector(phase); if (announce && phase === "all") showToast(t("filterCleared"));
+      showView("map"); renderGraph(); renderPhaseInspector(phase); persistMapState(); if (announce && phase === "all") showToast(t("filterCleared"));
     }
     function evidenceMatchesSelectedPhase(evidence) {
       if (selectedPhase === "all") return true;
@@ -1562,13 +1655,19 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       if (!hasMappedEvidence) return true;
       return Boolean(evidence?.phaseHeading && stripMarkdown(evidence.phaseHeading) === group.heading);
     }
+    function nodeMatchesMapSearch(node) {
+      const query = mapSearchQuery.trim().toLocaleLowerCase(language === "tr" ? "tr-TR" : "en-US");
+      if (!query) return true;
+      return `${node.label || ""} ${node.path || ""}`.toLocaleLowerCase(language === "tr" ? "tr-TR" : "en-US").includes(query);
+    }
     function updateMapCount() {
       const diagram = activeDiagram();
       if (diagram) {
         const m = diagram.receipt.measurements;
-        const visible = diagram.receipt.graph.nodes.filter(node => evidenceMatchesSelectedPhase(diagram.receipt.nodeEvidence[node.id])).length;
+        const visible = diagram.receipt.graph.nodes.filter(node => evidenceMatchesSelectedPhase(diagram.receipt.nodeEvidence[node.id]) && nodeMatchesMapSearch(node)).length;
+        const searchCount = mapSearchQuery.trim() ? `${visible} ${t("mapSearchResults")} · ` : "";
         const unit = t("realNodeCount");
-        $('#mapCount').textContent = `${visible} / ${m.renderedNodeCount} ${unit} · ${m.renderedEdgeCount} ${t("measuredEdgesLabel")} · ${m.unresolvedCount} ${t("unresolvedImportsLabel")}`;
+        $('#mapCount').textContent = `${searchCount}${visible} / ${m.renderedNodeCount} ${unit} · ${m.renderedEdgeCount} ${t("measuredEdgesLabel")} · ${m.unresolvedCount} ${t("unresolvedImportsLabel")}`;
         return;
       }
       const total = activeProject().nodes.length;
@@ -1710,6 +1809,10 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       $$(".phase-item").forEach(details => paintInspectorDeltaCard(details, details.dataset.compositeItemId === key ? state : null));
     }
     function renderGraph() {
+      // React Flow görünmeyen katalog ekranında sıfır boyutla kurulursa kayıtlı
+      // viewport'u minimum zoom ile ezebilir. Harita yalnız çalışma alanı
+      // görünür olduktan sonra mount edilir; showSection bunu tekrar çağırır.
+      if ($('#workspaceScreen').hidden) return;
       const project = activeProject();
       const diagram = activeDiagram();
       if (!diagram) {
@@ -1743,14 +1846,18 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         return;
       }
       window.KokpitMapFlow.render({
-        groups: (receipt.graph.groups || []).map(group => ({ id: group.id, label: architectureGroupLabel(group) })),
+        groups: (receipt.graph.groups || []).map(group => ({ id: group.id, label: architectureGroupLabel(group), description: group.description })),
         nodes: receipt.graph.nodes.map(node => {
           const evidence = receipt.nodeEvidence[node.id];
           const status = mapNodeStatus(evidence);
-          return { id: node.id, label: node.label, path: node.path, groupId: node.groupId, status: status === "inProgress" ? "partial" : status === "planned" ? "open" : status, statusLabel: statusLabel(status), evidenceLabel: evidenceKindLabel(evidence?.evidenceKind), waitingOnGo: evidence?.gateStatus === "waiting-go", dimmed: !evidenceMatchesSelectedPhase(evidence), isDeltaHit: deltaHitIds.has(node.id) };
+          return { id: node.id, label: node.label, path: node.path, groupId: node.groupId, status: status === "inProgress" ? "partial" : status === "planned" ? "open" : status, statusLabel: statusLabel(status), evidenceLabel: evidenceKindLabel(evidence?.evidenceKind), waitingOnGo: evidence?.gateStatus === "waiting-go", dimmed: !evidenceMatchesSelectedPhase(evidence) || !nodeMatchesMapSearch(node), isDeltaHit: deltaHitIds.has(node.id) };
         }),
-        edges: receipt.graph.edges.map(edge => ({ ...edge, label: architectureEdgeLabel(edge.label) })),
+        edges: receipt.graph.edges.map((edge, index) => ({ ...edge, id: `edge-${index}`, label: architectureEdgeLabel(edge.label) })),
         onSelect: selectMapNode,
+        onSelectGroup: selectMapGroup,
+        onSelectEdge: selectMapEdge,
+        initialViewport: readMapState()?.viewport || undefined,
+        onViewportChange: viewport => persistMapState(viewport),
         ariaLabel: t("mapAria"),
         otherGroupLabel: t("architectureGroupShared"),
         highlightNodeIds: [...deltaHitIds],
@@ -1776,6 +1883,19 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     function architectureEdgeLabel(label) {
       const keys = { imports: "architectureEdgeImports", "dynamic import": "architectureEdgeDynamic", "type import": "architectureEdgeType" };
       return label ? (keys[label] ? t(keys[label]) : label) : undefined;
+    }
+    function architectureGroupDescription(group) {
+      const tr = {
+        interface: "Kullanıcıya görünen sayfa, bileşen ve istemci arayüzleri.",
+        runtime: "Sunucu çalışma zamanı, API rotaları, işleyiciler ve fonksiyonlar.",
+        analysis: "Ayrıştırıcılar, tarayıcılar, derleyiciler ve diyagram analizi.",
+        integration: "Proje adaptörleri, servisler, bağlayıcılar ve sağlayıcılar.",
+        data: "Kalıcılık, veri modelleri, şemalar ve migrasyonlar.",
+        automation: "İş akışları, ajanlar, worker'lar, işler ve kuyruklar.",
+        delivery: "Derleme, yapılandırma, altyapı ve geliştirici araçları.",
+        shared: "Daha özel bir yol rolüne girmeyen paylaşılan çekirdek modüller."
+      };
+      return language === "tr" ? (tr[group.id] || tr.shared) : group.description;
     }
     function githubBlobUrl(fileLinkBase, revision, path) {
       if (!fileLinkBase || !/https:\/\/github\.com\//.test(fileLinkBase)) return null;
@@ -1803,7 +1923,47 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         : `${measurements.scannedFileCount} ${t("scannedFilesLabel")} · ${measurements.renderedEdgeCount}/${measurements.totalEdgeCount} ${t("measuredEdgesLabel")} · ${measurements.unresolvedCount} ${t("unresolvedImportsLabel")}`}</p></section>${evidence.phaseHeading ? `<section class="detail-section"><h3>${t("phase")}</h3><p>${escapeHtml(evidence.phaseHeading)}</p><p><code>${escapeHtml(evidence.itemId || "")}</code></p></section>` : ""}${testEvidence}<section class="detail-section"><h3>${t("evidenceReceipt")}</h3><p>${escapeHtml(receiptLabel)}</p><p>projectId:<code>${escapeHtml(evidence.projectId)}</code></p><p><code>${escapeHtml(evidence.branch)} · ${escapeHtml(evidence.revision)}</code></p>${evidence.revisionKind === "working-tree" ? `<p>${escapeHtml(t("sourceWorkingTreeNote"))}</p>` : ""}</section>${sourceAction}`;
       openInspector();
     }
+    function renderGroupInspector(id) {
+      const receipt = activeDiagram()?.receipt;
+      const group = receipt?.graph.groups.find(candidate => candidate.id === id);
+      if (!receipt || !group) return;
+      selectedNode = { id, type: "group" };
+      const nodes = receipt.graph.nodes.filter(node => node.groupId === id);
+      const nodeIds = new Set(nodes.map(node => node.id));
+      const inbound = receipt.graph.edges.filter(edge => nodeIds.has(edge.to) && !nodeIds.has(edge.from));
+      const outbound = receipt.graph.edges.filter(edge => nodeIds.has(edge.from) && !nodeIds.has(edge.to));
+      const phases = new Map();
+      nodes.forEach(node => {
+        const heading = receipt.nodeEvidence[node.id]?.phaseHeading;
+        if (heading) phases.set(heading, (phases.get(heading) || 0) + 1);
+      });
+      const nodeMarkup = nodes.map(node => `<button class="evidence-link" type="button" data-node-jump="${escapeHtml(node.id)}"><code>${escapeHtml(node.path || node.label)}</code><span>${escapeHtml(t("openMappedNode"))}</span></button>`).join("");
+      const phaseMarkup = phases.size
+        ? [...phases.entries()].map(([heading, count]) => `<span class="test-chip">${escapeHtml(heading)} · ${count}</span>`).join("")
+        : `<p>${escapeHtml(t("noPhaseEvidence"))}</p>`;
+      $('#inspectorBody').innerHTML = `<div class="detail-title">${escapeHtml(architectureGroupLabel(group))}</div><div class="detail-path">group:${escapeHtml(group.id)}</div><section class="detail-section"><h3>${escapeHtml(t("groupResponsibility"))}</h3><p>${escapeHtml(architectureGroupDescription(group))}</p><p>${escapeHtml(t("measuredOnlyNote"))}</p></section><section class="detail-section"><h3>${escapeHtml(t("groupNodes"))}</h3>${nodeMarkup}</section><section class="detail-section"><h3>${escapeHtml(t("evidence"))}</h3><p>${escapeHtml(t("inboundRelations"))}: <strong>${inbound.length}</strong></p><p>${escapeHtml(t("outboundRelations"))}: <strong>${outbound.length}</strong></p></section><section class="detail-section"><h3>${escapeHtml(t("phaseDistribution"))}</h3><div class="test-evidence">${phaseMarkup}</div></section>`;
+      persistMapState();
+      openInspector();
+    }
+    function renderEdgeInspector(id) {
+      const receipt = activeDiagram()?.receipt;
+      const index = /^edge-(\d+)$/.exec(id)?.[1];
+      const edge = index === undefined ? null : receipt?.graph.edges[Number(index)];
+      if (!receipt || !edge) return;
+      const source = receipt.graph.nodes.find(node => node.id === edge.from);
+      const target = receipt.graph.nodes.find(node => node.id === edge.to);
+      if (!source || !target) return;
+      selectedNode = { id, type: "edge" };
+      const tests = [...new Set([...(receipt.nodeEvidence[source.id]?.testPaths || []), ...(receipt.nodeEvidence[target.id]?.testPaths || [])])];
+      const testMarkup = tests.length ? `<div class="test-evidence">${tests.map(path => `<span class="test-chip">${escapeHtml(path)}</span>`).join("")}</div>` : `<p>${escapeHtml(t("noTestMapping"))}</p>`;
+      const relation = architectureEdgeLabel(edge.label) || (edge.relation === "type-import" ? t("architectureEdgeType") : edge.relation === "dynamic-import" ? t("architectureEdgeDynamic") : t("architectureEdgeImports"));
+      $('#inspectorBody').innerHTML = `<div class="detail-title">${escapeHtml(source.label)} → ${escapeHtml(target.label)}</div><div class="detail-path">${escapeHtml(relation)}</div><section class="detail-section"><h3>${escapeHtml(t("edgeSource"))}</h3><p><code>${escapeHtml(source.path || source.label)}</code></p></section><section class="detail-section"><h3>${escapeHtml(t("edgeTarget"))}</h3><p><code>${escapeHtml(target.path || target.label)}</code></p></section><section class="detail-section"><h3>${escapeHtml(t("importEvidence"))}</h3><p><code>${escapeHtml(edge.evidence || `${source.path || source.label} -> ${target.path || target.label}`)}</code></p><p>${escapeHtml(t("measuredOnlyNote"))}</p></section><section class="detail-section"><h3>${escapeHtml(t("testEvidence"))}</h3>${testMarkup}</section>`;
+      persistMapState();
+      openInspector();
+    }
     function renderInspector(id, type = "node") {
+      if (type === "group") return renderGroupInspector(id);
+      if (type === "edge") return renderEdgeInspector(id);
       if (type === "node" && activeDiagram() && activeDiagram().receipt.nodeEvidence[id]) return renderRealNodeInspector(id);
       const data = type === "issue" ? ISSUE_DATA[id] : activeProject().nodes.find(node => node.id === id);
       if (!data) return;
@@ -1814,7 +1974,9 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       $('#inspectorBody').innerHTML = `<div class="detail-title">${data.title}</div><div class="detail-path">${data.path}</div><div class="detail-status"><span class="status-mark ${data.status === "inProgress" ? "progress" : data.status}"></span>${statusLabel(data.status)}</div><section class="detail-section"><h3>${t("phase")}</h3><p>${data.phase}${phaseName !== data.phase ? ` · ${phaseName}` : ""}</p></section><section class="detail-section"><h3>${t("evidence")}</h3><p>${data.description[language]}</p><p>${evidenceNote}</p></section><button class="text-button source-disabled" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>${sourceNote}</span></button>`;
       openInspector();
     }
-    function selectMapNode(id) { $$('.map-node').forEach(node => node.setAttribute("aria-pressed", String(node.dataset.node === id))); window.KokpitMapFlow?.select(id); renderInspector(id, "node"); }
+    function selectMapNode(id) { $$('.map-node').forEach(node => node.setAttribute("aria-pressed", String(node.dataset.node === id))); window.KokpitMapFlow?.select(id); renderInspector(id, "node"); persistMapState(); }
+    function selectMapGroup(id) { renderInspector(id, "group"); }
+    function selectMapEdge(id) { renderInspector(id, "edge"); }
     function renderEmptyInspector() {
       $('#inspectorBody').innerHTML = `<div class="inspector-empty"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-panel"></use></svg></div><strong>${escapeHtml(t("nothingSelected"))}</strong><p>${escapeHtml(t("nothingSelectedBody"))}</p></div>`;
     }
@@ -1957,6 +2119,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     $('#langTr').addEventListener("click", () => applyLanguage("tr")); $('#langEn').addEventListener("click", () => applyLanguage("en"));
     $('#themeToggle').addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
     $('#commandTrigger').addEventListener("click", openCommand); $('#commandInput').addEventListener("input", event => filterCommands(event.target.value));
+    $('#mapSearch').addEventListener("input", event => { mapSearchQuery = event.target.value; renderGraph(); persistMapState(); });
     $('#commandDialog').addEventListener("click", event => { if (event.target === $('#commandDialog')) $('#commandDialog').close(); });
     $('#projectSwitcher').addEventListener("click", () => { const willOpen = $('#projectMenu').hidden; $('#projectMenu').hidden = !willOpen; $('#projectSwitcher').setAttribute("aria-expanded", String(willOpen)); });
     $('#projectSwitcher').addEventListener("keydown", event => { if (!["ArrowDown", "ArrowUp"].includes(event.key)) return; event.preventDefault(); $('#projectMenu').hidden = false; $('#projectSwitcher').setAttribute("aria-expanded", "true"); const options = $$('[data-project-select]'); (event.key === "ArrowDown" ? options[0] : options.at(-1))?.focus(); });
@@ -1999,7 +2162,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     $('#inspectorToggle').addEventListener("click", toggleInspector); $('#inspectorClose').addEventListener("click", closeInspector); $('#inspectorScrim').addEventListener("click", closeInspector);
     $('#graphState').addEventListener("click", event => { const button = event.target.closest('[data-map-reindex]'); if (button) void reindexProject(button.dataset.mapReindex, button); });
     $('#resetPhase').addEventListener("click", () => setPhaseFilter("all", true)); $('#zoomIn').addEventListener("click", () => setZoom(zoomLevel + .1)); $('#zoomOut').addEventListener("click", () => setZoom(zoomLevel - .1)); $('#zoomFit').addEventListener("click", () => { zoomLevel = 1; window.KokpitMapFlow?.fitView(); });
-    document.addEventListener("keydown", event => { const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName); if (event.key === "Tab" && document.body.classList.contains("inspector-open")) { const focusable = $$('button:not(:disabled), a[href], summary, [tabindex]:not([tabindex="-1"])', $('#inspector')).filter(element => !element.hidden); const first = focusable[0]; const last = focusable.at(-1); if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } } if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openCommand(); return; } if (event.key === "/" && !isTyping) { event.preventDefault(); openCommand(); return; } if (!isTyping && ['1', '2', '3', '4'].includes(event.key)) { showSection("workspace"); showView(['map', 'timeline', 'delta', 'compliance'][Number(event.key) - 1]); } if (event.key === "Escape" && document.body.classList.contains("inspector-open")) closeInspector(); });
+    document.addEventListener("keydown", event => { const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName); if (event.key === "Tab" && document.body.classList.contains("inspector-open")) { const focusable = $$('button:not(:disabled), a[href], summary, [tabindex]:not([tabindex="-1"])', $('#inspector')).filter(element => !element.hidden); const first = focusable[0]; const last = focusable.at(-1); if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } } if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openCommand(); return; } if (event.key === "/" && !isTyping) { event.preventDefault(); if (activeSection === "workspace" && activeView === "map") $('#mapSearch').focus(); else openCommand(); return; } if (!isTyping && ['1', '2', '3', '4'].includes(event.key)) { showSection("workspace"); showView(['map', 'timeline', 'delta', 'compliance'][Number(event.key) - 1]); } if (event.key === "Escape" && document.body.classList.contains("inspector-open")) closeInspector(); });
     async function initializeApp() {
       document.body.dataset.appReady = "loading";
       setTheme(localStorage.getItem("kokpit-theme") || "dark");

@@ -28,9 +28,9 @@ describe('measured import relation language', () => {
     const base = { from: 'a.ts', to: 'b.ts', resolved: true, dynamic: false, typeOnly: false };
 
     it('labels only measured relation kinds and cross-group imports', () => {
-        expect(measuredImportPresentation(base, 'analysis', 'analysis')).toEqual({ style: 'solid' });
-        expect(measuredImportPresentation(base, 'interface', 'runtime')).toEqual({ label: 'imports', style: 'solid' });
-        expect(measuredImportPresentation({ ...base, dynamic: true }, 'interface', 'runtime')).toEqual({ label: 'dynamic import', style: 'dashed' });
-        expect(measuredImportPresentation({ ...base, typeOnly: true }, 'analysis', 'analysis')).toEqual({ label: 'type import', style: 'dashed' });
+        expect(measuredImportPresentation(base, 'analysis', 'analysis')).toEqual({ style: 'solid', relation: 'static-import', evidence: 'a.ts -> b.ts' });
+        expect(measuredImportPresentation(base, 'interface', 'runtime')).toEqual({ label: 'imports', style: 'solid', relation: 'static-import', evidence: 'a.ts -> b.ts' });
+        expect(measuredImportPresentation({ ...base, raw: './lazy', dynamic: true }, 'interface', 'runtime')).toEqual({ label: 'dynamic import', style: 'dashed', relation: 'dynamic-import', evidence: './lazy' });
+        expect(measuredImportPresentation({ ...base, raw: './types', typeOnly: true }, 'analysis', 'analysis')).toEqual({ label: 'type import', style: 'dashed', relation: 'type-import', evidence: './types' });
     });
 });

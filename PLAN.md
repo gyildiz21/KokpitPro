@@ -21,11 +21,14 @@
 > `lite` dalında storage'sız çalışır. Uretilen diyagram önbelleklenmez, her
 > ziyarette yeniden üretilir — Dilim 2 UI'sı için yeterli.
 
-- [x] **`lite` dalı hazır** (`gitdiagram`, commit `1e1e8e9`):
+- [x] **`lite` dalı hazır** (`gitdiagram`, taban `1e1e8e9`, yerel doğrulama
+      commiti `d2bdfc9`):
       R2 okumaları "yapılandırılmamış = artefakt yok" sayar; Turbopack kökü
       sabitlendi; persistence zaten fail-safe'ti (uyarı bandı normaldir)
 - [x] `cd gitdiagram && git checkout lite` — dal/HEAD doğrulandı:
-      `lite · 1e1e8e9`
+      `lite · d2bdfc9`; üçüncü kişiye ait `upstream` remote'una push yapılmadı.
+      Değişiklikler KokpitPro içinde `vendor-patches/gitdiagram-lite.patch`
+      ve uygulama/doğrulama tarifiyle yeniden üretilebilir hâle getirildi.
 - [x] `.env.example` → `.env`; zorunlu tek alan: **`OPENAI_API_KEY`**
       *(alternatif: `AI_PROVIDER=openrouter` + `OPENROUTER_API_KEY`;
       önerilir: `GITHUB_PAT` — GitHub API limitini yükseltir)* — anahtar değeri
@@ -267,6 +270,37 @@ KAPANMIŞ sayılmaz (koşum disiplini).
   gruplar arası yönlü import ilişkisi ve TR/EN etiketleri aynı haritada; Mermaid
   ihracı aynı grupları taşır; graf içinde ölçülmemiş kenar bulunmaz.
 
+## Dilim 2.3 · Etkileşimli Mimari Denetimi
+
+> **UI sözleşmesi:** `UI-SPEC.md` v1.1 §5.0.2. Bu dilim GitDiagram'ın okunur
+> haritasını KokpitPro'nun kanıt denetçisi ve proje/makbuz bağlamıyla birleştirir;
+> ölçülmeyen çalışma-zamanı davranışı, sahiplik veya ticari etki uydurmaz.
+
+- [x] **Grup denetçisi:** mimari grup kapsayıcısı klavye/işaretçiyle seçilir;
+      sorumluluk açıklaması, içerdiği düğümler, gelen/giden ölçülmüş ilişkiler
+      ve kanıtlı faz dağılımı sağ denetçide açılır.
+- [x] **Kenar denetçisi:** ölçülmüş kenar seçilince kaynak/hedef yolu, statik ·
+      dinamik · type-only türü, import kanıtı ve ölçülebilen ilgili testler
+      açılır; çözülemeyen veya ölçülmeyen etki açıkça bilinmeyen kalır.
+- [x] **Görünüm durumu sürekliliği:** kaynak dosyayı açıp aynı proje/makbuza
+      dönünce zoom/pan, seçili grup/kenar/düğüm, faz filtresi ve arama korunur;
+      proje ya da makbuz değişiminde güvenli biçimde sıfırlanır.
+- [x] **Tek güncellik gerçeği:** Proje Merkezi, üst bağlam, Harita, Delta ve
+      denetçi aynı sunucu-taraflı makbuz doğrulama sonucunu tüketir; eşzamanlı
+      `güncel`/`bayat` çelişkisi mümkün değildir ve tek yeniden-indeks eylemi vardır.
+- [x] **Gerçek-sunucu E2E kabulü:** 1440/1024/768, TR/EN, klavye/Escape,
+      grup+kenar seçimi, geri dönüşte görünüm korunması ve yüzeyler-arası
+      güncellik paritesi Playwright ile doğrulanır.
+- **2026-08-27 kabul kanıtı (Node 20.20.2):** 16 dosyada **166/166** Vitest,
+  TypeScript 0 hata ve Playwright **9/9** geçti. Gerçek sunucu turu harita
+  aramasını, grup/kenar denetçisini, seçim+zoom geri yüklemeyi, gerçek
+  plan→kod→test delta kartını ve kısa/uzun Windows yoluyla eklenen geçici Git
+  reposunda `ready → stale → yeniden indeks → baseline'lı measured` akışını
+  kapsar.
+- **Kabul:** gerçek indeksli bir repoda kullanıcı bir gruptan ve bir ölçülmüş
+  kenardan kanıta iner; kaynağı açıp döndüğünde bağlamını kaybetmez; bütün
+  yüzeylerde tek ve tutarlı güncellik durumu görür.
+
 ## Dilim 3 · Delta Ön-Görünümü
 
 - [x] **Delta motoru (`kokpit/delta`):** sürümlü `.strict()` sözleşme +
@@ -288,14 +322,20 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       bölümler ayrı (kod/test/öneri/kenar-değişimi/ölçülemeyen-gerekçe);
       proje değişiminde delta+vurgu sıfır; HTTP hatasında önceki dürüst boşluk
       korunur. TR/EN parite sözlükte; renk yalnız `--st-*`.
-- [~] **Karşılaştırmalı tarih-delta:** motor hazır (baseline parametreli);
-      kalıcı ikinci ölçüm saklama alanı olmadığından uç nokta şimdilik
-      `comparison-baseline-unavailable` raporlar — kalıcı karşılaştırma deposu
-      ayrı iş.
+- [x] **Karşılaştırmalı tarih-delta:** `DeltaHistoryStore` son iki gerçek graf
+      anlık görüntüsünü proje bazında `.kokpit/data/delta-history.json` altında
+      atomik saklar; ikinci indeks sonrası eklenen/kaldırılan ölçülmüş kenarlar
+      baseline ile hesaplanır. İlk ölçümde taban yoksa dürüst
+      `comparison-baseline-unavailable` sınırı korunur; proje silme aynı
+      yaşam döngüsünde o projeye ait geçmişi de kaldırır.
 - [x] **2026-08-26 E2E kabulü:** Playwright hermetik mock'larla S1 measured
       vurgu+test listesi · S2 önerilen kesikli+uydurma-kenar-yok · S4 bayat→CTA
       · S5 proje-sıfırlama · S6 TR/EN parite · S7 klavye+Escape odak iadesi
       · S8 1440/1024/768 taşmasız — **7 passed**.
+- [x] **2026-08-27 gerçek-sunucu kabulü:** maskesiz KokpitPro indeksinde plan
+      maddesi → gerçek kod/test delta kartı; geçici gerçek Git reposunda ilk
+      indeks → canlı kirlenme ile tek `stale` gerçeği → yeniden indeks → tarih
+      baseline'lı measured delta akışı doğrulandı.
 - **Kabul:** bir plan adımı seçildiğinde ön-görünüm kartı ve harita vurgusu
   birlikte çalışır — ✅ gerçek repoda bizzat doğrulandı (yukarıdaki canlı
   DELTA[measured] çıktısı).

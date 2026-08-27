@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { parseGithubRepository } from './github';
-import { indexLocalProject } from './local';
+import { indexLocalProject, withLocalFreshness } from './local';
 import { summarizePlanText } from './plan';
 import { ProjectRegistry } from './registry';
 
@@ -38,6 +38,25 @@ describe('persistent project registry', () => {
         registry.write(reloaded);
         expect(readdirSync(dataDir).filter((name) => name.endsWith('.tmp'))).toEqual([]);
         expect(new ProjectRegistry(dataDir).read()).toEqual(reloaded);
+
+        const matching = withLocalFreshness(project, {
+            branch: project.index.branch,
+            commit: project.index.commit,
+            kind: project.index.revisionKind ?? 'commit',
+            revision: project.index.revision ?? project.index.commit,
+            dirty: project.index.revisionKind === 'working-tree',
+        });
+        expect(matching.connectionState).toBe('ready');
+
+        const stale = withLocalFreshness(project, {
+            branch: project.index.branch,
+            commit: project.index.commit,
+            kind: 'working-tree',
+            revision: 'worktree-00000000000000000000',
+            dirty: true,
+        });
+        expect(stale.connectionState).toBe('stale');
+        expect(stale.lastError).toBe('stale-receipt');
     });
 
     it('rejects a plan path outside the selected repository root', async () => {

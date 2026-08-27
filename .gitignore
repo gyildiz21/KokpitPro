@@ -4,6 +4,9 @@ coverage/
 .env
 .env.local
 .kokpit/
+.codex-tmp/
+!kokpit/importgraph/__fixtures__/importgraph/excluded-folders/.codex-tmp/
+!kokpit/importgraph/__fixtures__/importgraph/excluded-folders/.codex-tmp/temporary.ts
 output/
 test-results/
 playwright-report/

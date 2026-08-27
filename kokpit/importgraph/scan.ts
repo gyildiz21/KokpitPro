@@ -41,6 +41,7 @@ const DEFAULT_EXCLUDED_SEGMENTS = [
     'node_modules',
     '.git',
     '.kokpit',
+    '.codex-tmp',
     'dist',
     'coverage',
     'output',

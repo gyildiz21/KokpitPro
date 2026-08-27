@@ -121,11 +121,12 @@ export function measuredImportPresentation(
     edge: ImportGraphEdge,
     fromGroupId: string,
     toGroupId: string,
-): Pick<DiagramGraphEdge, 'label' | 'style'> {
-    if (edge.dynamic) return { label: 'dynamic import', style: 'dashed' };
-    if (edge.typeOnly) return { label: 'type import', style: 'dashed' };
-    if (fromGroupId !== toGroupId) return { label: 'imports', style: 'solid' };
-    return { style: 'solid' };
+): Pick<DiagramGraphEdge, 'label' | 'style' | 'relation' | 'evidence'> {
+    const evidence = edge.raw?.trim() || `${edge.from} -> ${edge.to ?? 'unresolved'}`;
+    if (edge.dynamic) return { label: 'dynamic import', style: 'dashed', relation: 'dynamic-import', evidence };
+    if (edge.typeOnly) return { label: 'type import', style: 'dashed', relation: 'type-import', evidence };
+    if (fromGroupId !== toGroupId) return { label: 'imports', style: 'solid', relation: 'static-import', evidence };
+    return { style: 'solid', relation: 'static-import', evidence };
 }
 
 export function architectureGroupById(id: string): DiagramGroup | undefined {

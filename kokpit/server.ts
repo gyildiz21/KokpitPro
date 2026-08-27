@@ -4,9 +4,10 @@ import { extname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildProjectDiagram } from './diagram/diagram-service';
 import { computeDelta } from './delta/compute';
+import { DeltaHistoryStore } from './delta/history';
 import { DeltaResult, type BaseRevision } from './delta/schema';
 import { githubAuthConfiguration, indexGithubProject, type GithubProjectInput } from './projects/github';
-import { indexLocalProject, type LocalProjectInput } from './projects/local';
+import { indexLocalProject, refreshProjectFreshness, type LocalProjectInput } from './projects/local';
 import { ProjectRegistry } from './projects/registry';
 import type { ProjectRecord } from './projects/schema';
 import { buildUiAssets, type UiAssets } from './ui/assets';
@@ -15,6 +16,7 @@ const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const PORT = Number.parseInt(process.env.PORT || '4173', 10);
 const HOST = process.env.HOST || '127.0.0.1';
 const registry = new ProjectRegistry();
+const deltaHistory = new DeltaHistoryStore(registry.dataDir);
 const MAX_BODY = 64 * 1024;
 let uiAssets: UiAssets | null = null;
 
@@ -111,6 +113,25 @@ function receiptBaseRevision(project: ProjectRecord): BaseRevision {
     return { kind, revision, commit: project.index.commit, branch: project.index.branch };
 }
 
+async function registryWithLiveFreshness() {
+    const current = registry.read();
+    return {
+        ...current,
+        projects: await Promise.all(current.projects.map(refreshProjectFreshness)),
+    };
+}
+
+async function recordDiagramSnapshot(project: ProjectRecord): Promise<void> {
+    if (project.source.type !== 'local') return;
+    const diagram = await buildProjectDiagram(diagramInputFor(project));
+    if (!diagram.measurable) return;
+    deltaHistory.record(
+        project.id,
+        project.index.revision ?? project.index.commit,
+        diagram.receipt.graph,
+    );
+}
+
 /**
  * Dilim 3 delta hesabı. Ölçüm aynı diyagram disipliniyle (canlı makbuz
  * doğrulaması) alınır; ölçülemez durumlar sahte boş başarı olarak GİZLENMEZ.
@@ -134,7 +155,13 @@ async function buildProjectDelta(project: ProjectRecord, phaseHeading: string, i
         // verifyLocalRevision:true tazeliği kanıtladı → canlı == temel revizyon.
         return computeDelta({
             projectId: project.id, phaseHeading, itemKey,
-            receipt, diagram: basis.receipt, liveRevision: receiptBaseRevision(project),
+            receipt,
+            diagram: basis.receipt,
+            liveRevision: receiptBaseRevision(project),
+            baselineDiagram: deltaHistory.baselineFor(
+                project.id,
+                project.index.revision ?? project.index.commit,
+            ),
         });
     }
     if (basis.reason === 'stale-receipt' && basis.currentRevision) {
@@ -172,6 +199,7 @@ async function reindex(project: ProjectRecord): Promise<ProjectRecord> {
             ? await indexLocalProject({ path: project.source.root, planPath: project.index.planPath, name: project.name }, project)
             : await indexGithubProject({ repository: `${project.source.owner}/${project.source.repo}`, branch: project.branch, planPath: project.index.planPath, name: project.name }, project);
         registry.upsert(updated);
+        await recordDiagramSnapshot(updated);
         return updated;
     } catch (error) {
         const stale = { ...project, connectionState: 'stale' as const, updatedAt: new Date().toISOString(), lastError: error instanceof Error ? error.message : String(error) };
@@ -189,7 +217,7 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
         return true;
     }
     if (request.method === 'GET' && url.pathname === '/api/projects') {
-        json(response, 200, registry.read());
+        json(response, 200, await registryWithLiveFreshness());
         return true;
     }
     const planMatch = /^\/api\/projects\/([^/]+)\/plan$/.exec(url.pathname);
@@ -204,7 +232,15 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
     const diagramMatch = /^\/api\/projects\/([^/]+)\/diagram$/.exec(url.pathname);
     if (request.method === 'GET' && diagramMatch?.[1]) {
         const project = findProject(decodeURIComponent(diagramMatch[1]));
-        json(response, 200, await buildProjectDiagram(await diagramInputFor(project)));
+        const diagram = await buildProjectDiagram(diagramInputFor(project));
+        if (diagram.measurable) {
+            deltaHistory.record(
+                project.id,
+                project.index.revision ?? project.index.commit,
+                diagram.receipt.graph,
+            );
+        }
+        json(response, 200, diagram);
         return true;
     }
     // Dilim 3: seçili bileşik plan maddesinin kanıta dayalı delta ön-görünümü.
@@ -229,7 +265,9 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
     }
     if (request.method === 'POST' && url.pathname === '/api/projects/local') {
         const project = await indexLocalProject(await body<LocalProjectInput>(request));
-        json(response, 201, registry.upsert(project, !registry.read().activeProjectId));
+        const stored = registry.upsert(project, !registry.read().activeProjectId);
+        await recordDiagramSnapshot(project);
+        json(response, 201, stored);
         return true;
     }
     if (request.method === 'POST' && url.pathname === '/api/projects/github') {
@@ -250,7 +288,10 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
     }
     const deleteMatch = /^\/api\/projects\/([^/]+)$/.exec(url.pathname);
     if (request.method === 'DELETE' && deleteMatch?.[1]) {
-        json(response, 200, registry.remove(decodeURIComponent(deleteMatch[1])));
+        const projectId = decodeURIComponent(deleteMatch[1]);
+        const updated = registry.remove(projectId);
+        deltaHistory.remove(projectId);
+        json(response, 200, updated);
         return true;
     }
     throw new HttpError(404, 'API route not found.');
@@ -284,6 +325,7 @@ async function bootstrap(): Promise<void> {
     if (registry.read().projects.length) return;
     const current = await indexLocalProject({ path: ROOT, planPath: 'PLAN.md', name: 'KokpitPro' });
     registry.upsert(current, true);
+    await recordDiagramSnapshot(current);
 }
 
 export async function startServer(): Promise<void> {

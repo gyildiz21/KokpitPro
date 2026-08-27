@@ -42,7 +42,7 @@ export interface DeltaComputeInput {
         branch: string;
     } | null;
     /** Verilmediyse (undefined/null) kenar karşılaştırması yapılmaz — uydurma yasak. */
-    baselineDiagram?: ReceiptDiagram | null;
+    baselineDiagram?: Pick<ReceiptDiagram, 'graph'> | null;
 }
 
 /** Madde başlığındaki yol-benzeri bildirimler — receipt-adapter deseniyle aynı. */

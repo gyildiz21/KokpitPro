@@ -12,6 +12,7 @@ import {
     type NodeTypes,
     type NodeProps,
     type ReactFlowInstance,
+    type Viewport,
 } from '@xyflow/react';
 import React, { memo, useMemo } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -37,13 +38,28 @@ export interface MapFlowNodeInput {
 export interface MapFlowGroupInput {
     id: string;
     label: string;
+    description?: string;
+}
+
+export interface MapFlowEdgeInput {
+    id: string;
+    from: string;
+    to: string;
+    label?: string;
+    style?: 'solid' | 'dashed';
+    relation?: 'static-import' | 'dynamic-import' | 'type-import';
+    evidence?: string;
 }
 
 export interface MapFlowPayload {
     groups: MapFlowGroupInput[];
     nodes: MapFlowNodeInput[];
-    edges: Array<{ from: string; to: string; label?: string; style?: 'solid' | 'dashed' }>;
+    edges: MapFlowEdgeInput[];
     onSelect: (nodeId: string) => void;
+    onSelectGroup?: (groupId: string) => void;
+    onSelectEdge?: (edgeId: string) => void;
+    initialViewport?: Viewport;
+    onViewportChange?: (viewport: Viewport) => void;
     ariaLabel: string;
     otherGroupLabel: string;
     highlightNodeIds?: string[];
@@ -64,10 +80,13 @@ type MapNode = Node<MapNodeData, 'kokpit'>;
 interface ArchitectureGroupData extends Record<string, unknown> {
     label: string;
     nodeCount: number;
+    onSelect?: (groupId: string) => void;
 }
 
 type ArchitectureGroupNode = Node<ArchitectureGroupData, 'architectureGroup'>;
 type FlowNode = MapNode | ArchitectureGroupNode;
+interface MapEdgeData extends Record<string, unknown> { input: MapFlowEdgeInput; }
+type FlowEdge = Edge<MapEdgeData>;
 
 const NODE_WIDTH = 224;
 const NODE_HEIGHT = 104;
@@ -120,18 +139,20 @@ const KokpitNode = memo(function KokpitNode({ id, data, selected }: NodeProps<Ma
     );
 });
 
-const ArchitectureGroup = memo(function ArchitectureGroup({ data }: NodeProps<ArchitectureGroupNode>) {
+const ArchitectureGroup = memo(function ArchitectureGroup({ id, data }: NodeProps<ArchitectureGroupNode>) {
+    const groupId = id.replace(/^architecture_group_/, '');
     return (
-        <div className="map-flow-group" aria-label={`${data.label}, ${data.nodeCount}`}>
+        <button type="button" className="map-flow-group" data-map-group-id={groupId}
+            aria-label={`${data.label}, ${data.nodeCount}`} onClick={() => data.onSelect?.(groupId)}>
             <span className="map-flow-group__title">{data.label}</span>
             <span className="map-flow-group__count">{data.nodeCount}</span>
-        </div>
+        </button>
     );
 });
 
 const nodeTypes: NodeTypes = { kokpit: KokpitNode, architectureGroup: ArchitectureGroup };
 
-function layout(payload: MapFlowPayload): { nodes: FlowNode[]; edges: Edge[] } {
+function layout(payload: MapFlowPayload): { nodes: FlowNode[]; edges: FlowEdge[] } {
     const nodes: FlowNode[] = [];
     let cursorX = 36;
     let cursorY = 36;
@@ -177,10 +198,10 @@ function layout(payload: MapFlowPayload): { nodes: FlowNode[]; edges: Edge[] } {
             id: parentId,
             type: 'architectureGroup',
             position: { x: cursorX, y: cursorY },
-            data: { label: partition.label, nodeCount: partition.nodes.length },
+            data: { label: partition.label, nodeCount: partition.nodes.length, onSelect: payload.onSelectGroup },
             width,
             height,
-            selectable: false,
+            selectable: true,
             draggable: false,
             zIndex: 0,
         });
@@ -202,34 +223,42 @@ function layout(payload: MapFlowPayload): { nodes: FlowNode[]; edges: Edge[] } {
         rowHeight = Math.max(rowHeight, height);
     }
 
-    const edges: Edge[] = payload.edges.map((edge, index) => ({
-        id: `${edge.from}-${edge.to}-${index}`,
+    const edges: FlowEdge[] = payload.edges.map((edge) => ({
+        id: edge.id,
         source: edge.from,
         target: edge.to,
         type: 'smoothstep',
         label: edge.label,
         markerEnd: { type: MarkerType.ArrowClosed, color: edge.label ? 'var(--accent)' : 'var(--line-strong)' },
         className: `map-flow-edge${edge.label ? ' is-labeled' : ''}${edge.style === 'dashed' ? ' is-dashed' : ''}`,
+        data: { input: edge },
         zIndex: 1,
     }));
     return { nodes, edges };
 }
 
-function MapCanvas({ payload, onInit }: { payload: MapFlowPayload; onInit: (instance: ReactFlowInstance<FlowNode, Edge>) => void }) {
+function MapCanvas({ payload, onInit }: { payload: MapFlowPayload; onInit: (instance: ReactFlowInstance<FlowNode, FlowEdge>) => void }) {
     const elements = useMemo(() => layout(payload), [payload]);
     return (
         <ReactFlowProvider>
-            <ReactFlow<FlowNode, Edge>
+            <ReactFlow<FlowNode, FlowEdge>
                 nodes={elements.nodes}
                 edges={elements.edges}
                 nodeTypes={nodeTypes}
                 onInit={onInit}
-                fitView
+                fitView={!payload.initialViewport}
+                defaultViewport={payload.initialViewport}
                 fitViewOptions={{ padding: 0.12, minZoom: 0.25, maxZoom: 0.9 }}
                 minZoom={0.25}
                 maxZoom={1.45}
                 nodesFocusable={false}
-                edgesFocusable={false}
+                edgesFocusable
+                onEdgeClick={(_event, edge) => payload.onSelectEdge?.(edge.id)}
+                onSelectionChange={({ edges }) => {
+                    const selected = edges[0];
+                    if (selected) payload.onSelectEdge?.(selected.id);
+                }}
+                onMoveEnd={(_event, viewport) => payload.onViewportChange?.(viewport)}
                 elevateNodesOnSelect
                 aria-label={payload.ariaLabel}
             >
@@ -270,7 +299,7 @@ function withDeltaOverlays(payload: MapFlowPayload): MapFlowPayload {
 }
 
 let root: Root | null = null;
-let instance: ReactFlowInstance<FlowNode, Edge> | null = null;
+let instance: ReactFlowInstance<FlowNode, FlowEdge> | null = null;
 
 function mountRoot(): Root {
     const host = document.querySelector<HTMLElement>('#graphNodes');
@@ -281,8 +310,15 @@ function mountRoot(): Root {
 
 const api = {
     render(payload: MapFlowPayload) {
-        instance = null;
-        mountRoot().render(<MapCanvas payload={withDeltaOverlays(payload)} onInit={(next) => { instance = next; }} />);
+        mountRoot().render(<MapCanvas payload={withDeltaOverlays(payload)} onInit={(next) => {
+            instance = next;
+            if (payload.initialViewport) void next.setViewport(payload.initialViewport);
+        }} />);
+        // Katalog ekranı gizliyken ilk mount sıfır ölçüyle başlayabilir. Çalışma
+        // alanı görünür olduğunda yapılan sonraki render'da makbuz-kapsamlı
+        // viewport'u mevcut örneğe yeniden uygula; React Flow defaultViewport'u
+        // yalnız ilk mount sırasında okur.
+        if (payload.initialViewport && instance) void instance.setViewport(payload.initialViewport);
     },
     clear() {
         instance = null;
@@ -291,6 +327,7 @@ const api = {
     zoomIn() { void instance?.zoomIn({ duration: 180 }); },
     zoomOut() { void instance?.zoomOut({ duration: 180 }); },
     fitView() { void instance?.fitView({ padding: 0.18, duration: 220 }); },
+    getViewport() { return instance?.getViewport() ?? null; },
     focusNode(nodeId: string) {
         document.querySelector<HTMLElement>(`[data-map-node-id="${nodeId}"]`)?.focus();
     },

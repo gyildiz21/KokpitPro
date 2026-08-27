@@ -106,6 +106,28 @@ describe('Dilim 2 real-map wiring', () => {
         expect(preview).not.toContain('function renderRealWires');
     });
 
+    it('binds group/edge inspectors and receipt-scoped view persistence', () => {
+        expect(preview).toContain('onSelectGroup: selectMapGroup');
+        expect(preview).toContain('onSelectEdge: selectMapEdge');
+        expect(preview).toContain('function renderGroupInspector(id)');
+        expect(preview).toContain('function renderEdgeInspector(id)');
+        expect(preview).toContain('function mapStateKey()');
+        expect(preview).toContain('kokpit-map-state:${activeProjectId}:${revision}');
+        expect(preview).toContain('viewport: viewport || previous?.viewport || null');
+        expect(preview).toContain('search: mapSearchQuery');
+        expect(preview).toContain('function nodeMatchesMapSearch(node)');
+        expect(preview).toContain('id="mapSearch"');
+        expect(preview).toContain('restoreMapContext();');
+        expect(preview).toContain("if ($('#workspaceScreen').hidden) return;");
+        expect(mapFlowSource).toContain('data-map-group-id={groupId}');
+        expect(mapFlowSource).toContain('edgesFocusable');
+        expect(mapFlowSource).toContain('onViewportChange');
+        const renderApi = /render\(payload: MapFlowPayload\) \{[\s\S]+?\n    \},/.exec(mapFlowSource)?.[0] ?? '';
+        expect(renderApi).not.toContain('instance = null;');
+        expect(renderApi).toContain('next.setViewport(payload.initialViewport)');
+        expect(renderApi).toContain('instance.setViewport(payload.initialViewport)');
+    });
+
     it('shows phase code/test mappings, GO gates, and stale-receipt recovery', () => {
         expect(preview).toContain('receipt.itemMappings');
         expect(preview).toContain('receipt.unmatchedPlanItems');

@@ -93,6 +93,8 @@ export const DiagramGraphEdge = z
         to: graphIdSchema,
         label: renderableDiagramTextSchema(MAX_GRAPH_LABEL_LENGTH).optional(),
         style: DiagramEdgeStyle.optional(),
+        relation: z.enum(['static-import', 'dynamic-import', 'type-import']).optional(),
+        evidence: z.string().trim().min(1).max(MAX_GRAPH_PATH_LENGTH).optional(),
     })
     .strict();
 export type DiagramGraphEdge = z.infer<typeof DiagramGraphEdge>;
