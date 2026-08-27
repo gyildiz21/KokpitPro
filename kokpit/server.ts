@@ -281,8 +281,9 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
         json(response, 200, { report: applyClosures(report, complianceClosures.list(project.id)) });
         return true;
     }
-    if (request.method === 'POST' && complianceMatch?.[1]) {
-        const project = findProject(decodeURIComponent(complianceMatch[1]));
+    const complianceCloseMatch = /^\/api\/projects\/([^/]+)\/compliance\/close$/.exec(url.pathname);
+    if (request.method === 'POST' && complianceCloseMatch?.[1]) {
+        const project = findProject(decodeURIComponent(complianceCloseMatch[1]));
         let input: ClosureRequest;
         try {
             input = ClosureRequest.parse(await body(request));

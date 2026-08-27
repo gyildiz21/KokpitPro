@@ -7,7 +7,8 @@
 > güncel indeks makbuzunda ölçülmüş repo verisini, ölçüm yoksa açıkça etiketli
 > örnek durumu gösterir; Delta (§5.2) Dilim 3 ile gerçek modda açıldı — yalnız
 > seçili madde için ölçülmüş kanıt; kanıt yoksa ölçülemiyor. §10 Uyum motoru
-> Dilim 5 kapsamında hâlâ açıktır. Remap v2 backlog'tadır.
+> Dilim 5 ile CANLIYA açıldı (2026-08-27: şema + üç denetçi modülü + gerçek IR
+> triage kuyruğu/kapatma akışı). Remap v2 backlog'tadır.
 > **Kapsam:** proje kataloğu, kalıcı yerel/GitHub bağlantı servisi, proje
 > değiştirici, veri izolasyonu, portföy karşılaştırması, tam-yükseklik kabuk,
 > Harita/Zaman/Delta/**Uyum** yüzeyleri.

@@ -128,5 +128,9 @@ test('S3 · gerçek API negatif turu: özel depo anonim → HTTP 404, kayıt def
     expect(bodyText).toContain('private or does not exist');
     const after = await (await request.get('/api/projects')).json();
     expect(after.projects.length).toBe(before.projects.length);
-    expect(after.projects.some((project: { name: string }) => project.name === 'KokpitPro')).toBe(false);
+    // Başarısız doğrulama GitHub kimliğiyle kayıt üretmez (yerel KokpitPro
+    // kaydı meşrudur; sahibi gyildiz21 olan GITHUB kaydı asla oluşmamalı).
+    expect(after.projects.some((project: { source: { type: string; owner?: string; repo?: string } }) =>
+        project.source.type === 'github' && project.source.owner === 'gyildiz21' && project.source.repo === 'KokpitPro',
+    )).toBe(false);
 });

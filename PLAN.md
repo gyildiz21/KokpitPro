@@ -214,21 +214,30 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 - [x] **Yerel sunucu güvenlik sınırı:** `.env`, `.git`, `.kokpit`,
       `node_modules` ve `gitdiagram` statik servisten dışlanır; Host başlığı
       yalnız yapılandırılan yerel adres/porttur; saf nöbetçi + canlı HTTP kabulü vardır.
-- [~] **GitHub App / GitHub Contents (`kokpit/projects/github.ts`):** seçili repolar + `Contents: read` token
+- [x] **GitHub App / GitHub Contents (`kokpit/projects/github.ts`):** seçili repolar + `Contents: read` token
       üretimi sunucuda kodlandı; anonim halka açık repo kabulü gerçek API ile
-      doğrulandı. Özel `gyildiz21` repoları için App ID/installation/private-key
-      dış kurulumu henüz yok; PAT/parola formu yok ve sır ön yüze gitmez.
+      doğrulandı. **2026-08-27 negatif-yol sözleşmesi:** anonim özel repo
+      `GithubVerificationError` ile ALGILANABİLİR 404 döner
+      (`not-found-or-private`; auth/rate-limit/network ayrımı); hata metni
+      sır-taşımaz, anonim modda Authorization başlığı gönderilmez; özel
+      `gyildiz21` repoları için App ID/installation/private-key dış kurulumu
+      hâlâ yok; PAT/parola formu yok.
 - [x] **Proje-bazlı gerçek indeks:** IR
       `projectId/repoRoot/branch/commit/revisionKind/revision` alanları; temiz
       commit ile kirli çalışma ağacı ayrılır; başarısız yeni koşumda son
       başarılı IR bayat etiketiyle korunur.
 - [x] **Gerçek karşılaştırma adaptörü:** proje özetleri aynı ölçüm sözleşmesinden
       gelmiyorsa ölçülemez; proje satırı etkin bağlama drill-through yapar.
-- [~] **E2E kabul:** yerel ekle, halka açık GitHub doğrula, özel GitHub yetki
+- [x] **E2E kabul:** yerel ekle, halka açık GitHub doğrula, özel GitHub yetki
       hatası, proje değişimi, yeniden yükleme kalıcılığı ve veri
       sızıntısı nöbetçisi. 1440/1024/768 taşma, TR/EN, düğüm çakışması ve
-      klavye/odak senaryoları 2026-08-26'da Playwright ile kapandı; özel GitHub
-      App dış kurulumu bu maddenin kalanıdır.
+      klavye/odak senaryoları 2026-08-26'da Playwright ile kapandı.
+      **2026-08-27 negatif-yol turu:** `e2e/dilim-connect-github.spec.ts`
+      S1 anonim-özel-repo dürüst 404 + kayıt defteri hazır-gibi kaydetmez,
+      S2 halka açık akış regreasyonsuz (hermetik maskeler); S3 gerçek-API
+      negatif turu `KOKPIT_REAL_GITHUB_PROBE=1` ile ayrı koşar —
+      `gyildiz21/KokpitPro` anonim gerçek 404 doğrulandı (birim + E2E).
+      Özel GitHub App dış kurulumu bu maddenin kalanıdır.
 - [x] **2026-08-24 canlı kanıt:** 3 kalıcı yerel repo; KokpitPro `7/31`,
       MethodLogos `8/62` ham checkbox grubu, PageBlitz kanıt-defteri adaptörü
       `51/1057` ham belge grubu (kanonik ürün fazı sayılmaz); halka
@@ -355,16 +364,40 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 
 ## Dilim 5 · Uyum Telemetrisi (UI-SPEC §10) — [hazirlik-auditi: SAHİPSİZ bulgusuna sahip çıktık]
 
-- [ ] IR v0.2 şema genişlemesi: `sync[]` · `violations[]` · `conflicts[]` ·
-      `health{}` (UI-SPEC §10.6 alanları, Zod'lu)
-- [ ] Denetçi modüller: `kokpit/check/sync.ts` (defter senkronu + near-miss
-      gerekçesi) · `kokpit/check/rules.ts` (başlangıç seti: koşumsuz-commit,
-      hardcode-metin, hex-in-component, sahte-kapı, bayat-kutu, ks-band)
-      · `kokpit/check/conflicts.ts` (karar-defteri ↔ ROADMAP çaprazı)
-- [ ] Uyum sekmesi mock → gerçek IR verisi; triage kuyrukları (Yeni/Regress/
-      Yükselen/Gerekçeyle-kapalı); kapatma akışı zorunlu gerekçe+kim+zaman
+- [x] **IR v0.2 şema genişlemesi:** `kokpit/check/schema.ts` v1 donduruldu —
+      `violations[]` (kural ciddiyeti ≠ bağlam ciddiyeti; friction×severity
+      sıralama; kapalı kayıt gerekçe+kim+zaman şartlı), `sync[]` (near-miss
+      zorunlu: date-gap · content-hash-mismatch · version-field-missing ·
+      phase-file-missing), `conflicts[]` (open-conflict · superseded-chain),
+      `health{}` dört bağımsız bant. Zod 3 `.strict()`; **tek genel sağlık
+      yüzdesi şema düzeyinde imkânsız**; `measurement` alanı ölçülemeyeni
+      sahte temizlikten ayırır. Nöbetçi: 6 şema testi.
+- [x] **Denetçi modüller:** `kokpit/check/rules.ts` (başlangıç seti: koşumsuz-
+      commit, hardcode-metin, hex-in-component, sahte-kapı, bayat-kutu, ks-band
+      — hepsi deterministik, id koşumlar arası kararlı), `kokpit/check/sync.ts`
+      (faz dosyası × kutu × handoff üçlüsü + near-miss gerekçesi),
+      `kokpit/check/conflicts.ts` (karar-defteri ↔ plan negasyon çaprazı +
+      bozuk superseded zinciri), `kokpit/check/index.ts` (buildCompliance;
+      github kökünde dürüst unmeasured), `kokpit/check/closures.ts` (atomik
+      audit deposu + kapatma birleştirmesi). 24 motor testi.
+- [x] **Uyum sekmesi mock → gerçek IR verisi:** statik örnek satırlar
+      silindi; yüzey yalnız `GET /api/projects/:id/compliance` (cache no-store)
+      raporundan çizer. Triage kuyrukları Tümü/İhlal/Defter/Karar/Gerekçeyle-
+      kapalı; Regres/Yükselen v1 iz-sürülmüyor (dürüst devre dışı + gerekçe
+      toast). Kapatma `POST …/compliance/close`: gerekçesiz 400, bilinmeyen
+      404, tekrar 409; gerekçe+kim+zaman `.kokpit/data/compliance-audit.json`
+      atomik audit'e yazılır, aktif sağlık bantları yalnız açık kaydı sayar.
+- **2026-08-27 canlı kabul:** MethodLogos Pro verisinde pano **49 gerçek ihlal**
+  (hex-in-component 24 · bayat-kutu 18 · koşumsuz-commit 4 · sahte-kapı 2 ·
+  ks-band 1) ve **8 açık çelişki adayı** (ör. D4-I korpus erişim kararı ↔
+  ROADMAP "TR korpusu değildir" negasyonu) yakaladı; her çipten **≤2 tıklamada**
+  kanıt satırı (chip → satır → drawer `targetPath:line`); kapatma akışı canlı
+  API'de 400/200/409/404 ile doğrulandı; TR/EN parite, klavye/Esc ve
+  1440/1024/768 taşmasız tur Playwright **9/9**; GitHub kaynağında boş liste
+  `ölçemedi` olarak sunulur, örnek veri canlı veriyle karışmaz.
 - **Kabul:** MethodLogos verisinde pano ≥1 gerçek ihlal ve ≥1 çelişkiyi
-  yakalar; her çipten drill-through ≤2 tıklama (UI-SPEC §10.7).
+  yakalar; her çipten drill-through ≤2 tıklama (UI-SPEC §10.7) — ✅ gerçek
+  repoda bizzat doğrulandı.
 
 ## Sabit kurallar (bu projede de geçerli)
 
