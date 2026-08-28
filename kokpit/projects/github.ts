@@ -7,6 +7,76 @@ const API_ROOT = 'https://api.github.com';
 const API_VERSION = '2026-03-10';
 const PLAN_CANDIDATES = ['PLAN.md', 'ROADMAP.md', 'DEVIR_TESLIM.md', 'docs/PLAN.md', 'docs/ROADMAP.md'];
 
+/**
+ * Dilim 2.1 dürüst hata sözleşmesi: anonim istemcinin özel depodan aldığı 404,
+ * "depo yok" ile "yetki yok" ayrımı yapmadan dürüstçe raporlanır. GitHub,
+ * özel depoların varlığını gizlediği için 404 iki anlamı da taşır; mesaj bunu
+ * açıkça söyler. Token/değer sızıntısı yapısal olarak imkânsızdır: bu sınıf
+ * yalnız durum kodu + sabit metin taşır.
+ */
+export type GithubFailureReason =
+    | 'not-found-or-private'
+    | 'auth-required'
+    | 'rate-limit'
+    | 'network'
+    | 'plan-file-missing';
+
+export class GithubVerificationError extends Error {
+    constructor(
+        readonly status: number,
+        readonly reasonCode: GithubFailureReason,
+        message: string,
+        readonly retryAfter?: string,
+    ) {
+        super(message);
+        this.name = 'GithubVerificationError';
+    }
+}
+
+type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
+
+function githubVerificationFailure(
+    status: number,
+    label: string,
+    rateLimitRemaining: string | null,
+    retryAfter: string | null,
+): GithubVerificationError {
+    if (status === 404) {
+        return new GithubVerificationError(
+            404,
+            'not-found-or-private',
+            `GitHub repository not found (404): ${label} is private or does not exist. Anonymous access cannot verify private repositories; GitHub App authorization is required.`,
+        );
+    }
+    if (status === 401) {
+        return new GithubVerificationError(
+            401,
+            'auth-required',
+            `GitHub authorization rejected (401) for ${label}. Credentials stay server-side; no token value is logged.`,
+        );
+    }
+    if (status === 403 || status === 429) {
+        if (status === 429 || rateLimitRemaining === '0') {
+            return new GithubVerificationError(
+                status,
+                'rate-limit',
+                `GitHub rate limit reached (${status}); retry later. No token value is logged.`,
+                retryAfter ?? undefined,
+            );
+        }
+        return new GithubVerificationError(
+            403,
+            'auth-required',
+            `GitHub access rejected (403) for ${label}. Private repositories require GitHub App authorization.`,
+        );
+    }
+    return new GithubVerificationError(
+        status,
+        'network',
+        `GitHub request failed (${status}) for ${label}.`,
+    );
+}
+
 interface GithubAuth {
     mode: 'github-app' | 'server-token' | 'anonymous';
     token: string | null;
@@ -24,6 +94,10 @@ interface GithubContentEntry { name: string; path: string; type: 'file' | 'dir' 
 interface GithubInstallationToken { token: string; expires_at: string }
 
 const installationTokenCache = new Map<string, { token: string; expiresAt: number }>();
+
+export function clearGithubInstallationTokenCacheForTests(): void {
+    installationTokenCache.clear();
+}
 
 function base64url(value: string): string {
     return Buffer.from(value).toString('base64url');
@@ -57,39 +131,77 @@ function githubHeaders(token: string | null, accept = 'application/vnd.github+js
     };
 }
 
-async function githubAppInstallationToken(repo: string): Promise<string | null> {
+async function githubAppInstallationToken(repo: string, fetchImpl: FetchLike = fetch): Promise<string | null> {
     const installationId = process.env.GITHUB_APP_INSTALLATION_ID;
     const jwt = githubAppJwt();
     if (!installationId || !jwt) return null;
-    const cached = installationTokenCache.get(repo);
+    const cacheKey = `${installationId}:${repo.toLocaleLowerCase('en-US')}`;
+    const cached = installationTokenCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now() + 60_000) return cached.token;
-    const response = await fetch(`${API_ROOT}/app/installations/${encodeURIComponent(installationId)}/access_tokens`, {
-        method: 'POST',
-        headers: githubHeaders(jwt),
-        body: JSON.stringify({ repositories: [repo], permissions: { contents: 'read' } }),
-    });
-    if (!response.ok) throw new Error(`GitHub App token request failed (${response.status}): ${await response.text()}`);
+    let response: Response;
+    try {
+        response = await fetchImpl(`${API_ROOT}/app/installations/${encodeURIComponent(installationId)}/access_tokens`, {
+            method: 'POST',
+            headers: githubHeaders(jwt),
+            body: JSON.stringify({ repositories: [repo], permissions: { contents: 'read' } }),
+        });
+    } catch {
+        throw new GithubVerificationError(0, 'network', 'GitHub App token request could not be completed: network unreachable.');
+    }
+    if (!response.ok) {
+        const rateLimited = response.status === 429 || (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0');
+        throw new GithubVerificationError(
+            response.status,
+            rateLimited ? 'rate-limit' : 'auth-required',
+            `GitHub App token request failed (${response.status}).`,
+            response.headers.get('retry-after') ?? response.headers.get('x-ratelimit-reset') ?? undefined,
+        );
+    }
     const payload = (await response.json()) as GithubInstallationToken;
-    installationTokenCache.set(repo, { token: payload.token, expiresAt: Date.parse(payload.expires_at) });
+    installationTokenCache.set(cacheKey, { token: payload.token, expiresAt: Date.parse(payload.expires_at) });
     return payload.token;
 }
 
-async function resolveAuth(repo: string): Promise<GithubAuth> {
-    const appToken = await githubAppInstallationToken(repo);
+async function resolveAuth(repo: string, fetchImpl: FetchLike = fetch): Promise<GithubAuth> {
+    const appToken = await githubAppInstallationToken(repo, fetchImpl);
     if (appToken) return { mode: 'github-app', token: appToken };
     if (process.env.GITHUB_TOKEN) return { mode: 'server-token', token: process.env.GITHUB_TOKEN };
     return { mode: 'anonymous', token: null };
 }
 
-async function githubJson<T>(path: string, token: string | null): Promise<T> {
-    const response = await fetch(`${API_ROOT}${path}`, { headers: githubHeaders(token) });
-    if (!response.ok) throw new Error(`GitHub API ${response.status}: ${await response.text()}`);
+async function githubJson<T>(path: string, token: string | null, label: string, fetchImpl: FetchLike = fetch): Promise<T> {
+    let response: Response;
+    try {
+        response = await fetchImpl(`${API_ROOT}${path}`, { headers: githubHeaders(token) });
+    } catch {
+        throw new GithubVerificationError(0, 'network', 'GitHub request could not be completed: network unreachable.');
+    }
+    if (!response.ok) {
+        throw githubVerificationFailure(
+            response.status,
+            label,
+            response.headers.get('x-ratelimit-remaining'),
+            response.headers.get('retry-after') ?? response.headers.get('x-ratelimit-reset'),
+        );
+    }
     return (await response.json()) as T;
 }
 
-async function githubRaw(path: string, token: string | null): Promise<string> {
-    const response = await fetch(`${API_ROOT}${path}`, { headers: githubHeaders(token, 'application/vnd.github.raw+json') });
-    if (!response.ok) throw new Error(`GitHub contents ${response.status}: ${await response.text()}`);
+async function githubRaw(path: string, token: string | null, label: string, fetchImpl: FetchLike = fetch): Promise<string> {
+    let response: Response;
+    try {
+        response = await fetchImpl(`${API_ROOT}${path}`, { headers: githubHeaders(token, 'application/vnd.github.raw+json') });
+    } catch {
+        throw new GithubVerificationError(0, 'network', 'GitHub request could not be completed: network unreachable.');
+    }
+    if (!response.ok) {
+        throw githubVerificationFailure(
+            response.status,
+            label,
+            response.headers.get('x-ratelimit-remaining'),
+            response.headers.get('retry-after') ?? response.headers.get('x-ratelimit-reset'),
+        );
+    }
     const text = await response.text();
     if (text.length > 2 * 1024 * 1024) throw new Error('Plan file is larger than 2 MiB.');
     return text;
@@ -104,18 +216,42 @@ export function parseGithubRepository(input: string): { owner: string; repo: str
     return { owner, repo };
 }
 
-async function discoverPlan(owner: string, repo: string, branch: string, token: string | null, requested?: string) {
-    const candidates = requested && requested !== 'auto' ? [requested] : PLAN_CANDIDATES;
+async function discoverPlan(
+    owner: string,
+    repo: string,
+    branch: string,
+    token: string | null,
+    requested: string | undefined,
+    fetchImpl: FetchLike,
+) {
+    const label = `${owner}/${repo}`;
+    const candidates = requested && requested !== 'auto' ? [validateGithubPlanPath(requested)] : PLAN_CANDIDATES;
     for (const candidate of candidates) {
         try {
             const encodedPath = candidate.split('/').map(encodeURIComponent).join('/');
-            const markdown = await githubRaw(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`, token);
+            const markdown = await githubRaw(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`, token, label, fetchImpl);
             return { planPath: candidate, planMarkdown: markdown };
         } catch (error) {
-            if (!String(error).includes(' 404:')) throw error;
+            const notFound = error instanceof GithubVerificationError && error.reasonCode === 'not-found-or-private';
+            if (!notFound) throw error;
         }
     }
-    throw new Error(`No readable plan file found. Tried: ${candidates.join(', ')}`);
+    throw new GithubVerificationError(404, 'plan-file-missing', `No readable plan file found. Tried: ${candidates.join(', ')}`);
+}
+
+export function validateGithubPlanPath(input: string): string {
+    const path = input.trim();
+    const segments = path.split('/');
+    if (
+        !path ||
+        path.length > 512 ||
+        path.startsWith('/') ||
+        path.includes('\\') ||
+        segments.some((segment) => !segment || segment === '.' || segment === '..')
+    ) {
+        throw new Error('GitHub plan path must be a repository-relative path without traversal segments.');
+    }
+    return path;
 }
 
 function nodesOf(entries: GithubContentEntry[], owner: string, repo: string, branch: string): ProjectNode[] {
@@ -146,15 +282,26 @@ export interface GithubProjectInput {
     name?: string;
 }
 
-export async function indexGithubProject(input: GithubProjectInput, previous?: ProjectRecordType): Promise<ProjectRecordType> {
+export interface GithubProjectDeps {
+    /** Prod davranış değişmez; hermetik testler sahte fetch takabilir. */
+    fetchImpl?: FetchLike;
+}
+
+export async function indexGithubProject(
+    input: GithubProjectInput,
+    previous?: ProjectRecordType,
+    deps?: GithubProjectDeps,
+): Promise<ProjectRecordType> {
+    const fetchImpl = deps?.fetchImpl ?? fetch;
     const { owner, repo } = parseGithubRepository(input.repository);
-    const auth = await resolveAuth(repo);
-    const repository = await githubJson<GithubRepositoryResponse>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, auth.token);
+    const label = `${owner}/${repo}`;
+    const auth = await resolveAuth(repo, fetchImpl);
+    const repository = await githubJson<GithubRepositoryResponse>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, auth.token, label, fetchImpl);
     const branch = input.branch?.trim() || repository.default_branch;
-    const commit = await githubJson<GithubCommitResponse>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits/${encodeURIComponent(branch)}`, auth.token);
-    const plan = await discoverPlan(owner, repo, branch, auth.token, input.planPath);
+    const commit = await githubJson<GithubCommitResponse>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits/${encodeURIComponent(branch)}`, auth.token, label, fetchImpl);
+    const plan = await discoverPlan(owner, repo, branch, auth.token, input.planPath, fetchImpl);
     const planIndex = indexPlanText(plan.planMarkdown, plan.planPath);
-    const rootEntries = await githubJson<GithubContentEntry[]>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents?ref=${encodeURIComponent(branch)}`, auth.token);
+    const rootEntries = await githubJson<GithubContentEntry[]>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents?ref=${encodeURIComponent(branch)}`, auth.token, label, fetchImpl);
     const now = new Date().toISOString();
     const identity = `${owner}/${repo}`.toLocaleLowerCase('en-US');
     const id = previous?.id ?? `github-${createHash('sha256').update(identity).digest('hex').slice(0, 12)}`;
