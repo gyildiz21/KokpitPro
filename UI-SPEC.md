@@ -7,8 +7,9 @@
 > güncel indeks makbuzunda ölçülmüş repo verisini, ölçüm yoksa açıkça etiketli
 > örnek durumu gösterir; Delta (§5.2) Dilim 3 ile gerçek modda açıldı — yalnız
 > seçili madde için ölçülmüş kanıt; kanıt yoksa ölçülemiyor. §10 Uyum motoru
-> Dilim 5 ile CANLIYA açıldı (2026-08-27: şema + üç denetçi modülü + gerçek IR
-> triage kuyruğu/kapatma akışı). Remap v2 backlog'tadır.
+> Dilim 5 ile teknik olarak CANLIYA açıldı (şema + üç denetçi modülü + gerçek
+> rapor triage kuyruğu/kapatma akışı); ancak §10.7#1'deki aynı doğrulanmış
+> korpusta gerçek çelişki adayı kabulü henüz kapanmadı. Remap v2 backlog'tadır.
 > **Kapsam:** proje kataloğu, kalıcı yerel/GitHub bağlantı servisi, proje
 > değiştirici, veri izolasyonu, portföy karşılaştırması, tam-yükseklik kabuk,
 > Harita/Zaman/Delta/**Uyum** yüzeyleri.
@@ -439,8 +440,7 @@ metin; uygulama insan kararıdır.
     server.ts               ← :4173 aynı-köken API + statik servis (K1 sertleşti)
     cli.ts                  ← kabul aracı
     i18n/labels.ts          ← D1 sözlük
-    check/{sync,rules,conflicts}.ts  ← Dilim 5 (Uyum) — eklenecek
-    ir/                     ← Kokpit-IR v0.2 (sync/violations/conflicts) — eklenecek
+    check/{schema,index,sync,rules,conflicts,closures}.ts ← Dilim 5 (Uyum)
   gitdiagram/               ← referans motor (lite dalı; saf çekirdek Dilim 2.0'da nakledilir)
   .github/workflows/ci.yml  ← typecheck + test koşum kanıtı
   ```
@@ -541,7 +541,8 @@ içerik-hash mi, sürüm alanı mı* — tek satır açıklama zorunlu.
 
 ### §10.4 Kural İhlali Kuyruğu (Akış C — Sentry/GitHub şeması)
 
-Her ihlal kaydı:
+Her ihlal kaydı aşağıdaki tam hedef biçime evrilir; v1'de ölçülmeyen trend ve
+friction alanları sayı uydurmak yerine açıkça `ÖLÇÜLMEDİ` gösterilir:
 
 ```
 [🔴 ERR] sahte-kapı        · kokpit/ui/InviteButton.tsx:12   ▁▃▂▁▂▄▆ (14g)
@@ -555,10 +556,12 @@ Kurallar:
 1. **İki ayrı ciddiyet:** kural ciddiyeti (Error/Warning/Note) ≠ bağlam
    ciddiyeti (o bölgedeki değişim yoğunluğu — CodeScene friction deseni).
    Sıralama friction×severity'dir.
-2. **Triage sekmeleri:** Yeni · Regress (çözülüp geri gelen!) · Yükselen ·
-   Gerekçeyle kapalı. Kapatma **gerekçesiz olamaz**; gerekçe audit'e yazılır.
-3. **Alert ↔ fix bağlantısı:** ihlal kartında "düzelten commit/PR" alanı;
-   çözülmeyenler için fix önerisi metni.
+2. **v1 triage:** Tümü · İhlal · Defter · Karar · Gerekçeyle kapalı.
+   Regress/Yükselen kontrolleri görünür fakat ölçüm geçmişi olmadığı için
+   devre dışıdır ve gerekçesini söyler. Kapatma **gerekçesiz olamaz**;
+   gerekçe+kim+zaman, rapor kaynak revizyonuna bağlı audit'e yazılır.
+3. **Ölçüm sınırı:** v1 `contextFriction: unmeasured` ve `changeCount: 0`
+   taşır; ilk görülme, trend ve düzelten commit/PR henüz ölçülmüş alan değildir.
 4. Başlangıç kural seti (denetlenebilir → otomatik): `koşumsuz-commit`
    · `hardcode-metin` · `hex-in-component` · `sahte-kapı` · `bayat-kutu`
    · `ks-band-delinmesi`. Set genişletilebilir (`kokpit/check/rules/`).
@@ -577,16 +580,21 @@ D5 Dağıtım Yolu   ● 2026-08-24 Adopt (+1)  "yerel-önce"
 CORPUS_FROM_YEAR  ● 2026-08-22 Hold (-1)   "kod zaten açık"
 ```
 
-- Çelişki tespiti: aynı konuda iki otorite farklı söylüyorsa (anahtar-kelime
-  + tarih sırası sezgisel başlar; v1'de yarım-otomatik, onaylı).
+- Çelişki tespiti: eski otorite aynı konuyu açıkça sınırlıyor, daha yeni karar
+  genişletme yönü taşıyor ve en az iki konu terimi kesişiyorsa `candidate`
+  üretilir. Bu bir **insan incelemesi adayıdır**; onay olmadan açık çelişki ya
+  da çözülmüş karar sayılmaz.
 - Yön-değişimi doğrulaması: yeni karar geldiğinde etkilenen belgelerin
   güncellenip güncellenmediği Akış B ile çaprazlanır.
 
 ### §10.6 IR Şeması Genişlemesi (v0.2)
 
-`KokpitIr`'e eklenir: `sync[{sliceId,phaseFile,roadmapBox,handoff,nearMiss?}]`,
-`violations[]`, `conflicts[]`, `health{phaseDone,partial,open,syncPct,vioErr,vioWarn,conflicts}`.
-Tümü Zod'lu; UI hesaplama yapmaz.
+Canlı `ComplianceReport v1`: `projectId`, `sourceRevision`, `generatedAt`,
+`measurement(measured|partial|unmeasured)`, `reasons[]`,
+`coverage{eligibleFiles,scannedFiles,skippedLargeFiles,unreadableFiles,skippedSymlinks,outsideRootPaths,truncated}`,
+`sync[{sliceId,phaseFile,roadmapBox,handoff,nearMiss?}]`, `violations[]`,
+`conflicts[]`, `health{phaseDone,partial,open,syncStale,vioErr,vioWarn,conflictOpen}`.
+Tümü Zod'lu; UI yalnız kayıtları dizer, tek sağlık yüzdesi üretmez.
 
 ### §10.7 Kabul (Uyum katmanı)
 
@@ -596,7 +604,13 @@ Tümü Zod'lu; UI hesaplama yapmaz.
 3. Kapatılan her ihlalde gerekçe+kim+zaman audit kaydı oluşur.
 4. TR/EN paritesi yeni metinlerde de bozulmaz.
 5. Motor bağlı değilken hiçbir yüzde/ihlal/çelişki repo gerçeği gibi görünmez.
-6. Örnek kayıtların her birinde görünür `ÖRNEK` etiketi vardır.
+6. Canlı rapora örnek kayıt karışmaz; ayrı bir örnek yüzey eklenirse her kayıt
+   görünür `ÖRNEK` etiketi taşır.
+
+> **2026-08-28 kabul durumu:** #2–#6 nöbetçilerle korunur; gerçek ihlal
+> ölçülür. #1'in gerçek çelişki ayağı güncel doğrulanmış korpusta 0 aday olduğu
+> için açıktır. Eski ilgisiz-bölüm eşleşmelerinden üretilen adaylar kabul kanıtı
+> sayılmaz.
 
 ### §10.8 Desen kaynakları — ikinci tur araştırma (2026-08-24)
 

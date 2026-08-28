@@ -967,20 +967,24 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `node_modules` ve `gitdiagram` statik servisten dışlanır; Host başlığı
       yalnız yapılandırılan yerel adres/porttur; saf nöbetçi + canlı HTTP kabulü vardır.
 - [x] **GitHub App / GitHub Contents (`kokpit/projects/github.ts`):** seçili repolar + `Contents: read` token
-      üretimi sunucuda kodlandı; anonim halka açık repo kabulü gerçek API ile
-      doğrulandı. **2026-08-27 negatif-yol sözleşmesi:** anonim özel repo
+      üretimi sunucuda kodlandı; hermetik RSA/JWT → installation token → özel
+      repo indeksleme olumlu yolu ve token önbelleği nöbetçiyle doğrulandı;
+      anonim halka açık repo kabulü gerçek API ile doğrulandı. **2026-08-27
+      negatif-yol sözleşmesi:** anonim özel repo
       `GithubVerificationError` ile ALGILANABİLİR 404 döner
       (`not-found-or-private`; auth/rate-limit/network ayrımı); hata metni
-      sır-taşımaz, anonim modda Authorization başlığı gönderilmez; özel
-      `gyildiz21` repoları için App ID/installation/private-key dış kurulumu
-      hâlâ yok; PAT/parola formu yok.
+      sır-taşımaz, anonim modda Authorization başlığı gönderilmez; PAT/parola
+      formu yok.
+- [ ] **Gerçek özel-repo GitHub App kabulü:** `gyildiz21` repoları için App
+      ID/installation/private-key dış kurulumu ve kimlikli gerçek-API olumlu
+      turu henüz yok. Kod ve hermetik test bu harici yetki kanıtının yerine geçmez.
 - [x] **Proje-bazlı gerçek indeks:** IR
       `projectId/repoRoot/branch/commit/revisionKind/revision` alanları; temiz
       commit ile kirli çalışma ağacı ayrılır; başarısız yeni koşumda son
       başarılı IR bayat etiketiyle korunur.
 - [x] **Gerçek karşılaştırma adaptörü:** proje özetleri aynı ölçüm sözleşmesinden
       gelmiyorsa ölçülemez; proje satırı etkin bağlama drill-through yapar.
-- [x] **E2E kabul:** yerel ekle, halka açık GitHub doğrula, özel GitHub yetki
+- [x] **Hermetik E2E kabul:** yerel ekle, halka açık GitHub doğrula, özel GitHub yetki
       hatası, proje değişimi, yeniden yükleme kalıcılığı ve veri
       sızıntısı nöbetçisi. 1440/1024/768 taşma, TR/EN, düğüm çakışması ve
       klavye/odak senaryoları 2026-08-26'da Playwright ile kapandı.
@@ -989,6 +993,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       S2 halka açık akış regreasyonsuz (hermetik maskeler); S3 gerçek-API
       negatif turu `KOKPIT_REAL_GITHUB_PROBE=1` ile ayrı koşar —
       `gyildiz21/KokpitPro` anonim gerçek 404 doğrulandı (birim + E2E).
+- [ ] **Kimlikli E2E kabul:** gerçek kurulum tokenıyla özel depo başarı akışı
+      harici GitHub App kurulumu yapılana kadar açıktır.
       Özel GitHub App dış kurulumu bu maddenin kalanıdır.
 - [x] **2026-08-24 canlı kanıt:** 3 kalıcı yerel repo; KokpitPro `7/31`,
       MethodLogos `8/62` ham checkbox grubu, PageBlitz kanıt-defteri adaptörü
@@ -1120,18 +1126,22 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `violations[]` (kural ciddiyeti ≠ bağlam ciddiyeti; friction×severity
       sıralama; kapalı kayıt gerekçe+kim+zaman şartlı), `sync[]` (near-miss
       zorunlu: date-gap · content-hash-mismatch · version-field-missing ·
-      phase-file-missing), `conflicts[]` (open-conflict · superseded-chain),
-      `health{}` dört bağımsız bant. Zod 3 `.strict()`; **tek genel sağlık
-      yüzdesi şema düzeyinde imkânsız**; `measurement` alanı ölçülemeyeni
-      sahte temizlikten ayırır. Nöbetçi: 6 şema testi.
+      phase-file-missing · slice-commit-missing), `conflicts[]` (candidate ·
+      open-conflict · superseded-chain), `health{}` dört bağımsız bant,
+      `sourceRevision` ve dosya-kapsam sayaçları. Zod 3 `.strict()`; **tek
+      genel sağlık yüzdesi şema düzeyinde imkânsız**; `measurement`
+      measured/partial/unmeasured ayrımı sessiz kesilmeyi engeller.
 - [x] **Denetçi modüller:** `kokpit/check/rules.ts` (başlangıç seti: koşumsuz-
-      commit, hardcode-metin, hex-in-component, sahte-kapı, bayat-kutu, ks-band
+      commit, hardcode-metin, hex-in-component, sahte-kapı, bayat-kutu,
+      ks-band-delinmesi
       — hepsi deterministik, id koşumlar arası kararlı), `kokpit/check/sync.ts`
       (faz dosyası × kutu × handoff üçlüsü + near-miss gerekçesi),
-      `kokpit/check/conflicts.ts` (karar-defteri ↔ plan negasyon çaprazı +
+      `kokpit/check/conflicts.ts` (tarih+yön+konu kesişimli, insan incelemeli
+      karar adayı +
       bozuk superseded zinciri), `kokpit/check/index.ts` (buildCompliance;
-      github kökünde dürüst unmeasured), `kokpit/check/closures.ts` (atomik
-      audit deposu + kapatma birleştirmesi). 24 motor testi.
+      github kökünde dürüst unmeasured), `kokpit/check/closures.ts` (atomik,
+      revizyon-bağlı audit deposu + kapatma birleştirmesi). Dosya sınırı,
+      dış-kök bağlantısı, kimlik çakışması ve revizyon kapanışı nöbetçileri var.
 - [x] **Uyum sekmesi mock → gerçek IR verisi:** statik örnek satırlar
       silindi; yüzey yalnız `GET /api/projects/:id/compliance` (cache no-store)
       raporundan çizer. Triage kuyrukları Tümü/İhlal/Defter/Karar/Gerekçeyle-
@@ -1139,17 +1149,26 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       toast). Kapatma `POST …/compliance/close`: gerekçesiz 400, bilinmeyen
       404, tekrar 409; gerekçe+kim+zaman `.kokpit/data/compliance-audit.json`
       atomik audit'e yazılır, aktif sağlık bantları yalnız açık kaydı sayar.
-- **2026-08-27 canlı kabul:** MethodLogos Pro verisinde pano **49 gerçek ihlal**
-  (hex-in-component 24 · bayat-kutu 18 · koşumsuz-commit 4 · sahte-kapı 2 ·
-  ks-band 1) ve **8 açık çelişki adayı** (ör. D4-I korpus erişim kararı ↔
-  ROADMAP "TR korpusu değildir" negasyonu) yakaladı; her çipten **≤2 tıklamada**
-  kanıt satırı (chip → satır → drawer `targetPath:line`); kapatma akışı canlı
-  API'de 400/200/409/404 ile doğrulandı; TR/EN parite, klavye/Esc ve
-  1440/1024/768 taşmasız tur Playwright **9/9**; GitHub kaynağında boş liste
-  `ölçemedi` olarak sunulur, örnek veri canlı veriyle karışmaz.
-- **Kabul:** MethodLogos verisinde pano ≥1 gerçek ihlal ve ≥1 çelişkiyi
-  yakalar; her çipten drill-through ≤2 tıklama (UI-SPEC §10.7) — ✅ gerçek
-  repoda bizzat doğrulandı.
+- **2026-08-28 yeniden denetim:** eski **49 ihlal / 8 açık çelişki** kapanış
+  iddiası geri çekildi: tarama 400 dosyada sessiz kesiliyor, tüm faz dosyaları
+  her dilime kanıt sayılıyor ve ilgisiz karar bölümleri çelişki üretiyordu.
+  Güncel motor uygun kod kapsamını açıkça raporlar; kural kayıtları gerçek
+  satırlara bağlıdır. KokpitPro kanıt koşumu **280/280 uygun kod dosyası**,
+  **99 açık kayıt** (hex-in-component 39 · koşumsuz-commit 55 · sahte-kapı 4 ·
+  hardcode-metin 1), **11 senkron near-miss** ve **0 insan incelemeli karar
+  adayı** üretir. `partial` görünüm kapsam sayacını gösterir;
+  `unmeasured` boş listeyi temiz gibi sunmaz. Drill-through, gerekçeli
+  kapanış, TR/EN, klavye/Esc ve duyarlı yerleşim hermetik Playwright
+  senaryolarıyla korunur.
+- [ ] **Kabul:** ≥1 gerçek ihlal ölçülmüştür; ancak aynı doğrulanmış korpusta
+      ≥1 gerçek çelişki adayı kriteri bugün karşılanmıyor. Aday uydurulmayacak;
+      doğrulanmış bir karar/otorite çifti oluşana kadar Dilim 5 tam kabulü açıktır.
+- [x] **2026-08-28 düzeltme kapıları:** bağımsız ajan `APPROVE_FIXES` kararıyla
+      yukarıdaki bulguları yeniden değerlendirdi; Node **20.20.2** altında
+      typecheck, Vitest **213 passed / 1 opt-in skipped**, tüm Playwright paketi
+      **22 passed / 1 opt-in gerçek-API skipped**, önizleme senkronu ve
+      `npm audit --omit=dev` (**0 açık**) doğrulandı. Bunlar dış GitHub App
+      kurulumu veya gerçek çelişki korpusu kabulünün yerine geçmez.
 
 ## Sabit kurallar (bu projede de geçerli)
 
@@ -1208,30 +1227,30 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     Object.assign(I18N.tr, {
       triageGroupAria: "Triage kuyrukları", complianceQueueAria: "Uyum kuyruğu",
       complianceUnmeasuredNote: "Uyum motoru bu projeyi ölçemedi; satırlar yalnız canlı uyum raporundan üretilir.",
-      complianceTechnicalReason: "Ölçüm gerekçesi", engineReady: "Canlı uyum raporu", engineUnmeasured: "Motor ölçemedi", engineError: "Uyum raporu alınamadı", engineStaleBadge: "veri bayat",
+      complianceTechnicalReason: "Ölçüm gerekçesi", complianceCoverage: "Taranan kapsam", compliancePartialNote: "Uyum motoru yalnız ölçebildiği kapsamı gösteriyor; sayılar tam repo toplamı değildir.", engineReady: "Canlı uyum raporu", enginePartial: "Kısmi uyum raporu", engineUnmeasured: "Motor ölçemedi", engineError: "Uyum raporu alınamadı", engineStaleBadge: "veri bayat",
       queueClosed: "Gerekçeyle kapalı", queueRegress: "Regres", queueRising: "Yükselen", trackNotTracked: "Regres ve yükselen izleme v1'de tutulmuyor; kayıtlar koşumlar arasında karşılaştırılmaz.",
-      emptyQueue: "Bu kuyrukta kayıt yok", emptyQueueBody: "Canlı uyum raporunda bu filtre için kayıt üretilmedi; tahmin gösterilmez.", signalOpenCount: "açık",
-      kindViolation: "İhlal", kindSync: "Senkron", kindDecision: "Karar", kindClosed: "Kapalı",
+      emptyQueue: "Bu kuyrukta kayıt yok", emptyQueueBody: "Canlı uyum raporunda bu filtre için kayıt üretilmedi; tahmin gösterilmez.", signalOpenCount: "açık", signalRecordCount: "kayıt",
+      kindViolation: "İhlal", kindSync: "Senkron", kindDecision: "Karar", kindDecisionCandidate: "Karar adayı", kindClosed: "Kapalı",
       ruleKosulsuzCommit: "Koşumsuz commit", ruleHardcodeMetin: "Hardcode metin", ruleHexInComponent: "Bileşende hex", ruleSahteKapi: "Sahte kapı", ruleBayatKutu: "Bayat kutu", ruleKsBand: "Sağlık bandı tutarsızlığı",
       evidenceTarget: "Kanıt hedefi", technicalMessage: "Teknik mesaj", ruleReference: "Kural referansı", recordRule: "Kural", recordSeverity: "Ciddiyet", recordGenerated: "Rapor zamanı",
       conflictTopic: "Konu", conflictAuthorityA: "Otorite A", conflictAuthorityB: "Otorite B", conflictObserved: "Görülme tarihi", conflictSuggestion: "Öneri (insan onayı gerekir)",
       syncSlice: "Dilim", syncRoadmapBox: "ROADMAP kutusu", syncPhaseFile: "Faz dosyası", syncHandoff: "Handoff", syncNearMiss: "Near-miss gerekçesi",
-      syncStatusCurrent: "Güncel", syncStatusStale: "Bayat", syncStatusMissing: "Yok", syncStatusPartial: "Kısmi",
+      syncStatusCurrent: "Güncel", syncStatusStale: "Bayat", syncStatusMissing: "Yok", syncStatusPartial: "Kısmi", contextFriction: "Bağlam ciddiyeti", frictionUnmeasured: "Ölçülmedi", frictionLow: "Düşük", frictionElevated: "Yüksekçe", frictionHigh: "Yüksek",
       closureTitle: "Gerekçeyle kapat", closureJustificationLabel: "Gerekçe (zorunlu)", closureJustificationHelp: "Gerekçesiz kapatma kaydı üretilmez; gerekçe + kim + zaman denetim dosyasına yazılır.", closureByLabel: "Kim (oturum-dostu rumuz)", closureSave: "Kapatmayı kaydet", closureCancel: "Vazgeç",
       closureSavedToast: "Kayıt gerekçeyle kapatıldı; denetim kaydı yazıldı.", closureFailedToast: "Kapatma başarısız", closureAlreadyClosed: "Bu kayıt zaten kapatılmış.", closureClosedReceipt: "Kapatma makbuzu", closureBy: "Kapatan"
     });
     Object.assign(I18N.en, {
       triageGroupAria: "Triage queues", complianceQueueAria: "Compliance queue",
       complianceUnmeasuredNote: "The compliance engine could not measure this project; rows are produced from the live compliance report only.",
-      complianceTechnicalReason: "Measurement reason", engineReady: "Live compliance report", engineUnmeasured: "Engine could not measure", engineError: "Compliance report unavailable", engineStaleBadge: "stale data",
+      complianceTechnicalReason: "Measurement reason", complianceCoverage: "Scanned coverage", compliancePartialNote: "The compliance engine is showing only the scope it could measure; counts are not whole-repository totals.", engineReady: "Live compliance report", enginePartial: "Partial compliance report", engineUnmeasured: "Engine could not measure", engineError: "Compliance report unavailable", engineStaleBadge: "stale data",
       queueClosed: "Closed with reason", queueRegress: "Regress", queueRising: "Rising", trackNotTracked: "Regress and rising tracking is not kept in v1; records are not compared across runs.",
-      emptyQueue: "No records in this queue", emptyQueueBody: "The live compliance report produced no records for this filter; no guesses are shown.", signalOpenCount: "open",
-      kindViolation: "Violation", kindSync: "Sync", kindDecision: "Decision", kindClosed: "Closed",
+      emptyQueue: "No records in this queue", emptyQueueBody: "The live compliance report produced no records for this filter; no guesses are shown.", signalOpenCount: "open", signalRecordCount: "records",
+      kindViolation: "Violation", kindSync: "Sync", kindDecision: "Decision", kindDecisionCandidate: "Decision candidate", kindClosed: "Closed",
       ruleKosulsuzCommit: "Unconditional commit", ruleHardcodeMetin: "Hardcoded text", ruleHexInComponent: "Hex in component", ruleSahteKapi: "Fake gate", ruleBayatKutu: "Stale box", ruleKsBand: "Health band inconsistency",
       evidenceTarget: "Evidence target", technicalMessage: "Technical message", ruleReference: "Rule reference", recordRule: "Rule", recordSeverity: "Severity", recordGenerated: "Report time",
       conflictTopic: "Topic", conflictAuthorityA: "Authority A", conflictAuthorityB: "Authority B", conflictObserved: "Observed on", conflictSuggestion: "Suggestion (human confirmation required)",
       syncSlice: "Slice", syncRoadmapBox: "ROADMAP box", syncPhaseFile: "Phase file", syncHandoff: "Handoff", syncNearMiss: "Near-miss reason",
-      syncStatusCurrent: "Current", syncStatusStale: "Stale", syncStatusMissing: "Missing", syncStatusPartial: "Partial",
+      syncStatusCurrent: "Current", syncStatusStale: "Stale", syncStatusMissing: "Missing", syncStatusPartial: "Partial", contextFriction: "Context friction", frictionUnmeasured: "Unmeasured", frictionLow: "Low", frictionElevated: "Elevated", frictionHigh: "High",
       closureTitle: "Close with reason", closureJustificationLabel: "Justification (required)", closureJustificationHelp: "A closure without justification is never produced; reason + who + when are written to the audit file.", closureByLabel: "Who (session-friendly alias)", closureSave: "Save closure", closureCancel: "Discard",
       closureSavedToast: "Record closed with justification; the audit entry was written.", closureFailedToast: "Closure failed", closureAlreadyClosed: "This record is already closed.", closureClosedReceipt: "Closure receipt", closureBy: "Closed by"
     });
@@ -1899,11 +1918,12 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     // boş liste "temiz" gibi DEĞİL, açık ölçemezlikte kalır. Dört sağlık bandı
     // asla tek yüzdeye katılmaz.
     function activeCompliance() { return complianceState && complianceState.projectId === activeProjectId && complianceState.status !== "loading" ? complianceState : null; }
-    const RULE_LABEL_KEYS = { "koşumsuz-commit": "ruleKosulsuzCommit", "hardcode-metin": "ruleHardcodeMetin", "hex-in-component": "ruleHexInComponent", "sahte-kapı": "ruleSahteKapi", "bayat-kutu": "ruleBayatKutu", "ks-band": "ruleKsBand" };
+    const RULE_LABEL_KEYS = { "koşumsuz-commit": "ruleKosulsuzCommit", "hardcode-metin": "ruleHardcodeMetin", "hex-in-component": "ruleHexInComponent", "sahte-kapı": "ruleSahteKapi", "bayat-kutu": "ruleBayatKutu", "ks-band-delinmesi": "ruleKsBand" };
     const SYNC_STATUS_KEYS = { current: "syncStatusCurrent", stale: "syncStatusStale", missing: "syncStatusMissing", partial: "syncStatusPartial" };
     function ruleLabel(rule) { return t(RULE_LABEL_KEYS[rule] || rule); }
     function syncStatusLabel(status) { return t(SYNC_STATUS_KEYS[status] || status); }
     function severityLabel(severity) { return severity === "error" ? t("error") : severity === "warning" ? t("warning") : t("review"); }
+    function frictionLabel(friction) { return t({ unmeasured: "frictionUnmeasured", low: "frictionLow", elevated: "frictionElevated", high: "frictionHigh" }[friction] || "frictionUnmeasured"); }
     function resetCompliancePanel() {
       complianceRequestId += 1;
       complianceState = null;
@@ -1937,7 +1957,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     }
     function updateQueueCounts(report) {
       const total = value => { $(value).textContent = "0"; };
-      if (!report || report.measurement !== "measured") { ["#queueCountAll", "#queueCountViolation", "#queueCountSync", "#queueCountDecision", "#queueCountClosed"].forEach(total); return; }
+      if (!report || report.measurement === "unmeasured") { ["#queueCountAll", "#queueCountViolation", "#queueCountSync", "#queueCountDecision", "#queueCountClosed"].forEach(total); return; }
       const records = complianceRecords(report);
       $("#queueCountAll").textContent = String(records.filter(record => record.kind !== "closed").length);
       $("#queueCountViolation").textContent = String(records.filter(record => record.kind === "violation").length);
@@ -1946,11 +1966,11 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       $("#queueCountClosed").textContent = String(records.filter(record => record.kind === "closed").length);
     }
     function updateSignalChips(report) {
-      const measurable = Boolean(report && report.measurement === "measured");
+      const measurable = Boolean(report && report.measurement !== "unmeasured");
       const pairs = [["#signalSyncStale", "#signalSyncCount", measurable && report ? report.health.syncStale : null, report?.sync.length], ["#signalViolationOpen", "#signalViolationCount", measurable && report ? report.health.vioErr + report.health.vioWarn : null, report?.violations.length], ["#signalDecisionOpen", "#signalDecisionCount", measurable && report ? report.health.conflictOpen : null, report?.conflicts.length]];
       for (const [strongId, smallId, band, listTotal] of pairs) {
         $(strongId).textContent = band === null || band === undefined ? "—" : String(band);
-        $(smallId).textContent = measurable ? `${listTotal ?? 0} ${t("signalOpenCount")}` : "—";
+        $(smallId).textContent = measurable ? `${listTotal ?? 0} ${t("signalRecordCount")}` : "—";
       }
     }
     function complianceRowMarkup(record) {
@@ -1977,7 +1997,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       }
       const conflict = record.conflict;
       return {
-        state: "decision", kind: "decision", id: record.id, kindLabel: t("kindDecision"),
+        state: "decision", kind: "decision", id: record.id, kindLabel: conflict.status === "candidate" ? t("kindDecisionCandidate") : t("kindDecision"),
         title: `${t("conflictTopic")}: ${conflict.topic}`,
         path: conflict.authorityB.slice(0, 96),
         rule: conflict.authorityA.slice(0, 96),
@@ -1992,12 +2012,13 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       if (!list || !empty || !engine || !note) return;
       const state = activeCompliance();
       const report = state && state.status === "ready" ? state.report : null;
-      if (!report || report.measurement !== "measured") {
+      if (!report || report.measurement === "unmeasured") {
         engine.textContent = state && state.status === "error" ? t("engineError") : report ? t("engineUnmeasured") : t("engineOffline");
         engine.classList.toggle("is-error", Boolean(state && state.status === "error"));
         engine.classList.toggle("is-unmeasured", Boolean(report));
         engine.classList.remove("is-ready");
         $("#complianceReason").textContent = report?.reasons?.[0]?.code ? `${t("complianceTechnicalReason")}: ${report.reasons[0].code}` : "";
+        note.querySelector("span").textContent = t("complianceUnmeasuredNote");
         note.hidden = !report;
         list.innerHTML = "";
         empty.hidden = false;
@@ -2005,15 +2026,20 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         updateSignalChips(report);
         return;
       }
+      const partial = report.measurement === "partial";
       const staleMs = Date.now() - Date.parse(report.generatedAt);
       const stale = Number.isFinite(staleMs) && staleMs > 7 * 86_400_000;
-      engine.textContent = `${t("engineReady")}${stale ? ` · ${t("engineStaleBadge")}` : ""}`;
+      engine.textContent = `${partial ? t("enginePartial") : t("engineReady")}${stale ? ` · ${t("engineStaleBadge")}` : ""}`;
       engine.classList.add("is-ready");
       engine.classList.remove("is-unmeasured", "is-error");
-      note.hidden = true;
+      note.hidden = !partial;
+      note.querySelector("span").textContent = partial ? t("compliancePartialNote") : t("complianceUnmeasuredNote");
+      const coverage = report.coverage;
+      const coverageText = coverage ? ` · ${t("complianceCoverage")}: ${coverage.scannedFiles}/${coverage.eligibleFiles}` : "";
+      $("#complianceReason").textContent = partial ? `${t("complianceTechnicalReason")}: ${report.reasons?.map(reason => reason.code).join(", ") || "—"}${coverageText}` : "";
       updateQueueCounts(report);
       updateSignalChips(report);
-      const filtered = complianceRecords(report).filter(record => complianceFilter === "all" ? true : record.kind === complianceFilter);
+      const filtered = complianceRecords(report).filter(record => complianceFilter === "all" ? record.kind !== "closed" : record.kind === complianceFilter);
       if (!filtered.length) { list.innerHTML = ""; empty.hidden = false; return; }
       empty.hidden = true;
       list.innerHTML = filtered.map(record => {
@@ -2038,7 +2064,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const violation = report.violations.find(candidate => candidate.id === id);
       if (violation) {
         const target = `${violation.targetPath}${violation.targetLine ? ":" + violation.targetLine : ""}`;
-        body = `<div class="detail-title">${escapeHtml(ruleLabel(violation.rule))}</div><div class="detail-path">${escapeHtml(target)}</div><div class="detail-status"><span class="severity ${escapeHtml(violation.severity)}"><span>${escapeHtml(severityLabel(violation.severity))}</span></span>${violation.state === "closed" ? `<span class="queue-kind">${escapeHtml(t("kindClosed"))}</span>` : ""}</div><section class="detail-section"><h3>${escapeHtml(t("evidenceTarget"))}</h3><p><code>${escapeHtml(target)}</code></p></section><section class="detail-section"><h3>${escapeHtml(t("technicalMessage"))}</h3><p>${escapeHtml(violation.message)}</p></section><section class="detail-section"><h3>${escapeHtml(t("ruleReference"))}</h3><p>${escapeHtml(violation.ruleReference)}</p><p><code>${escapeHtml(violation.rule)}</code></p></section>${closureReceiptMarkup(violation)}${violation.state === "open" ? closureFormMarkup(violation.id) : ""}`;
+        body = `<div class="detail-title">${escapeHtml(ruleLabel(violation.rule))}</div><div class="detail-path">${escapeHtml(target)}</div><div class="detail-status"><span class="severity ${escapeHtml(violation.severity)}"><span>${escapeHtml(severityLabel(violation.severity))}</span></span>${violation.state === "closed" ? `<span class="queue-kind">${escapeHtml(t("kindClosed"))}</span>` : ""}</div><section class="detail-section"><h3>${escapeHtml(t("evidenceTarget"))}</h3><p><code>${escapeHtml(target)}</code></p></section><section class="detail-section"><h3>${escapeHtml(t("technicalMessage"))}</h3><p>${escapeHtml(violation.message)}</p></section><section class="detail-section"><h3>${escapeHtml(t("contextFriction"))}</h3><p>${escapeHtml(frictionLabel(violation.contextFriction))}${violation.contextFriction === "unmeasured" ? "" : ` · ${escapeHtml(String(violation.changeCount))}`}</p></section><section class="detail-section"><h3>${escapeHtml(t("ruleReference"))}</h3><p>${escapeHtml(violation.ruleReference)}</p><p><code>${escapeHtml(violation.rule)}</code></p></section>${closureReceiptMarkup(violation)}${violation.state === "open" ? closureFormMarkup(violation.id) : ""}`;
       } else {
         const entry = report.sync.find(candidate => `sync:${candidate.sliceId}` === id);
         if (entry) {

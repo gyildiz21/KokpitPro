@@ -24,6 +24,7 @@ function reportOver(overrides: Partial<Record<string, unknown>>): ComplianceRepo
     const base: Record<string, unknown> = {
         version: 1,
         projectId: 'local-kokpitpro',
+        sourceRevision: 'rev-1',
         generatedAt: '2026-08-27T10:00:00.000Z',
         measurement: 'measured',
         reasons: [],
@@ -38,6 +39,15 @@ function reportOver(overrides: Partial<Record<string, unknown>>): ComplianceRepo
             vioErr: 0,
             vioWarn: 1,
             conflictOpen: 0,
+        },
+        coverage: {
+            eligibleFiles: 1,
+            scannedFiles: 1,
+            skippedLargeFiles: 0,
+            unreadableFiles: 0,
+            skippedSymlinks: 0,
+            outsideRootPaths: 0,
+            truncated: false,
         },
         ...overrides,
     };
@@ -97,5 +107,24 @@ describe('ComplianceReport şema dondurması — Dilim 5', () => {
         const parsed = reportOver({ measurement: 'unmeasured', violations: [], reasons: [{ code: 'no-local-checkout', message: 'x' }] });
         expect(Object.keys(parsed)).not.toContain('clean');
         expect(parsed.measurement).toBe('unmeasured');
+    });
+
+    it('kısmi ölçüm kapsam sayacı ve gerekçesi olmadan tam ölçüm gibi sunulamaz', () => {
+        const parsed = reportOver({
+            measurement: 'partial',
+            reasons: [{ code: 'scan-truncated', message: '400/401 eligible files scanned.' }],
+            coverage: {
+                eligibleFiles: 401,
+                scannedFiles: 400,
+                skippedLargeFiles: 0,
+                unreadableFiles: 0,
+                skippedSymlinks: 0,
+                outsideRootPaths: 0,
+                truncated: true,
+            },
+        });
+        expect(parsed.measurement).toBe('partial');
+        expect(parsed.coverage.truncated).toBe(true);
+        expect(parsed.coverage.scannedFiles).toBeLessThan(parsed.coverage.eligibleFiles);
     });
 });

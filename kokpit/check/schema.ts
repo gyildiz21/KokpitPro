@@ -15,7 +15,7 @@ export const RuleCode = z.enum([
     'hex-in-component',
     'sahte-kapı',
     'bayat-kutu',
-    'ks-band',
+    'ks-band-delinmesi',
 ]);
 export type RuleCode = z.infer<typeof RuleCode>;
 
@@ -28,7 +28,7 @@ export type ViolationSeverity = z.infer<typeof ViolationSeverity>;
  * ölçülmüş değişim yoğunluğu. Sıralama friction×severity'dir; ikisi ayrı
  * alanlar olarak taşınır — tek sayıya katıştırılmaz.
  */
-export const ContextFriction = z.enum(['low', 'elevated', 'high']);
+export const ContextFriction = z.enum(['unmeasured', 'low', 'elevated', 'high']);
 export type ContextFriction = z.infer<typeof ContextFriction>;
 
 /**
@@ -79,13 +79,14 @@ export const NearMissReasonCode = z.enum([
     'content-hash-mismatch',
     'version-field-missing',
     'phase-file-missing',
+    'slice-commit-missing',
 ]);
 export type NearMissReasonCode = z.infer<typeof NearMissReasonCode>;
 
 export const SyncEntry = z
     .object({
         sliceId: z.string().min(1),
-        phaseFile: z.string().nullable(),
+        phaseFile: SyncStatus,
         roadmapBox: SyncStatus,
         handoff: SyncStatus,
         nearMiss: z
@@ -99,7 +100,7 @@ export const SyncEntry = z
     .strict();
 export type SyncEntry = z.infer<typeof SyncEntry>;
 
-export const ConflictStatus = z.enum(['open-conflict', 'superseded-chain', 'clean']);
+export const ConflictStatus = z.enum(['candidate', 'open-conflict', 'superseded-chain', 'clean']);
 export type ConflictStatus = z.infer<typeof ConflictStatus>;
 
 export const ConflictEntry = z
@@ -134,14 +135,29 @@ export const ComplianceHealth = z
     .strict();
 export type ComplianceHealth = z.infer<typeof ComplianceHealth>;
 
+export const ComplianceCoverage = z
+    .object({
+        eligibleFiles: z.number().int().nonnegative(),
+        scannedFiles: z.number().int().nonnegative(),
+        skippedLargeFiles: z.number().int().nonnegative(),
+        unreadableFiles: z.number().int().nonnegative(),
+        skippedSymlinks: z.number().int().nonnegative(),
+        outsideRootPaths: z.number().int().nonnegative(),
+        truncated: z.boolean(),
+    })
+    .strict();
+export type ComplianceCoverage = z.infer<typeof ComplianceCoverage>;
+
 /** Ölçüm dürüstlük sürek kontrolü: motor ölçemediyse boş liste temiz SAYILMAZ. */
-export const MeasurementMode = z.enum(['measured', 'unmeasured']);
+export const MeasurementMode = z.enum(['measured', 'partial', 'unmeasured']);
 export type MeasurementMode = z.infer<typeof MeasurementMode>;
 
 export const ComplianceReport = z
     .object({
         version: z.literal(1),
         projectId: z.string().min(1),
+        /** Kapatma kayıtlarını aynı kaynak makbuzuna bağlayan değişmez kimlik. */
+        sourceRevision: z.string().min(1),
         generatedAt: z.string().datetime(),
         measurement: MeasurementMode,
         reasons: z.array(z.object({ code: z.string(), message: z.string() }).strict()).max(16),
@@ -149,6 +165,7 @@ export const ComplianceReport = z
         sync: z.array(SyncEntry).max(128),
         conflicts: z.array(ConflictEntry).max(64),
         health: ComplianceHealth,
+        coverage: ComplianceCoverage,
     })
     .strict();
 export type ComplianceReport = z.infer<typeof ComplianceReport>;

@@ -159,7 +159,9 @@ describe('Dilim 5 compliance wiring', () => {
         expect(preview).not.toContain('ISSUE_DATA');
         expect(preview).not.toContain('data-issue=');
         expect(preview).not.toContain('Örnek uyum kayıtları');
-        expect(preview).toContain("measurement !== \"measured\"");
+        expect(preview).toContain("measurement === \"unmeasured\"");
+        expect(preview).toContain("measurement === \"partial\"");
+        expect(preview).toContain('report.coverage');
         const activation = /async function activateProject\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
         expect(activation).toContain('complianceState = null;');
         expect(activation).toContain('void loadCompliance();');

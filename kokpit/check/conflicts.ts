@@ -32,6 +32,16 @@ const NEGATION_MARKERS = [
     'olmaz',
 ];
 
+const EXPANSION_MARKERS = [
+    'genişlet',
+    'ekle',
+    'aç',
+    'adopt',
+    'birleştir',
+    'kullanıma al',
+    'devreye al',
+];
+
 const STOPWORDS = new Set([
     'için', 'olarak', 'kadar', 'ancak', 'daha', 'sonra', 'göre', 'kararı', 'karar',
     'durum', 'sahibi', 'protokol', 'kural', 'seçenek', 'tavsiye', 'bedel', 'notu',
@@ -67,7 +77,7 @@ function tokensIntersect(a: Set<string>, b: Set<string>): string[] {
 }
 
 function planDate(text: string, fallbackDate: string): string {
-    const match = /(?:[Ss]on [gG]üncelleme)[::]?\s*(\d{4}-\d{2}-\d{2})/.exec(text);
+    const match = /son güncelleme\**\s*:\**\s*(\d{4}-\d{2}-\d{2})/i.exec(text);
     return match?.[1] ?? fallbackDate;
 }
 
@@ -75,9 +85,10 @@ interface PlanStatement {
     line: number;
     text: string;
     tokens: Set<string>;
+    observedAt: string;
 }
 
-function planNegationStatements(planText: string, limit: number): PlanStatement[] {
+function planNegationStatements(planText: string, limit: number, fallbackDate: string): PlanStatement[] {
     const statements: PlanStatement[] = [];
     const lines = planText.split(/\r?\n/);
     let buffer = '';
@@ -98,7 +109,8 @@ function planNegationStatements(planText: string, limit: number): PlanStatement[
         const statementEnds = /[.;:]\s*$/.test(line) || index === lines.length - 1;
         if (!statementEnds) continue;
         if (NEGATION_MARKERS.some((marker) => buffer.includes(marker))) {
-            statements.push({ line: bufferLine, text: buffer.trim(), tokens: tokenize(buffer) });
+            const observedAt = /\d{4}-\d{2}-\d{2}/.exec(buffer)?.[0] ?? planDate(planText, fallbackDate);
+            statements.push({ line: bufferLine, text: buffer.trim(), tokens: tokenize(buffer), observedAt });
             if (statements.length >= limit) return statements;
         }
         buffer = '';
@@ -113,6 +125,7 @@ interface LedgerSection {
     isDecision: boolean;
     body: string;
     tokens: Set<string>;
+    decisionText: string;
 }
 
 function ledgerSections(text: string): LedgerSection[] {
@@ -122,7 +135,18 @@ function ledgerSections(text: string): LedgerSection[] {
     const flush = (): void => {
         if (!current) return;
         const body = current.body.join('\n');
-        const date = /\d{4}-\d{2}-\d{2}/.exec(body)?.[0];
+        const decisionIndex = current.body.findIndex((line) => /KARAR/i.test(line));
+        const decisionLines: string[] = [];
+        if (decisionIndex >= 0) {
+            for (let index = decisionIndex; index < Math.min(current.body.length, decisionIndex + 3); index += 1) {
+                const line = current.body[index] ?? '';
+                if (index > decisionIndex && !line.trim()) break;
+                decisionLines.push(line);
+            }
+        }
+        const decisionText = decisionLines.join(' ').trim();
+        const authorityText = `${current.heading}\n${decisionText}`;
+        const date = /\d{4}-\d{2}-\d{2}/.exec(authorityText)?.[0];
         if (!date) {
             current = null;
             return;
@@ -131,9 +155,10 @@ function ledgerSections(text: string): LedgerSection[] {
             heading: current.heading,
             line: current.line,
             date,
-            isDecision: /KARAR/i.test(body),
+            isDecision: /KARAR/i.test(authorityText),
             body: `${current.heading}\n${body}`,
-            tokens: tokenize(`${current.heading}\n${body}`),
+            tokens: tokenize(authorityText),
+            decisionText,
         });
         current = null;
     };
@@ -160,12 +185,15 @@ export function detectConflicts(ctx: ConflictContext): ConflictEntry[] {
     const entries: ConflictEntry[] = [];
     if (!ctx.ledgerText) return entries;
     const sections = ledgerSections(ctx.ledgerText);
-    const statements = planNegationStatements(ctx.planText, 24);
-    const observedAtA = planDate(ctx.planText, ctx.fallbackDate);
+    const statements = planNegationStatements(ctx.planText, 64, ctx.fallbackDate);
     const seen = new Set<string>();
     for (const statement of statements) {
         for (const section of sections) {
             if (!section.isDecision) continue;
+            if (section.date <= statement.observedAt) continue;
+            const expands = EXPANSION_MARKERS.some((marker) => section.decisionText.toLocaleLowerCase('tr-TR').includes(marker));
+            const repeatsRestriction = NEGATION_MARKERS.some((marker) => section.decisionText.toLocaleLowerCase('tr-TR').includes(marker));
+            if (!expands || repeatsRestriction) continue;
             const intersection = tokensIntersect(statement.tokens, section.tokens).slice(0, 3);
             if (intersection.length < 2) continue;
             const conflictId = `conflict:${slugify(intersection.join('-'))}`;
@@ -174,15 +202,15 @@ export function detectConflicts(ctx: ConflictContext): ConflictEntry[] {
             entries.push({
                 id: conflictId,
                 topic: intersection.join(', '),
-                status: 'open-conflict',
+                status: 'candidate',
                 authorityA: `${ctx.planPath} · L${statement.line} — "…${statement.text.slice(0, 90)}…"`,
                 authorityB: `${ctx.ledgerPath} · L${section.line} — ${section.heading.slice(0, 90)} (${section.date})`,
-                observedAtA,
+                observedAtA: statement.observedAt,
                 observedAtB: section.date,
                 suggestion:
                     'Add a superseded-note to the older authority line, or record this as an accepted conflict in the decision ledger (human confirmation required).',
             });
-            if (entries.length >= 8) return sortConflicts(entries);
+            if (entries.length >= 64) return sortConflicts(entries);
         }
     }
     return sortConflicts(entries);
@@ -199,7 +227,11 @@ export function detectBrokenSupersededChains(ctx: ConflictContext): ConflictEntr
     const entries: ConflictEntry[] = [];
     for (const section of sections) {
         if (!/supersedes|yürürlükten kaldırır|geçersiz kılar/i.test(section.body)) continue;
-        const targets = sections.filter((candidate) => candidate !== section && section.date < candidate.date);
+        const targets = sections.filter((candidate) =>
+            candidate !== section &&
+            section.date < candidate.date &&
+            tokensIntersect(section.tokens, candidate.tokens).length >= 2,
+        );
         if (!targets.length) continue;
         entries.push({
             id: `conflict:superseded-chain-${slugify(section.heading).slice(0, 40)}`,

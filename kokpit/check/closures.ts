@@ -9,18 +9,19 @@ import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileS
 import { dirname, join, resolve } from 'node:path';
 import { z } from 'zod';
 import { sortViolations } from './rules';
-import type { ComplianceReport as ComplianceReportType, Violation } from './schema';
+import { RuleCode, ViolationSeverity, type ComplianceReport as ComplianceReportType, type Violation } from './schema';
 
 export const ClosureRecord = z
     .object({
         projectId: z.string().min(1),
+        sourceRevision: z.string().min(1),
         violationId: z.string().min(1),
         closedAt: z.string().datetime(),
-        closedBy: z.string().min(1),
-        justification: z.string().min(1),
-        rule: z.string().min(1),
+        closedBy: z.string().trim().min(1),
+        justification: z.string().trim().min(1),
+        rule: RuleCode,
         targetPath: z.string().min(1),
-        severity: z.string().min(1),
+        severity: ViolationSeverity,
     })
     .strict();
 export type ClosureRecord = z.infer<typeof ClosureRecord>;
@@ -46,10 +47,11 @@ export class ComplianceClosureStore {
     }
 
     private writeAll(next: ClosureFile): void {
+        const validated = ClosureFile.parse(next);
         mkdirSync(dirname(this.filePath), { recursive: true });
         const temporary = `${this.filePath}.${process.pid}.tmp`;
         try {
-            writeFileSync(temporary, `${JSON.stringify(next, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+            writeFileSync(temporary, `${JSON.stringify(validated, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
             renameSync(temporary, this.filePath);
         } finally {
             if (existsSync(temporary)) unlinkSync(temporary);
@@ -62,11 +64,22 @@ export class ComplianceClosureStore {
 
     add(record: ClosureRecord): void {
         const file = this.readAll();
-        if (file.closures.some((closure) => closure.projectId === record.projectId && closure.violationId === record.violationId)) {
+        if (file.closures.some((closure) =>
+            closure.projectId === record.projectId &&
+            closure.sourceRevision === record.sourceRevision &&
+            closure.violationId === record.violationId
+        )) {
             throw new Error(`Violation is already closed: ${record.violationId}`);
         }
         file.closures.push(ClosureRecord.parse(record));
         this.writeAll(file);
+    }
+
+    remove(projectId: string): void {
+        const file = this.readAll();
+        const closures = file.closures.filter((closure) => closure.projectId !== projectId);
+        if (closures.length === file.closures.length) return;
+        this.writeAll({ version: 1, closures });
     }
 }
 
@@ -77,10 +90,19 @@ export class ComplianceClosureStore {
  * kuyruğuna düşer, aktif bant sayısını şişirmez.
  */
 export function applyClosures(report: ComplianceReportType, closures: ClosureRecord[]): ComplianceReportType {
-    const byId = new Map(closures.map((closure) => [closure.violationId, closure]));
+    const byId = new Map(
+        closures
+            .filter((closure) => closure.sourceRevision === report.sourceRevision)
+            .map((closure) => [closure.violationId, closure]),
+    );
     const violations: Violation[] = report.violations.map((violation) => {
         const closure = byId.get(violation.id);
-        if (!closure) return violation;
+        if (
+            !closure ||
+            closure.rule !== violation.rule ||
+            closure.targetPath !== violation.targetPath ||
+            closure.severity !== violation.severity
+        ) return violation;
         return {
             ...violation,
             state: 'closed',

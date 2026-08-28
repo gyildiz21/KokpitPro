@@ -3,9 +3,10 @@
 // Modül saftır: girdi ctx ile verilir, I/O yok. Her kural deterministiktir;
 // sıralama friction×severity'dir ve eşitlikte id lexicographic'tir — koşumlar
 // arası kararlılık nöbetçi testlerle korunur. Bağlam ciddiyeti v1'de
-// ölçülmediği için dürüstçe 'low' + changeCount:0 taşır; sahte yoğunluk
+// ölçülmediği için dürüstçe 'unmeasured' + changeCount:0 taşır; sahte yoğunluk
 // uydurulmaz.
 
+import { createHash } from 'node:crypto';
 import type { PhaseGroup, PhaseItem } from '../parser/schema';
 import type { ContextFriction, RuleCode, Violation, ViolationSeverity } from './schema';
 
@@ -24,7 +25,7 @@ export interface RuleContext {
     receiptDate: string;
 }
 
-const FRICTION_RANK: Record<ContextFriction, number> = { low: 1, elevated: 2, high: 3 };
+const FRICTION_RANK: Record<ContextFriction, number> = { unmeasured: 0, low: 1, elevated: 2, high: 3 };
 const SEVERITY_RANK: Record<ViolationSeverity, number> = { error: 3, warning: 2, note: 1 };
 
 export function slugify(value: string): string {
@@ -51,8 +52,10 @@ interface ViolationSeed {
 }
 
 function seedToViolation(seed: ViolationSeed): Violation {
+    const identity = `${seed.rule}\0${seed.targetPath}\0${seed.targetLine ?? 0}`;
+    const fingerprint = createHash('sha256').update(identity).digest('hex').slice(0, 12);
     return {
-        id: `${seed.rule}:${slugify(seed.targetPath)}:${seed.targetLine ?? 0}`,
+        id: `${seed.rule}:${slugify(seed.targetPath).slice(0, 48)}:${seed.targetLine ?? 0}:${fingerprint}`,
         rule: seed.rule,
         severity: seed.severity,
         state: 'open',
@@ -60,7 +63,7 @@ function seedToViolation(seed: ViolationSeed): Violation {
         ...(seed.targetLine !== undefined ? { targetLine: seed.targetLine } : {}),
         message: seed.message,
         ruleReference: seed.ruleReference,
-        contextFriction: 'low',
+        contextFriction: 'unmeasured',
         changeCount: 0,
     };
 }
@@ -78,7 +81,7 @@ function mergeSeeds(seeds: ViolationSeed[]): Violation[] {
 
 const HEX_LINE_RE = /(?:^|[^\w&])#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/;
 /** CSS custom-property tanımı = belirteç kayıt yeri; hex yalnız burada legaldir. */
-const CUSTOM_PROPERTY_DEF_RE = /^\s*--[\w-]+\s*:/;
+const CUSTOM_PROPERTY_DEF_RE = /^\s*--st-[\w-]+\s*:/;
 const TURKISH_TEXT_RE = /(?:^|>)[^<>{}"'`]*[çğıöşüÇĞİÖŞÜ]/;
 const TEST_FILE_RE = /(?:^|\/)(?:__tests__|[^/]+\.test\.|[^/]+\.spec\.)/;
 const TEST_GATE_RE = /\.(?:only|skip)\(|\bxit\(|\bxdescribe\(/;
@@ -187,7 +190,7 @@ function planItemSeeds(ctx: RuleContext): ViolationSeed[] {
             }
             if (item.completedAt && previousCompletion && item.completedAt < previousCompletion) {
                 seeds.push({
-                    rule: 'ks-band',
+                    rule: 'ks-band-delinmesi',
                     severity: 'warning',
                     targetPath: ctx.planPath,
                     targetLine: item.line,

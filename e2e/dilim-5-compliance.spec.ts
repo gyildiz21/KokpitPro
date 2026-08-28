@@ -10,6 +10,7 @@ import { expect, test, type Page, type Route } from '@playwright/test';
 const MOCK_REPORT = {
     version: 1,
     projectId: 'local-859d21494b4a',
+    sourceRevision: 'test-revision-1',
     generatedAt: new Date().toISOString(),
     measurement: 'measured',
     reasons: [],
@@ -52,7 +53,7 @@ const MOCK_REPORT = {
         {
             id: 'conflict:test-topic',
             topic: 'korpus, tez',
-            status: 'open-conflict',
+            status: 'candidate',
             authorityA: 'ROADMAP.md · L37 — "…TR korpusu değildir…"',
             authorityB: '.agents/karar-defteri.md · L46 — D4-I · Korpus erişimi (2026-08-22)',
             observedAtA: '2026-07-28',
@@ -60,7 +61,8 @@ const MOCK_REPORT = {
             suggestion: 'Add a superseded-note to the older authority line, or record this as an accepted conflict.',
         },
     ],
-    health: { phaseDone: 50, partial: 2, open: 6, syncStale: 1, vioErr: 1, vioWarn: 0, conflictOpen: 1 },
+    health: { phaseDone: 50, partial: 2, open: 6, syncStale: 1, vioErr: 1, vioWarn: 0, conflictOpen: 0 },
+    coverage: { eligibleFiles: 2, scannedFiles: 2, skippedLargeFiles: 0, unreadableFiles: 0, skippedSymlinks: 0, outsideRootPaths: 0, truncated: false },
 };
 
 const CLOSED_REPORT = {
@@ -100,7 +102,7 @@ test('S1 · gerçek ihlal kartları görünür; ÖRNEK etiketi yoktur; sayaçlar
     await expect(page.locator('#queueCountDecision')).toHaveText('1');
     await expect(page.locator('#queueCountClosed')).toHaveText('0');
     await expect(page.locator('#signalViolationOpen')).toHaveText('1');
-    await expect(page.locator('#signalDecisionOpen')).toHaveText('1');
+    await expect(page.locator('#signalDecisionOpen')).toHaveText('0');
     await expect(page.locator('#complianceEngineState')).toContainText(/Canlı uyum raporu|Live compliance report/);
 });
 
@@ -155,6 +157,8 @@ test("S3 · kapatma gerekçesiz ilerlemez; gerekçe ve rumuz ile kapanır; denet
     await expect(page.locator('#queueCountViolation')).toHaveText('1');
     await page.locator('.queue-filter[data-queue-filter="closed"]').click();
     await expect(page.locator('#issueList .issue-row')).toHaveCount(1);
+    await page.locator('.queue-filter[data-queue-filter="all"]').click();
+    await expect(page.locator('#issueList .issue-row')).toHaveCount(3);
 });
 
 test('S4 · motor ölçemediğinde boş liste temiz gibi SUNULMAZ; ölçüm gerekçesi görünür', async ({ page }) => {
@@ -181,6 +185,24 @@ test('S4 · motor ölçemediğinde boş liste temiz gibi SUNULMAZ; ölçüm gere
     await expect(page.locator('#issueList .issue-row')).toHaveCount(0);
     await expect(page.locator('#complianceEmpty')).toBeVisible();
     await expect(page.locator('#signalViolationOpen')).toHaveText('—');
+});
+
+test('S4b · kısmi tarama tam repo ölçümü gibi sunulmaz; kapsam sayacı görünür', async ({ page }) => {
+    const partialReport = {
+        ...MOCK_REPORT,
+        measurement: 'partial',
+        reasons: [{ code: 'scan-truncated', message: 'Only the bounded scope was scanned.' }],
+        coverage: { ...MOCK_REPORT.coverage, eligibleFiles: 401, scannedFiles: 400, truncated: true },
+    };
+    await page.route('**/api/projects/**/compliance', (route: Route) =>
+        route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ report: partialReport }) }),
+    );
+    await openWorkspace(page);
+    await openComplianceView(page);
+    await expect(page.locator('#complianceEngineState')).toContainText(/Kısmi uyum raporu|Partial compliance report/);
+    await expect(page.locator('#complianceReason')).toContainText('scan-truncated');
+    await expect(page.locator('#complianceReason')).toContainText('400/401');
+    await expect(page.locator('#issueList .issue-row')).toHaveCount(4);
 });
 
 test('S5 · TR/EN parite: uyum yüzeyi ve drawer tamamen çevrilir', async ({ page }) => {
@@ -249,6 +271,8 @@ test("S9 · canlı API sözleşmesi: GET compliance KokpitPro da ölçülmüş y
     const payload = await response.json();
     expect(payload.report.version).toBe(1);
     expect(payload.report.measurement).toBe('measured');
+    expect(payload.report.coverage.scannedFiles).toBe(payload.report.coverage.eligibleFiles);
+    expect(payload.report.coverage.truncated).toBe(false);
     expect(typeof payload.report.health.vioErr).toBe('number');
     expect(typeof payload.report.health.vioWarn).toBe('number');
     expect(payload.report.violations.every((violation: { id: string; state: string }) => typeof violation.id === 'string' && ['open', 'closed'].includes(violation.state))).toBe(true);

@@ -35,7 +35,7 @@ const MIME: Record<string, string> = {
 };
 
 class HttpError extends Error {
-    constructor(readonly status: number, message: string, readonly code?: string) { super(message); }
+    constructor(readonly status: number, message: string, readonly code?: string, readonly retryAfter?: string) { super(message); }
 }
 
 /**
@@ -43,9 +43,13 @@ class HttpError extends Error {
  * anonim özel repo 404 olarak kalır (500'e gömülmez), UI dürüst yetki durumu
  * gösterir. Kod alanı makine sözleşmesidir; sır taşımaz.
  */
+export function githubVerificationHttpStatus(error: GithubVerificationError): number {
+    return error.status === 0 ? 502 : error.status;
+}
+
 function toHttpError(error: unknown): unknown {
     if (error instanceof GithubVerificationError) {
-        return new HttpError(error.status, error.message, `github-${error.reasonCode}`);
+        return new HttpError(githubVerificationHttpStatus(error), error.message, `github-${error.reasonCode}`, error.retryAfter);
     }
     return error;
 }
@@ -298,6 +302,7 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
         }
         complianceClosures.add({
             projectId: project.id,
+            sourceRevision: report.sourceRevision,
             violationId: violation.id,
             closedAt: new Date().toISOString(),
             closedBy: input.by,
@@ -345,6 +350,7 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
         const projectId = decodeURIComponent(deleteMatch[1]);
         const updated = registry.remove(projectId);
         deltaHistory.remove(projectId);
+        complianceClosures.remove(projectId);
         json(response, 200, updated);
         return true;
     }
@@ -400,7 +406,12 @@ export async function startServer(): Promise<void> {
             const mapped = toHttpError(error);
             const status = mapped instanceof HttpError ? mapped.status : 500;
             const code = mapped instanceof HttpError ? mapped.code : undefined;
-            json(response, status, { error: mapped instanceof Error ? mapped.message : String(mapped), ...(code ? { code } : {}) });
+            const retryAfter = mapped instanceof HttpError ? mapped.retryAfter : undefined;
+            json(response, status, {
+                error: mapped instanceof Error ? mapped.message : String(mapped),
+                ...(code ? { code } : {}),
+                ...(retryAfter ? { retryAfter } : {}),
+            });
         }
     });
     server.listen(PORT, HOST, () => {

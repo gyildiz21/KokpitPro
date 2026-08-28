@@ -26,6 +26,7 @@ export class GithubVerificationError extends Error {
         readonly status: number,
         readonly reasonCode: GithubFailureReason,
         message: string,
+        readonly retryAfter?: string,
     ) {
         super(message);
         this.name = 'GithubVerificationError';
@@ -38,6 +39,7 @@ function githubVerificationFailure(
     status: number,
     label: string,
     rateLimitRemaining: string | null,
+    retryAfter: string | null,
 ): GithubVerificationError {
     if (status === 404) {
         return new GithubVerificationError(
@@ -53,12 +55,13 @@ function githubVerificationFailure(
             `GitHub authorization rejected (401) for ${label}. Credentials stay server-side; no token value is logged.`,
         );
     }
-    if (status === 403) {
-        if (rateLimitRemaining === '0') {
+    if (status === 403 || status === 429) {
+        if (status === 429 || rateLimitRemaining === '0') {
             return new GithubVerificationError(
-                403,
+                status,
                 'rate-limit',
-                'GitHub rate limit reached (403); retry later. No token value is logged.',
+                `GitHub rate limit reached (${status}); retry later. No token value is logged.`,
+                retryAfter ?? undefined,
             );
         }
         return new GithubVerificationError(
@@ -91,6 +94,10 @@ interface GithubContentEntry { name: string; path: string; type: 'file' | 'dir' 
 interface GithubInstallationToken { token: string; expires_at: string }
 
 const installationTokenCache = new Map<string, { token: string; expiresAt: number }>();
+
+export function clearGithubInstallationTokenCacheForTests(): void {
+    installationTokenCache.clear();
+}
 
 function base64url(value: string): string {
     return Buffer.from(value).toString('base64url');
@@ -128,16 +135,30 @@ async function githubAppInstallationToken(repo: string, fetchImpl: FetchLike = f
     const installationId = process.env.GITHUB_APP_INSTALLATION_ID;
     const jwt = githubAppJwt();
     if (!installationId || !jwt) return null;
-    const cached = installationTokenCache.get(repo);
+    const cacheKey = `${installationId}:${repo.toLocaleLowerCase('en-US')}`;
+    const cached = installationTokenCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now() + 60_000) return cached.token;
-    const response = await fetchImpl(`${API_ROOT}/app/installations/${encodeURIComponent(installationId)}/access_tokens`, {
-        method: 'POST',
-        headers: githubHeaders(jwt),
-        body: JSON.stringify({ repositories: [repo], permissions: { contents: 'read' } }),
-    });
-    if (!response.ok) throw new GithubVerificationError(response.status, 'auth-required', `GitHub App token request failed (${response.status}).`);
+    let response: Response;
+    try {
+        response = await fetchImpl(`${API_ROOT}/app/installations/${encodeURIComponent(installationId)}/access_tokens`, {
+            method: 'POST',
+            headers: githubHeaders(jwt),
+            body: JSON.stringify({ repositories: [repo], permissions: { contents: 'read' } }),
+        });
+    } catch {
+        throw new GithubVerificationError(0, 'network', 'GitHub App token request could not be completed: network unreachable.');
+    }
+    if (!response.ok) {
+        const rateLimited = response.status === 429 || (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0');
+        throw new GithubVerificationError(
+            response.status,
+            rateLimited ? 'rate-limit' : 'auth-required',
+            `GitHub App token request failed (${response.status}).`,
+            response.headers.get('retry-after') ?? response.headers.get('x-ratelimit-reset') ?? undefined,
+        );
+    }
     const payload = (await response.json()) as GithubInstallationToken;
-    installationTokenCache.set(repo, { token: payload.token, expiresAt: Date.parse(payload.expires_at) });
+    installationTokenCache.set(cacheKey, { token: payload.token, expiresAt: Date.parse(payload.expires_at) });
     return payload.token;
 }
 
@@ -156,7 +177,12 @@ async function githubJson<T>(path: string, token: string | null, label: string, 
         throw new GithubVerificationError(0, 'network', 'GitHub request could not be completed: network unreachable.');
     }
     if (!response.ok) {
-        throw githubVerificationFailure(response.status, label, response.headers.get('x-ratelimit-remaining'));
+        throw githubVerificationFailure(
+            response.status,
+            label,
+            response.headers.get('x-ratelimit-remaining'),
+            response.headers.get('retry-after') ?? response.headers.get('x-ratelimit-reset'),
+        );
     }
     return (await response.json()) as T;
 }
@@ -169,7 +195,12 @@ async function githubRaw(path: string, token: string | null, label: string, fetc
         throw new GithubVerificationError(0, 'network', 'GitHub request could not be completed: network unreachable.');
     }
     if (!response.ok) {
-        throw githubVerificationFailure(response.status, label, response.headers.get('x-ratelimit-remaining'));
+        throw githubVerificationFailure(
+            response.status,
+            label,
+            response.headers.get('x-ratelimit-remaining'),
+            response.headers.get('retry-after') ?? response.headers.get('x-ratelimit-reset'),
+        );
     }
     const text = await response.text();
     if (text.length > 2 * 1024 * 1024) throw new Error('Plan file is larger than 2 MiB.');
@@ -194,7 +225,7 @@ async function discoverPlan(
     fetchImpl: FetchLike,
 ) {
     const label = `${owner}/${repo}`;
-    const candidates = requested && requested !== 'auto' ? [requested] : PLAN_CANDIDATES;
+    const candidates = requested && requested !== 'auto' ? [validateGithubPlanPath(requested)] : PLAN_CANDIDATES;
     for (const candidate of candidates) {
         try {
             const encodedPath = candidate.split('/').map(encodeURIComponent).join('/');
@@ -206,6 +237,21 @@ async function discoverPlan(
         }
     }
     throw new GithubVerificationError(404, 'plan-file-missing', `No readable plan file found. Tried: ${candidates.join(', ')}`);
+}
+
+export function validateGithubPlanPath(input: string): string {
+    const path = input.trim();
+    const segments = path.split('/');
+    if (
+        !path ||
+        path.length > 512 ||
+        path.startsWith('/') ||
+        path.includes('\\') ||
+        segments.some((segment) => !segment || segment === '.' || segment === '..')
+    ) {
+        throw new Error('GitHub plan path must be a repository-relative path without traversal segments.');
+    }
+    return path;
 }
 
 function nodesOf(entries: GithubContentEntry[], owner: string, repo: string, branch: string): ProjectNode[] {

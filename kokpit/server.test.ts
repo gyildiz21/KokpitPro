@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isAllowedHostHeader, isStaticPathBlocked } from './server';
+import { GithubVerificationError } from './projects/github';
+import { githubVerificationHttpStatus, isAllowedHostHeader, isStaticPathBlocked } from './server';
 
 describe('local server security boundaries', () => {
     it('blocks secret, registry, dependency, and reference-engine paths', () => {
@@ -26,5 +27,11 @@ describe('local server security boundaries', () => {
         expect(isAllowedHostHeader('attacker.example:4173')).toBe(false);
         expect(isAllowedHostHeader('localhost:4174')).toBe(false);
         expect(isAllowedHostHeader(undefined)).toBe(false);
+    });
+
+    it('maps GitHub network failures to a valid gateway status and preserves valid upstream classes', () => {
+        expect(githubVerificationHttpStatus(new GithubVerificationError(0, 'network', 'offline'))).toBe(502);
+        expect(githubVerificationHttpStatus(new GithubVerificationError(404, 'not-found-or-private', 'missing'))).toBe(404);
+        expect(githubVerificationHttpStatus(new GithubVerificationError(429, 'rate-limit', 'later', '60'))).toBe(429);
     });
 });
