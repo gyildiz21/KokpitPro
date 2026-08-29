@@ -13,6 +13,7 @@ import { GithubVerificationError, githubAuthConfiguration, indexGithubProject, t
 import { indexLocalProject, refreshProjectFreshness, type LocalProjectInput } from './projects/local';
 import { ProjectRegistry } from './projects/registry';
 import type { ProjectRecord } from './projects/schema';
+import { buildRemapReport } from './remap/service';
 import { buildUiAssets, type UiAssets } from './ui/assets';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -77,6 +78,16 @@ export function isAllowedHostHeader(
         `localhost:${configuredPort}`,
     ]);
     return allowed.has(normalized);
+}
+
+/**
+ * Dilim 4: `/api/projects/:id/remap` rota eşleyicisi — saf ve testlenebilir
+ * (isStaticPathBlocked deseni). Tam eşleşmede kodu çözülmüş proje kimliğini,
+ * diğer tüm yollarda null döndürür.
+ */
+export function remapRouteProjectId(pathname: string): string | null {
+    const remapMatch = /^\/api\/projects\/([^/]+)\/remap$/.exec(pathname);
+    return remapMatch?.[1] ? decodeURIComponent(remapMatch[1]) : null;
 }
 
 function json(response: ServerResponse, status: number, payload: unknown): void {
@@ -312,6 +323,16 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
             severity: violation.severity,
         });
         json(response, 200, { report: applyClosures(report, complianceClosures.list(project.id)) });
+        return true;
+    }
+    // Dilim 4: kanıta dayalı remap önerileri. Ölçüm canlı yerel çalışma
+    // ağacında yapılır; bayat makbuz ve yerel checkout yokluğu HTTP hatası
+    // DEĞİLDİR: 200 + measurement:'unmeasurable' + neden kodları döner;
+    // ölçülemez durum sahte boş başarıyla GİZLENMEZ.
+    const remapProjectId = request.method === 'GET' ? remapRouteProjectId(url.pathname) : null;
+    if (remapProjectId) {
+        const project = findProject(remapProjectId); // bilinmeyen kimlik → 404
+        json(response, 200, { report: await buildRemapReport(project) });
         return true;
     }
     if (request.method === 'POST' && url.pathname === '/api/projects/verify/local') {
