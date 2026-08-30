@@ -205,3 +205,55 @@ describe('Dilim 3 delta wiring', () => {
         expect(preview).toContain('proposalBadge');
     });
 });
+
+describe('Dilim 4 remap wiring', () => {
+    it('fetches the live remap report per project and resets it on switch', () => {
+        expect(preview).toContain('apiRequest(`/api/projects/${encodeURIComponent(projectId)}/remap`)');
+        expect(preview).toContain('function activeRemap()');
+        expect(preview).toContain('async function loadRemap()');
+        const activation = /async function activateProject\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
+        expect(activation).toContain('remapState = null;');
+        expect(activation).toContain('resetRemapPanel();');
+        expect(activation).toContain('void loadRemap();');
+    });
+
+    it('renders suggestion cards that reuse the proposal badge evidence language', () => {
+        expect(preview).toContain('data-remap-card=');
+        expect(preview).toContain('map-flow-node__badge');
+        expect(preview).toContain('t("proposalBadge")');
+        expect(preview).toContain('data-node-jump="${escapeHtml(suggestion.nodeId)}"');
+        expect(preview).toContain('t("remapNotRendered")');
+    });
+
+    it('never ships apply, move, or auto-fix actions in the suggestion panel', () => {
+        // Bu bir öneri panelidir: hiçbir şey otomatik değişmez (UI-SPEC §5.3, DESIGN D7).
+        expect(preview).not.toContain('data-remap-apply');
+        expect(preview).not.toContain('data-remap-move');
+        expect(preview).not.toContain('data-remap-autofix');
+        expect(preview).not.toContain('otomatik düzelt');
+        expect(preview).not.toContain('Otomatik düzelt');
+    });
+
+    it('keeps the honest empty and not-rendered language in both dictionaries', () => {
+        const blocks = [...preview.matchAll(/Object\.assign\(I18N\.(tr|en), \{([\s\S]*?)\}\);/g)];
+        const keys = { tr: new Set<string>(), en: new Set<string>() };
+        for (const block of blocks) {
+            const language = block[1] as 'tr' | 'en';
+            for (const match of (block[2] ?? '').matchAll(/([A-Za-z0-9_]+)\s*:\s*(?:"|'|`)/g)) keys[language].add(match[1] ?? '');
+        }
+        for (const key of ['remapToggle', 'remapPanelAria', 'remapEmptyTitle', 'remapEmptyBody', 'remapNotRendered', 'remapProposalNote']) {
+            expect(keys.tr.has(key), `TR missing key: ${key}`).toBe(true);
+            expect(keys.en.has(key), `EN missing key: ${key}`).toBe(true);
+        }
+        expect(preview).toContain('t("remapEmptyTitle")');
+        expect(preview).toContain('t("remapEmptyBody")');
+    });
+
+    it('reports unmeasurable states honestly with stale reindex but no fake success', () => {
+        expect(preview).toContain('measurement === "unmeasurable"');
+        expect(preview).toContain('REMAP_REASON_KEYS[reason.code] || reason.code');
+        expect(preview).toContain('data-remap-status="unmeasurable"');
+        expect(preview).toContain('data-map-reindex="${escapeHtml(state.projectId)}"');
+        expect(preview).toContain('status: "error"');
+    });
+});
