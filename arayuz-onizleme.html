@@ -975,9 +975,11 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       (`not-found-or-private`; auth/rate-limit/network ayrımı); hata metni
       sır-taşımaz, anonim modda Authorization başlığı gönderilmez; PAT/parola
       formu yok.
-- [ ] **Gerçek özel-repo GitHub App kabulü:** `gyildiz21` repoları için App
-      ID/installation/private-key dış kurulumu ve kimlikli gerçek-API olumlu
-      turu henüz yok. Kod ve hermetik test bu harici yetki kanıtının yerine geçmez.
+- [x] **Gerçek özel-repo GitHub App kabulü (2026-08-30):** App yalnız
+      `gyildiz21/KokpitPro` reposuna, `Contents: read` ve GitHub'ın zorunlu
+      `Metadata: read` yetkileriyle kuruldu; webhook, OAuth ve Device Flow kapalı.
+      Private key repo dışında tutuldu; App/installation kimlikleri ve anahtar
+      Git ağacına yazılmadı. Node 20.20.2 kimlikli gerçek-API kabulü yeşil.
 - [x] **Proje-bazlı gerçek indeks:** IR
       `projectId/repoRoot/branch/commit/revisionKind/revision` alanları; temiz
       commit ile kirli çalışma ağacı ayrılır; başarısız yeni koşumda son
@@ -993,9 +995,12 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       S2 halka açık akış regreasyonsuz (hermetik maskeler); S3 gerçek-API
       negatif turu `KOKPIT_REAL_GITHUB_PROBE=1` ile ayrı koşar —
       `gyildiz21/KokpitPro` anonim gerçek 404 doğrulandı (birim + E2E).
-- [ ] **Kimlikli E2E kabul:** gerçek kurulum tokenıyla özel depo başarı akışı
-      harici GitHub App kurulumu yapılana kadar açıktır.
-      Özel GitHub App dış kurulumu bu maddenin kalanıdır.
+- [x] **Kimlikli E2E kabul (2026-08-30):**
+      `KOKPIT_REAL_GITHUB_APP_PROBE=1` ve repo dışı yönlendirilmiş
+      `KOKPIT_DATA_DIR` ile S4, gerçek kurulum tokenı üzerinden özel depoyu
+      UI'da Doğrula → İndeksle → Hazır akışından geçirdi; kayıt
+      `authMode: github-app`, `private: true`, `PLAN.md` ve gerçek commit
+      makbuzuyla doğrulandı. Test sonrası yönlendirilmiş kayıt temizlendi.
 - [x] **2026-08-24 canlı kanıt:** 3 kalıcı yerel repo; KokpitPro `7/31`,
       MethodLogos `8/62` ham checkbox grubu, PageBlitz kanıt-defteri adaptörü
       `51/1057` ham belge grubu (kanonik ürün fazı sayılmaz); halka
