@@ -41,5 +41,6 @@ describe('local server security boundaries', () => {
         expect(remapRouteProjectId('/api/projects/p-1/diagram')).toBeNull();
         expect(remapRouteProjectId('/api/projects/p-1/remap/ekstra')).toBeNull();
         expect(remapRouteProjectId('/api/projects//remap')).toBeNull();
+        expect(remapRouteProjectId('/api/projects/%E0%A4%A/remap')).toBeNull();
     });
 });

@@ -201,7 +201,7 @@ export function analyzeRemap(input: RemapAnalyzeInput): RemapReport {
         coverage: {
             eligibleFiles: productionPaths.length,
             scannedFiles: input.scan.scannedFileCount,
-            testOrFixtureFiles: input.scan.scannedFileCount - productionPaths.length,
+            excludedFiles: input.scan.scannedFileCount - productionPaths.length,
             unresolvedImports: input.scan.unresolvedCount,
             renderedNodeCount: renderedSet.size,
             truncated,

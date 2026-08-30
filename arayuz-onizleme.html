@@ -1189,7 +1189,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 - [x] **Dilim 4.0 — RemapReport v1 sözleşmesi ve ölçüm tabanı:** strict
       Zod modeli (`version`, `projectId`, `sourceRevision`, `generatedAt`,
       `measurement` measured/partial/unmeasurable, `reasons[]`,
-      `coverage`, `suggestions[]`, `truncated`); her öneride kararlı `id`,
+      `coverage` (`eligibleFiles/scannedFiles/excludedFiles/unresolvedImports/
+      renderedNodeCount/truncated`), `suggestions[]`, `truncated`); her öneride kararlı `id`,
       `kind` (large-file · shared-import · cross-layer-placement-review),
       `targetPath`, yalnız gerçek eşleşmede `nodeId`, `reasonCode`,
       ölçülmüş metrics/kanıt, `relatedPaths`/`relatedGroups`,
@@ -1205,14 +1206,17 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `architectureGroupIdForPath` yeniden kullanımı; canlı revision
       doğrulaması; bayat makbuz → `unmeasurable/stale-receipt`; GitHub
       kaydı → `unmeasurable/no-local-checkout`; hata boş başarıyla
-      gizlenmez; kök-dışı/symlink sınırları korunur —
+      gizlenmez; ölçüm sonu revision yeniden doğrulanır ve koşum-içi değişiklik
+      → `unmeasurable/revision-changed-during-scan`; kök-dışı/symlink
+      sınırları Windows junction nöbetçisiyle korunur —
       `kokpit/remap/service.ts`
 - [x] **Dilim 4.3 — Öneri paneli, kaynak kanıtı ve harita vurgusu:**
       Harita bağlamında panel/denetçi modu; görünür ÖNERİ/PROPOSED
       etiketi; kart türü/neden/metrik/hedef/revision/ilgili yollar;
       `Kaynağı aç` yalnız değişmez commit'te; render dışı ölçülmüş hedef
       için dürüst açıklama; bayat/no-local-checkout'ta kart yerine
-      gerekçe + güvenli eylem; proje/revision değişiminde sıfırlama;
+      gerekçe + güvenli eylem; koşum-içi revision değişiminde eski kart yerine
+      yeniden indeks eylemi; proje/revision değişiminde sıfırlama;
       TR/EN, klavye/Esc, odak, `prefers-reduced-motion`, `--st-*` —
       harita bağlamı `#remapPanel`; beşinci görünüm AÇILMADI
 - [x] **Dilim 4.4 — Gerçek-repo ve E2E kabulü:** maskesiz KokpitPro
@@ -1353,7 +1357,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       remapCopiedToast: "Öneri özeti kopyalandı.", remapCopyAction: "Özeti kopyala", remapEmptyTitle: "Bu revizyonda öneri üretilmedi",
       remapEmptyBody: "Eşik altı veri temiz repo anlamına gelmez; yalnız ölçülen aralıkta öneri çıkmadı.", remapCoverageLabel: "Kapsam", remapTruncatedBadge: "liste kısaltıldı",
       remapSourceRevision: "Kaynak revision", remapLoading: "Remap raporu yükleniyor", remapLoadError: "Remap raporu alınamadı",
-      remapReasonStale: "Makbuz bayat", remapReasonNoLocalCheckout: "Yerel checkout yok", remapReasonScanFailed: "Tarama başarısız", remapReasonRootUnreadable: "Repo kökü okunamıyor", remapReasonRevisionCheckFailed: "Revision doğrulaması başarısız"
+      remapReasonStale: "Makbuz bayat", remapReasonNoLocalCheckout: "Yerel checkout yok", remapReasonScanFailed: "Tarama başarısız", remapReasonRootUnreadable: "Repo kökü okunamıyor", remapReasonRevisionCheckFailed: "Revision doğrulaması başarısız", remapReasonRevisionChanged: "Ölçüm sırasında çalışma ağacı değişti"
     });
     Object.assign(I18N.tr, {
       triageGroupAria: "Triage kuyrukları", complianceQueueAria: "Uyum kuyruğu",
@@ -1406,7 +1410,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       remapCopiedToast: "Suggestion summary copied.", remapCopyAction: "Copy summary", remapEmptyTitle: "No suggestions for this revision",
       remapEmptyBody: "Below-threshold data does not mean a clean repository; no suggestion was produced within the measured scope.", remapCoverageLabel: "Coverage", remapTruncatedBadge: "list truncated",
       remapSourceRevision: "Source revision", remapLoading: "Loading remap report", remapLoadError: "Remap report unavailable",
-      remapReasonStale: "Stale receipt", remapReasonNoLocalCheckout: "No local checkout", remapReasonScanFailed: "Scan failed", remapReasonRootUnreadable: "Repository root unreadable", remapReasonRevisionCheckFailed: "Revision check failed"
+      remapReasonStale: "Stale receipt", remapReasonNoLocalCheckout: "No local checkout", remapReasonScanFailed: "Scan failed", remapReasonRootUnreadable: "Repository root unreadable", remapReasonRevisionCheckFailed: "Revision check failed", remapReasonRevisionChanged: "Working tree changed during measurement"
     });
     let PROJECTS = {};
     const viewCopy = { map: ["viewMapTitle", "viewMapBody"], timeline: ["viewTimelineTitle", "viewTimelineBody"], delta: ["viewDeltaTitle", "viewDeltaBody"], compliance: ["viewComplianceTitle", "viewComplianceBody"] };
@@ -2067,7 +2071,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     // ve Uygula/Taşı eylemi YOKTUR — yalnız kopyalanabilir özet ve kanıta iniş.
     const REMAP_KIND_KEYS = { "large-file": "remapKindLargeFile", "shared-import": "remapKindSharedImport", "cross-layer-placement-review": "remapKindCrossLayer" };
     const REMAP_METRIC_KEYS = { lines: "remapMetricLines", bytes: "remapMetricBytes", importerFiles: "remapMetricImporters", importerGroupCount: "remapMetricGroups", foreignGroupCount: "remapMetricForeignGroups" };
-    const REMAP_REASON_KEYS = { "stale-receipt": "remapReasonStale", "no-local-checkout": "remapReasonNoLocalCheckout", "scan-failed": "remapReasonScanFailed", "root-unreadable": "remapReasonRootUnreadable", "revision-check-failed": "remapReasonRevisionCheckFailed" };
+    const REMAP_REASON_KEYS = { "stale-receipt": "remapReasonStale", "no-local-checkout": "remapReasonNoLocalCheckout", "scan-failed": "remapReasonScanFailed", "root-unreadable": "remapReasonRootUnreadable", "revision-check-failed": "remapReasonRevisionCheckFailed", "revision-changed-during-scan": "remapReasonRevisionChanged" };
     function activeRemap() { return remapState && remapState.projectId === activeProjectId && remapState.status !== "loading" ? remapState : null; }
     function remapKindLabel(kind) { return t(REMAP_KIND_KEYS[kind] || kind); }
     async function loadRemap() {
@@ -2132,7 +2136,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const reasonLine = unmeasurable
         ? `<ul class="delta-reason">${reasons.map(reason => `<li>${escapeHtml(t(REMAP_REASON_KEYS[reason.code] || reason.code))} <code>${escapeHtml(reason.code)}</code></li>`).join("")}</ul>`
         : reasons.length ? `<p class="remap-coverage">${escapeHtml(t("complianceTechnicalReason"))}: ${escapeHtml(reasons.map(reason => reason.code).join(", "))}</p>` : "";
-      const unmeasurableBody = `<div class="remap-unmeasurable" data-remap-status="unmeasurable"><strong>${escapeHtml(t("remapEngineUnmeasurable"))}</strong>${reasonLine}${reasons.some(reason => reason.code === "no-local-checkout") ? `<p class="remap-note">${escapeHtml(t("noLocalCheckout"))}</p>` : ""}${reasons.some(reason => reason.code === "stale-receipt") ? `<button class="text-button primary" type="button" data-map-reindex="${escapeHtml(state.projectId)}">${escapeHtml(t("reindexNow"))}</button>` : ""}</div>`;
+      const reindexable = reasons.some(reason => reason.code === "stale-receipt" || reason.code === "revision-changed-during-scan");
+      const unmeasurableBody = `<div class="remap-unmeasurable" data-remap-status="unmeasurable"><strong>${escapeHtml(t("remapEngineUnmeasurable"))}</strong>${reasonLine}${reasons.some(reason => reason.code === "no-local-checkout") ? `<p class="remap-note">${escapeHtml(t("noLocalCheckout"))}</p>` : ""}${reindexable ? `<button class="text-button primary" type="button" data-map-reindex="${escapeHtml(state.projectId)}">${escapeHtml(t("reindexNow"))}</button>` : ""}</div>`;
       const body = unmeasurable ? unmeasurableBody
         : suggestions.length ? `<div class="remap-list" data-remap-status="${escapeHtml(String(report.measurement))}">${suggestions.map(suggestion => remapCardMarkup(suggestion, report)).join("")}</div>`
         : `<div class="remap-list" data-remap-status="${escapeHtml(String(report.measurement))}"><div class="remap-empty" data-remap-empty><strong>${escapeHtml(t("remapEmptyTitle"))}</strong><p>${escapeHtml(t("remapEmptyBody"))}</p>${remapCoverageMarkup(report)}</div></div>`;

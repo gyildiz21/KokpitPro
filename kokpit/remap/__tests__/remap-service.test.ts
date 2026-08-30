@@ -71,7 +71,7 @@ function measuredReport(input: AnalyzeCall): RemapReportType {
         coverage: {
             eligibleFiles: rendered.length,
             scannedFiles: rendered.length,
-            testOrFixtureFiles: 0,
+            excludedFiles: 0,
             unresolvedImports: 0,
             renderedNodeCount: rendered.length,
             truncated: false,
@@ -136,13 +136,34 @@ describe('buildRemapReport yaşam döngüsü', () => {
         expect(report.coverage).toEqual({
             eligibleFiles: 0,
             scannedFiles: 0,
-            testOrFixtureFiles: 0,
+            excludedFiles: 0,
             unresolvedImports: 0,
             renderedNodeCount: 0,
             truncated: false,
         });
         expect(report.truncated).toBe(false);
         expect(calls).toHaveLength(0);
+    });
+
+    it('ölçüm sırasında çalışma ağacı değişirse eski revision measured diye yayımlanmaz', async () => {
+        const repo = await createTempRepo();
+        writeRepoFiles(repo, 'alpha');
+        await commitAll(repo);
+        const record = await indexLocalProject({ path: repo, planPath: 'PLAN.md' });
+        const calls: AnalyzeCall[] = [];
+        const analyze: AnalyzeFn = (input) => {
+            calls.push(input);
+            writeFileSync(resolve(repo, 'race-probe.ts'), 'export const changedDuringScan = true;\n');
+            return measuredReport(input);
+        };
+
+        const report = await buildRemapReport(record, { analyze });
+
+        expect(calls).toHaveLength(1);
+        expect(report.measurement).toBe('unmeasurable');
+        expect(report.sourceRevision).toBe(record.index.revision ?? record.index.commit);
+        expect(report.reasons.map((reason) => reason.code)).toEqual(['revision-changed-during-scan']);
+        expect(report.suggestions).toEqual([]);
     });
 
     it('GitHub kaydında unmeasurable/no-local-checkout döner; dosya sistemine dokunmaz', async () => {
@@ -171,11 +192,14 @@ describe('buildRemapReport yaşam döngüsü', () => {
     it('repo içi kök-dışı symlink ölçümü bozmaz; kök dışı yol düğüm olmaz', async () => {
         const repo = await createTempRepo();
         writeRepoFiles(repo, 'alpha');
-        // Sınır: symlink repo içinde durur ama KÖK DIŞINA çözülür.
-        const outside = resolve(repo, '..', 'kokpit-disi-secret.ts');
-        writeFileSync(outside, 'export const secret = 1;\n');
-        symlinkSync(outside, resolve(repo, 'src', 'alpha-link.ts'));
         await commitAll(repo);
+        // Sınır: junction/symlink repo içinde durur ama KÖK DIŞINA çözülür.
+        // Commit sonrasında kurulması Git'in Windows'ta junction hedefini
+        // izleyip fixture içeriğini stage etmesini engeller.
+        const outside = resolve(repo, '..', 'kokpit-disi-secret');
+        mkdirSync(outside);
+        writeFileSync(resolve(outside, 'alpha-link.ts'), 'export const secret = 1;\n');
+        symlinkSync(outside, resolve(repo, 'src', 'outside-link'), 'junction');
         const record = await indexLocalProject({ path: repo, planPath: 'PLAN.md' });
         const { analyze, calls } = fakeAnalyzer();
 
@@ -185,8 +209,8 @@ describe('buildRemapReport yaşam döngüsü', () => {
         expect(calls).toHaveLength(1);
         const paths = calls[0]?.renderedNodePaths ?? [];
         expect(paths).toEqual(['src/alpha-a.ts', 'src/alpha-b.ts']);
-        expect(paths).not.toContain('src/alpha-link.ts');
-        expect(report.suggestions.map((suggestion) => suggestion.targetPath)).not.toContain('src/alpha-link.ts');
+        expect(paths.some((path) => path.startsWith('src/outside-link/'))).toBe(false);
+        expect(report.suggestions.some((suggestion) => suggestion.targetPath.startsWith('src/outside-link/'))).toBe(false);
     });
 
     it('aynı revisionda iki koşum birebir aynı raporu üretir (generatedAt sabitlenmiş)', async () => {

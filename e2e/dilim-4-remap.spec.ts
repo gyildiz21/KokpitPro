@@ -116,7 +116,7 @@ function measuredRemap(projectId = 'mock-proj') {
             generatedAt: new Date().toISOString(),
             measurement: 'measured',
             reasons: [],
-            coverage: { eligibleFiles: 12, scannedFiles: 12, testOrFixtureFiles: 1, unresolvedImports: 0, renderedNodeCount: 3, truncated: false },
+            coverage: { eligibleFiles: 12, scannedFiles: 12, excludedFiles: 1, unresolvedImports: 0, renderedNodeCount: 3, truncated: false },
             suggestions: [
                 {
                     id: 'remap-1',
@@ -174,7 +174,7 @@ function unmeasurableRemap(projectId = 'mock-proj', code = 'stale-receipt') {
             generatedAt: new Date().toISOString(),
             measurement: 'unmeasurable',
             reasons: [{ code, message: `carrier reason: ${code}` }],
-            coverage: { eligibleFiles: 0, scannedFiles: 0, testOrFixtureFiles: 0, unresolvedImports: 0, renderedNodeCount: 0, truncated: false },
+            coverage: { eligibleFiles: 0, scannedFiles: 0, excludedFiles: 0, unresolvedImports: 0, renderedNodeCount: 0, truncated: false },
             suggestions: [],
             truncated: false,
         },
@@ -320,6 +320,20 @@ test.describe('Dilim 4 remap öneri paneli (hermetik maskeler)', () => {
         const request = await reindexRequest;
         expect(request.postDataBuffer()).toBeDefined();
         await expect(page.locator('#toast')).toContainText('yeniden indekslendi');
+    });
+
+    test('S5b · Ölçüm sırasında revision değişimi: eski kanıt çizilmez ve yeniden indeks sunulur', async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await installMocks(page, { remapSupplier: projectId => unmeasurableRemap(projectId, 'revision-changed-during-scan') });
+        await openWorkspace(page, 'Mock Proje');
+        await openRemapPanel(page);
+
+        const panel = page.locator('#remapPanel');
+        await expect(panel.locator('[data-remap-status="unmeasurable"]')).toBeVisible();
+        await expect(panel).toContainText('Ölçüm sırasında çalışma ağacı değişti');
+        await expect(panel).toContainText('revision-changed-during-scan');
+        await expect(panel.locator('[data-map-reindex="mock-proj"]')).toBeVisible();
+        await expect(panel.locator('[data-remap-card]')).toHaveCount(0);
     });
 
     test('S6 · no-local-checkout: dürüst ölçemezlik, yeniden indeks düğmesi YOK', async ({ page }) => {

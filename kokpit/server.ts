@@ -87,7 +87,14 @@ export function isAllowedHostHeader(
  */
 export function remapRouteProjectId(pathname: string): string | null {
     const remapMatch = /^\/api\/projects\/([^/]+)\/remap$/.exec(pathname);
-    return remapMatch?.[1] ? decodeURIComponent(remapMatch[1]) : null;
+    if (!remapMatch?.[1]) return null;
+    try {
+        return decodeURIComponent(remapMatch[1]);
+    } catch {
+        // Bozuk yüzde-kodlu istemci girdisi sunucu hatası değildir; rota
+        // eşleşmemiş sayılır ve normal 404 akışına bırakılır.
+        return null;
+    }
 }
 
 function json(response: ServerResponse, status: number, payload: unknown): void {

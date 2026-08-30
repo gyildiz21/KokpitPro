@@ -93,3 +93,11 @@ açacak şekilde tasarlanır (yazma izni ayrı GO konusu).
    katmanda` hükmü ÜRETİLMEZ; yalnız ölçülmüş, deterministik
    `cross-layer-placement-review` (yerleşimi gözden geçir) dili kullanılır
    ve otomatik hedef klasör uydurulmaz.
+5. Başlangıçtaki canlı Git makbuzu tarama ve dosya ölçümü bittikten sonra
+   yeniden doğrulanır. Çalışma ağacı koşum sırasında değiştiyse eski
+   `sourceRevision` ile ölçülmüş sonuç yayımlanmaz;
+   `unmeasurable/revision-changed-during-scan` döner ve yeniden indeks istenir.
+6. Kapsam sayaçları anlamını gizlemez: `eligibleFiles` analiz edilen üretim
+   dosyalarını, `scannedFiles` import taramasının tüm dosyalarını,
+   `excludedFiles` ise test/fixture/generated olarak analiz dışı bırakılanları
+   sayar.

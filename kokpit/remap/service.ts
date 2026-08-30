@@ -31,11 +31,20 @@ interface ReportReason {
     message: string;
 }
 
+function matchesRecordedRevision(current: LocalRevision, projectRecord: ProjectRecord): boolean {
+    const expectedKind = projectRecord.index.revisionKind ?? 'commit';
+    const expectedRevision = projectRecord.index.revision ?? projectRecord.index.commit;
+    return current.branch === projectRecord.index.branch
+        && current.commit === projectRecord.index.commit
+        && current.kind === expectedKind
+        && current.revision === expectedRevision;
+}
+
 function emptyCoverage(): RemapCoverage {
     return {
         eligibleFiles: 0,
         scannedFiles: 0,
-        testOrFixtureFiles: 0,
+        excludedFiles: 0,
         unresolvedImports: 0,
         renderedNodeCount: 0,
         truncated: false,
@@ -96,12 +105,7 @@ export async function buildRemapReport(
     }
     const expectedKind = projectRecord.index.revisionKind ?? 'commit';
     const expectedRevision = projectRecord.index.revision ?? projectRecord.index.commit;
-    if (
-        current.branch !== projectRecord.index.branch ||
-        current.commit !== projectRecord.index.commit ||
-        current.kind !== expectedKind ||
-        current.revision !== expectedRevision
-    ) {
+    if (!matchesRecordedRevision(current, projectRecord)) {
         return unmeasurableReport(projectRecord.id, sourceRevision, generatedAt, [
             { code: 'stale-receipt', message: `The receipt does not match the live working tree; re-index the project. Expected ${expectedKind}:${expectedRevision}, found ${current.kind}:${current.revision}.` },
         ]);
@@ -140,6 +144,26 @@ export async function buildRemapReport(
     const { stats: fileStats } = measureProductionFileStats(root, productionPaths);
     const analyze = deps?.analyze ?? analyzeRemap;
     const report = await analyze({ projectId: projectRecord.id, sourceRevision, generatedAt, scan, renderedNodePaths, fileStats });
+    // Tarama ve dosya ölçümü atomik bir filesystem snapshot'ı değildir. Koşum
+    // sırasında çalışma ağacı değiştiyse eski sourceRevision ile measured rapor
+    // yayımlamak yerine sonucu reddet. Bu ikinci kontrol, başlangıç freshness
+    // kapısının ölçüm tamamlanana kadar geçerli kaldığını kanıtlar.
+    let completedRevision: LocalRevision;
+    try {
+        completedRevision = await readLocalRevision(root);
+    } catch (error) {
+        return unmeasurableReport(projectRecord.id, sourceRevision, generatedAt, [
+            { code: 'revision-check-failed', message: `Post-scan revision check failed: ${error instanceof Error ? error.message : String(error)}` },
+        ]);
+    }
+    if (!matchesRecordedRevision(completedRevision, projectRecord)) {
+        return unmeasurableReport(projectRecord.id, sourceRevision, generatedAt, [
+            {
+                code: 'revision-changed-during-scan',
+                message: `The working tree changed during remap measurement; re-index and retry. Expected ${expectedKind}:${expectedRevision}, found ${completedRevision.kind}:${completedRevision.revision}.`,
+            },
+        ]);
+    }
     // Nihai kapı: rapor şemadan geçmeden servis dışına çıkmaz.
     return RemapReport.parse(report);
 }

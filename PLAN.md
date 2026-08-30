@@ -395,7 +395,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 - [x] **Dilim 4.0 — RemapReport v1 sözleşmesi ve ölçüm tabanı:** strict
       Zod modeli (`version`, `projectId`, `sourceRevision`, `generatedAt`,
       `measurement` measured/partial/unmeasurable, `reasons[]`,
-      `coverage`, `suggestions[]`, `truncated`); her öneride kararlı `id`,
+      `coverage` (`eligibleFiles/scannedFiles/excludedFiles/unresolvedImports/
+      renderedNodeCount/truncated`), `suggestions[]`, `truncated`); her öneride kararlı `id`,
       `kind` (large-file · shared-import · cross-layer-placement-review),
       `targetPath`, yalnız gerçek eşleşmede `nodeId`, `reasonCode`,
       ölçülmüş metrics/kanıt, `relatedPaths`/`relatedGroups`,
@@ -411,14 +412,17 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `architectureGroupIdForPath` yeniden kullanımı; canlı revision
       doğrulaması; bayat makbuz → `unmeasurable/stale-receipt`; GitHub
       kaydı → `unmeasurable/no-local-checkout`; hata boş başarıyla
-      gizlenmez; kök-dışı/symlink sınırları korunur —
+      gizlenmez; ölçüm sonu revision yeniden doğrulanır ve koşum-içi değişiklik
+      → `unmeasurable/revision-changed-during-scan`; kök-dışı/symlink
+      sınırları Windows junction nöbetçisiyle korunur —
       `kokpit/remap/service.ts`
 - [x] **Dilim 4.3 — Öneri paneli, kaynak kanıtı ve harita vurgusu:**
       Harita bağlamında panel/denetçi modu; görünür ÖNERİ/PROPOSED
       etiketi; kart türü/neden/metrik/hedef/revision/ilgili yollar;
       `Kaynağı aç` yalnız değişmez commit'te; render dışı ölçülmüş hedef
       için dürüst açıklama; bayat/no-local-checkout'ta kart yerine
-      gerekçe + güvenli eylem; proje/revision değişiminde sıfırlama;
+      gerekçe + güvenli eylem; koşum-içi revision değişiminde eski kart yerine
+      yeniden indeks eylemi; proje/revision değişiminde sıfırlama;
       TR/EN, klavye/Esc, odak, `prefers-reduced-motion`, `--st-*` —
       harita bağlamı `#remapPanel`; beşinci görünüm AÇILMADI
 - [x] **Dilim 4.4 — Gerçek-repo ve E2E kabulü:** maskesiz KokpitPro

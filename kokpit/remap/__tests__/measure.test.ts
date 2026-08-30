@@ -59,20 +59,25 @@ describe('measureProductionFileStats', () => {
     it('kök dışına çözülen symlink reddedilir; kök içi symlink kabul edilir', () => {
         const root = makeTempRoot();
         const outsideDir = makeTempRoot('remap-measure-outside-');
+        const insideDir = join(root, 'inside-target');
+        mkdirSync(insideDir);
         writeFileSync(join(outsideDir, 'secret.ts'), 'hidden\n', 'utf8');
-        writeFileSync(join(root, 'inner.ts'), 'inner\n', 'utf8');
-        symlinkSync(join(outsideDir, 'secret.ts'), join(root, 'outside-link.ts'));
-        symlinkSync(join(root, 'inner.ts'), join(root, 'inside-link.ts'));
+        writeFileSync(join(insideDir, 'inner.ts'), 'inner\n', 'utf8');
+        // `junction` Windows'ta yönetici/Developer Mode gerektirmez; POSIX'te
+        // normal dizin symlink'i olarak çalışır. Böylece güvenlik nöbetçisi
+        // deponun zorunlu Windows terminalinde de gerçekten koşar.
+        symlinkSync(outsideDir, join(root, 'outside-link'), 'junction');
+        symlinkSync(insideDir, join(root, 'inside-link'), 'junction');
 
         const { stats, unreadable, outsideRoot } = measureProductionFileStats(root, [
-            'outside-link.ts',
-            'inside-link.ts',
+            'outside-link/secret.ts',
+            'inside-link/inner.ts',
         ]);
 
         expect(outsideRoot).toBe(1);
         expect(unreadable).toBe(0);
-        expect(stats.has('outside-link.ts')).toBe(false);
-        expect(stats.get('inside-link.ts')).toEqual({ path: 'inside-link.ts', lines: 1, bytes: 6 });
+        expect(stats.has('outside-link/secret.ts')).toBe(false);
+        expect(stats.get('inside-link/inner.ts')).toEqual({ path: 'inside-link/inner.ts', lines: 1, bytes: 6 });
     });
 
     it('kök-dışı geçiş yolu (..) reddedilir', () => {

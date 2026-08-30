@@ -205,7 +205,7 @@ describe('cross-layer-placement-review kuralı', () => {
 });
 
 describe('dışlama ve kanıt disiplini', () => {
-    it('test/fixture/generated dosyaları öneri üretmez, testOrFixtureFiles sayılır', () => {
+    it('test/fixture/generated dosyaları öneri üretmez, excludedFiles sayılır', () => {
         const testPath = 'kokpit/importgraph/__tests__/scan.test.ts';
         const fixturePath = 'kokpit/diagram/__fixtures__/sample.ts';
         const generatedPath = 'kokpit/parser/generated/tables.ts';
@@ -221,7 +221,7 @@ describe('dışlama ve kanıt disiplini', () => {
         expect(report.measurement).toBe('measured');
         expect(report.coverage.eligibleFiles).toBe(2);
         expect(report.coverage.scannedFiles).toBe(5);
-        expect(report.coverage.testOrFixtureFiles).toBe(3);
+        expect(report.coverage.excludedFiles).toBe(3);
         expect(report.coverage.unresolvedImports).toBe(0);
     });
 

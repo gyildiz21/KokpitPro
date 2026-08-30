@@ -287,6 +287,11 @@ graph LR
   `kokpit/remap/thresholds.ts` dışında yaşamaz; UI hesaplama yapmaz,
   magic number taşımaz. Kimlikler ve sonuç sırası koşumlar arasında
   deterministiktir; liste sınırları ve `truncated` açıktır.
+  `coverage` içinde `eligibleFiles`, `scannedFiles`, `excludedFiles`,
+  `unresolvedImports`, `renderedNodeCount` ve `truncated` açıkça taşınır.
+  Başlangıç revisionı ölçüm sonunda yeniden doğrulanır; koşum sırasında
+  değişiklik varsa kart çizilmez, `revision-changed-during-scan` gerekçesi ve
+  yeniden indeks eylemi gösterilir.
 - **Proje kayıt şeması:** `ProjectRecord{id,name,sourceMode,localPath?,remote?,
   defaultBranch,planSources[],lastIndexedAt,connectionState}`. Kimlik görünür
   addan değil kanonik yerel kök veya GitHub `owner/repo` kimliğinden türetilir.

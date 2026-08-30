@@ -85,7 +85,8 @@ export const RemapCoverage = z
     .object({
         eligibleFiles: z.number().int().nonnegative(),
         scannedFiles: z.number().int().nonnegative(),
-        testOrFixtureFiles: z.number().int().nonnegative(),
+        /** Test, fixture ve generated olarak analiz dışı bırakılan dosyalar. */
+        excludedFiles: z.number().int().nonnegative(),
         unresolvedImports: z.number().int().nonnegative(),
         renderedNodeCount: z.number().int().nonnegative(),
         truncated: z.boolean(),
