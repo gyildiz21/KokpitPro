@@ -58,6 +58,8 @@ type AnalyzeCall = Parameters<AnalyzeFn>[0];
 
 /** Sözleşmeye uygun ölçülmüş rapor: enjekte edilen analizörün tek çıktı kalıbı. */
 function measuredReport(input: AnalyzeCall): RemapReportType {
+    // Entegrasyon: kanonik sözleşmede renderedNodePaths opsiyoneldir.
+    const rendered = input.renderedNodePaths ?? [];
     return {
         version: 1,
         projectId: input.projectId,
@@ -66,19 +68,20 @@ function measuredReport(input: AnalyzeCall): RemapReportType {
         measurement: 'measured',
         reasons: [],
         coverage: {
-            eligibleFiles: input.renderedNodePaths.length,
-            scannedFiles: input.renderedNodePaths.length,
+            eligibleFiles: rendered.length,
+            scannedFiles: rendered.length,
             testOrFixtureFiles: 0,
             unresolvedImports: 0,
-            renderedNodeCount: input.renderedNodePaths.length,
+            renderedNodeCount: rendered.length,
             truncated: false,
         },
-        suggestions: input.renderedNodePaths.map((path) => ({
+        suggestions: rendered.map((path) => ({
             id: `sugg:${path}`,
             kind: 'large-file',
             targetPath: path,
             reasonCode: 'size-over-threshold',
             metrics: { lines: 500 },
+            relatedGroups: ['shared'],
             sourceRevision: input.sourceRevision,
             proposed: true,
         })),
