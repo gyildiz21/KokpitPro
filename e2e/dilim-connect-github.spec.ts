@@ -4,9 +4,10 @@ import { expect, test, type Page, type Route } from '@playwright/test';
  * Dilim 2.1 · GitHub bağlantı negatif-yol kabulü.
  *
  * S1/S2 hermetiktir: api.github.com'a ÇIKILMAZ, yalnız aynı-köken API
- * route-maskelenir. S3 gerçek-API turu ayrı bir testtir ve yalnız
- * KOKPIT_REAL_GITHUB_PROBE=1 ile koşar (api.github.com READ izni); sunucunun
- * GithubVerificationError → HTTP 404 eşlemesi canlıyken anlamlıdır.
+ * route-maskelenir. S3 anonim gerçek-API negatif turudur ve yalnız
+ * KOKPIT_REAL_GITHUB_PROBE=1 ile koşar. S4 ise gerçek GitHub App kurulumuyla
+ * özel repo pozitif yolunu; açıkça yönlendirilmiş, yalıtılmış
+ * KOKPIT_DATA_DIR içinde Doğrula → İndeksle → Hazır olarak kanıtlar.
  */
 
 const PRIVATE_REPO = 'gyildiz21/KokpitPro';
@@ -117,6 +118,7 @@ test('S2 · halka açık depo akışı regreasyonsuz: Doğrula → İndeksle →
 });
 
 const RUN_REAL = process.env.KOKPIT_REAL_GITHUB_PROBE === '1';
+const RUN_REAL_APP = process.env.KOKPIT_REAL_GITHUB_APP_PROBE === '1' && Boolean(process.env.KOKPIT_DATA_DIR);
 
 test('S3 · gerçek API negatif turu: özel depo anonim → HTTP 404, kayıt defteri değişmez', async ({ request }) => {
     test.skip(!RUN_REAL, 'KOKPIT_REAL_GITHUB_PROBE=1 ile koşulur: gerçek api.github.com READ turu.');
@@ -133,4 +135,62 @@ test('S3 · gerçek API negatif turu: özel depo anonim → HTTP 404, kayıt def
     expect(after.projects.some((project: { source: { type: string; owner?: string; repo?: string } }) =>
         project.source.type === 'github' && project.source.owner === 'gyildiz21' && project.source.repo === 'KokpitPro',
     )).toBe(false);
+});
+
+test('S4 · kimlikli GitHub App pozitif turu: özel repo Doğrula → İndeksle → Hazır', async ({ page, request }) => {
+    test.skip(
+        !RUN_REAL_APP,
+        'KOKPIT_REAL_GITHUB_APP_PROBE=1 ve yalıtılmış KOKPIT_DATA_DIR ile koşulur.',
+    );
+
+    const health = await request.get('/api/health');
+    expect(health.ok()).toBe(true);
+    expect((await health.json()).github).toEqual({ mode: 'github-app', configured: true });
+
+    const before = await (await request.get('/api/projects')).json() as {
+        projects: Array<{ id: string; source: { type: string; owner?: string; repo?: string } }>;
+    };
+    const matchesPrivateRepo = (project: { source: { type: string; owner?: string; repo?: string } }) =>
+        project.source.type === 'github' && project.source.owner === 'gyildiz21' && project.source.repo === 'KokpitPro';
+    expect(before.projects.some(matchesPrivateRepo), 'Yalıtılmış veri dizini boş bir GitHub kabul kaydıyla başlamalıdır.').toBe(false);
+
+    let createdProjectId: string | null = null;
+    try {
+        await openCatalog(page);
+        await openGithubConnect(page, PRIVATE_REPO);
+        await page.locator('#connectNext').click();
+        await expect(page.locator('.connect-step.is-current')).toHaveAttribute('data-step', '3');
+        await expect(page.locator('#connectBody')).toContainText(/doğrulandı|verified/i);
+
+        await page.locator('#connectNext').click();
+        await expect(page.locator('.connect-step.is-current')).toHaveAttribute('data-step', '4');
+        await expect(page.locator('#connectBody')).toContainText(/Kalıcı proje kaydı hazır|Persistent project record ready/);
+
+        const after = await (await request.get('/api/projects')).json() as {
+            projects: Array<{
+                id: string;
+                authMode: string;
+                connectionState: string;
+                branch: string;
+                source: { type: string; owner?: string; repo?: string; private?: boolean };
+                index?: { commit?: string; planPath?: string };
+            }>;
+        };
+        const privateProject = after.projects.find(matchesPrivateRepo);
+        expect(privateProject).toBeDefined();
+        createdProjectId = privateProject?.id ?? null;
+        expect(privateProject).toMatchObject({
+            authMode: 'github-app',
+            connectionState: 'ready',
+            branch: 'main',
+            source: { type: 'github', owner: 'gyildiz21', repo: 'KokpitPro', private: true },
+        });
+        expect(privateProject?.index?.commit).toMatch(/^[0-9a-f]{40}$/);
+        expect(privateProject?.index?.planPath).toBe('PLAN.md');
+    } finally {
+        if (createdProjectId) {
+            const cleanup = await request.delete(`/api/projects/${encodeURIComponent(createdProjectId)}`);
+            expect(cleanup.ok()).toBe(true);
+        }
+    }
 });
