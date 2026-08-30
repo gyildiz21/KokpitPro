@@ -60,6 +60,21 @@ $env:GITHUB_APP_PRIVATE_KEY_PATH = "C:\secure\kokpit-pro.pem"
 npm run dev
 ```
 
+Gerçek özel-repo kabul testi varsayılan pakette ortam-korumalıdır. Yalnız
+repo dışında geçici bir kayıt defteriyle ve ayrı bir yerel portla açılır:
+
+```powershell
+$githubAppProbeData = Join-Path $env:TEMP "kokpit-github-app-e2e"
+$env:KOKPIT_DATA_DIR = $githubAppProbeData
+$env:KOKPIT_REAL_GITHUB_APP_PROBE = "1"
+$env:KOKPIT_E2E_PORT = "42173"
+npm run test:e2e -- --grep "S4 · kimlikli GitHub App pozitif turu" --workers=1
+```
+
+Test, özel depoyu UI'da `Doğrula → İndeksle → Hazır` akışından geçirir;
+oluşturduğu yönlendirilmiş proje kaydını tur sonunda temizler. App kimlikleri,
+installation tokenı ve private key KokpitPro ön yüzüne veya Git ağacına yazılmaz.
+
 Yerel geliştirmede `GITHUB_TOKEN` sunucu ortam değişkeni de desteklenir. Token
 HTML'e, API yanıtına, `localStorage`'a veya proje kayıt dosyasına yazılmaz.
 
