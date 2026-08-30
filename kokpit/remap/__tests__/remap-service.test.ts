@@ -1,10 +1,11 @@
 // Dilim 4 · buildRemapReport yaşam döngüsü nöbetçileri.
 //
-// Analizör AJAN A'nın kanonik modülüdür; bu dalda entegrasyon sapı fırlatır.
-// Testler sözleşmeye uygun EL YAPIMI deterministik analizörü enjekte eder —
-// sahte yalnız testte serbesttir, üretim yolu sahte İÇERMEZ. Geçici Git
-// depoları hermetiktir: her test kendi tmpdir kökünü kurup kapatır
-// (projects.test.ts desenindeki gibi).
+// Analizör AJAN A'nın kanonik modülüdür. Yaşam döngüsü testleri sözleşmeye
+// uygun EL YAPIMI deterministik analizörü enjekte eder — sahte yalnız testte
+// serbesttir, üretim yolu sahte İÇERMEZ. "fileStats dikişi" testi ise
+// enjeksiyonsuz GERÇEK analyzeRemap + measureProductionFileStats zincirini
+// nöbetler. Geçici Git depoları hermetiktir: her test kendi tmpdir kökünü
+// kurup kapatır (projects.test.ts desenindeki gibi).
 
 import { execFile } from 'node:child_process';
 import { appendFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -225,5 +226,26 @@ describe('buildRemapReport yaşam döngüsü', () => {
         expect(betaTargets).toEqual(['src/beta-a.ts', 'src/beta-b.ts']);
         expect(alphaTargets.some((path) => path.includes('beta'))).toBe(false);
         expect(betaTargets.some((path) => path.includes('alpha'))).toBe(false);
+    });
+
+    it('fileStats dikişi: enjeksiyonsuz gerçek zincir large-file önerisi üretir ve measured kalır', async () => {
+        const repo = await createTempRepo();
+        writeRepoFiles(repo, 'alpha');
+        // Eşiği aşan gerçek büyük dosya: 430 satır (threshold 400).
+        const largeBody = Array.from({ length: 430 }, (_, index) => `export const line${index} = ${index};\n`).join('');
+        writeFileSync(resolve(repo, 'src', 'alpha-large.ts'), `import { helper } from './alpha-b';\n${largeBody}`);
+        await commitAll(repo);
+        const record = await indexLocalProject({ path: repo, planPath: 'PLAN.md', name: 'Real Chain' });
+
+        // deps.analyze ENJEKTE EDİLMEZ: servis → measure → analyze üretim zinciri.
+        const report = await buildRemapReport(record);
+
+        expect(report.measurement).toBe('measured');
+        expect(report.reasons.map((reason) => reason.code)).not.toContain('file-stats-unavailable');
+        const largeFile = report.suggestions.find((suggestion) => suggestion.kind === 'large-file');
+        expect(largeFile).toBeDefined();
+        expect(largeFile?.targetPath).toBe('src/alpha-large.ts');
+        expect(largeFile?.metrics.lines).toBeGreaterThanOrEqual(400);
+        expect(largeFile?.sourceRevision).toBe(record.index.revision ?? record.index.commit);
     });
 });

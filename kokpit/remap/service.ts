@@ -12,11 +12,12 @@
 
 import { existsSync, realpathSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { buildReceiptDiagram } from '../diagram/receipt-adapter';
+import { buildReceiptDiagram, isTestPath } from '../diagram/receipt-adapter';
 import { scanImportGraph, type ImportScanResult } from '../importgraph/scan';
 import { readLocalRevision, type LocalRevision } from '../projects/local';
 import type { ProjectRecord } from '../projects/schema';
 import { analyzeRemap } from './analyze';
+import { measureProductionFileStats } from './measure';
 import { RemapReport, type RemapCoverage, type RemapReport as RemapReportType } from './schema';
 
 export interface BuildRemapReportDeps {
@@ -130,8 +131,24 @@ export async function buildRemapReport(
     const renderedNodePaths = receipt.graph.nodes
         .map((node) => node.path)
         .filter((path): path is string => typeof path === 'string');
+    // Büyük-dosya ölçümü canlı yolda atlanamaz: üretim dosyaları gerçekten
+    // ölçülüp fileStats analizöre verilir; aksi hâlde large-file kuralı ölü
+    // kalır ve rapor kalıcı 'partial' olur (AJAN D denetim bulgusu 1).
+    const productionPaths = scan.nodes
+        .map((node) => node.path)
+        .filter((path) => !isTestPath(path) && !isFixturePath(path) && !isGeneratedPath(path));
+    const { stats: fileStats } = measureProductionFileStats(root, productionPaths);
     const analyze = deps?.analyze ?? analyzeRemap;
-    const report = await analyze({ projectId: projectRecord.id, sourceRevision, generatedAt, scan, renderedNodePaths });
+    const report = await analyze({ projectId: projectRecord.id, sourceRevision, generatedAt, scan, renderedNodePaths, fileStats });
     // Nihai kapı: rapor şemadan geçmeden servis dışına çıkmaz.
     return RemapReport.parse(report);
+}
+
+/** analyze.ts ile aynı dışlama tanımları — sürüklenme nöbetçisi analyze.test.ts'tedir. */
+function isFixturePath(path: string): boolean {
+    return /(^|\/)__fixtures__(\/|$)/i.test(path);
+}
+
+function isGeneratedPath(path: string): boolean {
+    return /(^|\/)(generated|__generated__)(\/|$)/i.test(path);
 }
