@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GithubVerificationError } from './projects/github';
-import { githubVerificationHttpStatus, isAllowedHostHeader, isStaticPathBlocked } from './server';
+import { githubVerificationHttpStatus, isAllowedHostHeader, isStaticPathBlocked, remapRouteProjectId } from './server';
 
 describe('local server security boundaries', () => {
     it('blocks secret, registry, dependency, and reference-engine paths', () => {
@@ -33,5 +33,13 @@ describe('local server security boundaries', () => {
         expect(githubVerificationHttpStatus(new GithubVerificationError(0, 'network', 'offline'))).toBe(502);
         expect(githubVerificationHttpStatus(new GithubVerificationError(404, 'not-found-or-private', 'missing'))).toBe(404);
         expect(githubVerificationHttpStatus(new GithubVerificationError(429, 'rate-limit', 'later', '60'))).toBe(429);
+    });
+
+    it('remap rotası yalnız tam eşleşmede kodu çözülmüş proje kimliğini çözer', () => {
+        expect(remapRouteProjectId('/api/projects/p-1/remap')).toBe('p-1');
+        expect(remapRouteProjectId('/api/projects/proje%20ad%C4%B1/remap')).toBe('proje adı');
+        expect(remapRouteProjectId('/api/projects/p-1/diagram')).toBeNull();
+        expect(remapRouteProjectId('/api/projects/p-1/remap/ekstra')).toBeNull();
+        expect(remapRouteProjectId('/api/projects//remap')).toBeNull();
     });
 });
