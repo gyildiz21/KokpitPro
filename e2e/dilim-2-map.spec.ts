@@ -46,12 +46,19 @@ test('Dilim 2 gerçek harita, dil, klavye ve duyarlı yerleşim kabulü', async 
     // Dilim 2.3: grup denetçisi gerçek ölçülmüş graf üstünden açılır ve aynı
     // makbuzla sayfa dönüşünde seçim + viewport korunur.
     const firstGroup = page.locator('[data-map-group-id]').first();
-    await firstGroup.click();
+    // Grup düğmesi tüm grup kutusunu kaplar; alt düğümler (zIndex 2) merkezini
+    // örtebilir ve graf büyüklüğü yerleşimi değiştirir. Başlık şeridi (üst-sol)
+    // alt düğüm içermez; davranış bir sonraki denetçi metni iddiasıyla
+    // gerçek seçim işleyicisi üzerinden doğrulanır.
+    await firstGroup.click({ position: { x: 8, y: 8 } });
     await expect(page.locator('#inspectorBody')).toContainText('Deterministik sorumluluk');
     await page.locator('#mapSearch').fill('map-flow');
     await expect(page.locator('#mapCount')).toContainText('arama sonucu');
     expect(await page.locator('.map-flow-node.is-dimmed').count()).toBeGreaterThan(0);
     const viewportBeforeZoom = await page.evaluate(() => (window as any).KokpitMapFlow?.getViewport?.());
+    // Büyük graf fitView'i minZoom tabanına (0.25) indirebilir; tek adım tam
+    // +0.05 ürettiği için artış iddiası iki gerçek zoomIn adımıyla kurulur.
+    await page.evaluate(() => (window as any).KokpitMapFlow?.zoomIn());
     await page.evaluate(() => (window as any).KokpitMapFlow?.zoomIn());
     await expect.poll(() => page.evaluate(() => (window as any).KokpitMapFlow?.getViewport?.()?.zoom ?? 0))
         .toBeGreaterThan((viewportBeforeZoom?.zoom ?? 0) + 0.05);
