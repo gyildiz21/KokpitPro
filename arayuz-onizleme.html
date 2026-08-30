@@ -1181,36 +1181,59 @@ KAPANMIŞ sayılmaz (koşum disiplini).
 > yalnız `kokpit/remap/thresholds.ts` içinde gerekçesiyle yaşar; UI
 > magic number taşımaz.
 
-- [ ] **Dilim 4.0 — RemapReport v1 sözleşmesi ve ölçüm tabanı:** strict
+- [x] **Dilim 4.0 — RemapReport v1 sözleşmesi ve ölçüm tabanı:** strict
       Zod modeli (`version`, `projectId`, `sourceRevision`, `generatedAt`,
       `measurement` measured/partial/unmeasurable, `reasons[]`,
       `coverage`, `suggestions[]`, `truncated`); her öneride kararlı `id`,
       `kind` (large-file · shared-import · cross-layer-placement-review),
       `targetPath`, yalnız gerçek eşleşmede `nodeId`, `reasonCode`,
       ölçülmüş metrics/kanıt, `relatedPaths`/`relatedGroups`,
-      `sourceRevision`, `proposed` durumu; eşiklerin dondurulması
-- [ ] **Dilim 4.1 — Deterministik öneri motoru:** üç kural; uygun üretim
+      `sourceRevision`, `proposed` durumu; eşiklerin dondurulması —
+      `kokpit/remap/thresholds.ts` + `schema.ts`
+- [x] **Dilim 4.1 — Deterministik öneri motoru:** üç kural; uygun üretim
       dosyası dışlaması; unresolved kenar öneri kanıtı olamaz; kararlı
       kimlik ve deterministik sıra; liste sınırı + `truncated`;
-      determinizm/dışlama/olumlu-olumsuz nöbetçileri
-- [ ] **Dilim 4.2 — Remap API ve freshness sınırı:** `GET
+      determinizm/dışlama/olumlu-olumsuz nöbetçileri —
+      `kokpit/remap/{analyze,measure}.ts` + 28 motor nöbetçisi
+- [x] **Dilim 4.2 — Remap API ve freshness sınırı:** `GET
       /api/projects/:id/remap`; `scanImportGraph` +
       `architectureGroupIdForPath` yeniden kullanımı; canlı revision
       doğrulaması; bayat makbuz → `unmeasurable/stale-receipt`; GitHub
       kaydı → `unmeasurable/no-local-checkout`; hata boş başarıyla
-      gizlenmez; kök-dışı/symlink sınırları korunur
-- [ ] **Dilim 4.3 — Öneri paneli, kaynak kanıtı ve harita vurgusu:**
+      gizlenmez; kök-dışı/symlink sınırları korunur —
+      `kokpit/remap/service.ts`
+- [x] **Dilim 4.3 — Öneri paneli, kaynak kanıtı ve harita vurgusu:**
       Harita bağlamında panel/denetçi modu; görünür ÖNERİ/PROPOSED
       etiketi; kart türü/neden/metrik/hedef/revision/ilgili yollar;
       `Kaynağı aç` yalnız değişmez commit'te; render dışı ölçülmüş hedef
       için dürüst açıklama; bayat/no-local-checkout'ta kart yerine
       gerekçe + güvenli eylem; proje/revision değişiminde sıfırlama;
-      TR/EN, klavye/Esc, odak, `prefers-reduced-motion`, `--st-*`
-- [ ] **Dilim 4.4 — Gerçek-repo ve E2E kabulü:** maskesiz KokpitPro
+      TR/EN, klavye/Esc, odak, `prefers-reduced-motion`, `--st-*` —
+      harita bağlamı `#remapPanel`; beşinci görünüm AÇILMADI
+- [x] **Dilim 4.4 — Gerçek-repo ve E2E kabulü:** maskesiz KokpitPro
       `/api/projects/:id/remap` koşusu; ölçüm revision ↔ HEAD/working-tree
       makbuz karşılaştırması; en az bir gerçek ölçülmüş önerinin kanıt
       zinciri doğrulaması; hermetik Playwright senaryoları; 1440/1024/768
       taşma; TR/EN; klavye/Escape; `Uygula/Taşı` yokluğu nöbetçisi
+- [x] **2026-08-30 kabul kanıtı:** AJAN A/B/C dal çalışmaları entegrasyon
+      dalında birleştirildi (engine→API→UI); AJAN D bağımsız denetimi tek
+      kabul engeli buldu (servis `fileStats` dikişi kopuk: large-file
+      kuralı canlıda ölü, rapor kalıcı `partial`) — `87a2e9f` ile kapatıldı
+      ve enjeksiyonsuz gerçek-zincir nöbetçisi eklendi. **Maskesiz canlı
+      koşum:** `measurement: measured`, `sourceRevision = 87a2e9f…` (HEAD
+      commit makbuzuyla birebir), 38 uygun üretim dosyası / 80 taranan /
+      42 dışlanan / 34 render düğümü, `truncated: false`; **15 gerçek
+      öneri** (2 large-file: server.ts 446 satır · check/index.ts 420
+      satır — `wc -l` ile birebir doğrulandı; 7 shared-import:
+      parser/schema.ts 11 importer vb.; 6 cross-layer-placement-review),
+      dışlanan-yol ihlali 0. Vitest **254 passed / 1 opt-in skipped**;
+      Playwright **33 passed / 1 opt-in skipped** (dilim-4 paketi 11/11);
+      `npm run check:preview`, `npm audit --omit=dev` (0 açık) ve
+      `git diff --check` yeşil. Ürün yüzeyinde `Uygula/Taşı` eylemi
+      nöbetçilerle yasaklı; öneriler yalnız okunur + kopyalanabilir.
+      Not: koşumlar Windows interop'u kapalı korumalı WSL kum havuzunda
+      Linux **Node 20** (20.19/20.20) ile yapıldı; Node 20 gereksinimi
+      sağlanır, terminal kısıtı final raporda açıktır.
 
 ## Dilim 5 · Uyum Telemetrisi (UI-SPEC §10) — [hazirlik-auditi: SAHİPSİZ bulgusuna sahip çıktık]
 
