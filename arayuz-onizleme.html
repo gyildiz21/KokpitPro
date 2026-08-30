@@ -1224,25 +1224,24 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       makbuz karşılaştırması; en az bir gerçek ölçülmüş önerinin kanıt
       zinciri doğrulaması; hermetik Playwright senaryoları; 1440/1024/768
       taşma; TR/EN; klavye/Escape; `Uygula/Taşı` yokluğu nöbetçisi
-- [x] **2026-08-30 kabul kanıtı:** AJAN A/B/C dal çalışmaları entegrasyon
-      dalında birleştirildi (engine→API→UI); AJAN D bağımsız denetimi tek
-      kabul engeli buldu (servis `fileStats` dikişi kopuk: large-file
-      kuralı canlıda ölü, rapor kalıcı `partial`) — `87a2e9f` ile kapatıldı
-      ve enjeksiyonsuz gerçek-zincir nöbetçisi eklendi. **Maskesiz canlı
-      koşum:** `measurement: measured`, `sourceRevision = 87a2e9f…` (HEAD
-      commit makbuzuyla birebir), 38 uygun üretim dosyası / 80 taranan /
-      42 dışlanan / 34 render düğümü, `truncated: false`; **15 gerçek
-      öneri** (2 large-file: server.ts 446 satır · check/index.ts 420
-      satır — `wc -l` ile birebir doğrulandı; 7 shared-import:
-      parser/schema.ts 11 importer vb.; 6 cross-layer-placement-review),
-      dışlanan-yol ihlali 0. Vitest **254 passed / 1 opt-in skipped**;
-      Playwright **33 passed / 1 opt-in skipped** (dilim-4 paketi 11/11);
+- [x] **2026-08-30 nihai kapanış kanıtı:** güncel `origin/main` entegrasyon
+      dalına `43c524e` ile alındı; bağımsız denetimde bulunan dört açık kapı
+      `d848965` ile kapatıldı: ölçüm sonu revision nöbetçisi, ayrıcalıksız
+      Windows junction sınır testi, bozuk yüzde-kodlu remap rotasında güvenli
+      404 ve dürüst `coverage.excludedFiles` sözleşmesi. **Temiz commit
+      maskesiz koşumu:** Windows Node **20.20.2**, `measurement: measured`,
+      `sourceRevision = HEAD = d848965…`, neden 0; 38 uygun üretim dosyası /
+      80 taranan / 42 dışlanan / 34 render düğümü, `truncated: false`;
+      **15 gerçek öneri** (2 large-file: server.ts 453 satır ·
+      check/index.ts 420 satır; 7 shared-import; 6
+      cross-layer-placement-review), dışlanan-yol ihlali 0. TypeScript 0 hata;
+      Vitest **255 passed / 1 opt-in skipped**; Playwright **34 passed /
+      2 opt-in gerçek-API skipped** (Dilim 4 paketi **12/12**);
       `npm run check:preview`, `npm audit --omit=dev` (0 açık) ve
-      `git diff --check` yeşil. Ürün yüzeyinde `Uygula/Taşı` eylemi
-      nöbetçilerle yasaklı; öneriler yalnız okunur + kopyalanabilir.
-      Not: koşumlar Windows interop'u kapalı korumalı WSL kum havuzunda
-      Linux **Node 20** (20.19/20.20) ile yapıldı; Node 20 gereksinimi
-      sağlanır, terminal kısıtı final raporda açıktır.
+      `git diff --check` yeşil. Ürün yüzeyinde `Uygula/Taşı` eylemi yok;
+      öneriler yalnız okunur + kopyalanabilir. **Dilim 4 teknik ve ürün
+      kabulü kapanmıştır.** Push, `main` merge ve deploy bu kabulün parçası
+      değildir; ayrı Patron onayı gerektirir.
 
 ## Dilim 5 · Uyum Telemetrisi (UI-SPEC §10) — [hazirlik-auditi: SAHİPSİZ bulgusuna sahip çıktık]
 
