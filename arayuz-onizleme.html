@@ -432,6 +432,11 @@
     .ai-comment-badge { color: var(--text); font-size: 9px; font-weight: 720; letter-spacing: .07em; text-transform: uppercase; }
     .ai-comment-meta, .ai-comment-confidence { margin: 0; color: var(--text-3); font-size: 9.5px; }
     .ai-comment-limitations { display: grid; gap: 4px; margin: 0; padding-left: 16px; color: var(--text-2); font-size: 10px; line-height: 1.5; }
+    .delta-reason li { display: grid; gap: 4px; }
+    .delta-reason .delta-reason-note { color: var(--text-3); font-size: 10px; }
+    .delta-reason .delta-reason-action { justify-self: start; }
+    .delta-technical { margin-top: 9px; }
+    .delta-technical-list { display: grid; gap: 4px; margin: 0; padding-left: 16px; }
     .sample-label { display: inline-flex; align-items: center; justify-content: center; width: fit-content; min-height: 22px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--text-3); font-size: 9px; font-weight: 740; letter-spacing: .07em; text-transform: uppercase; }
     .mermaid-export { margin: 10px 0 0; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
     .mermaid-export summary { cursor: pointer; padding: 9px 12px; color: var(--text-2); font-size: 11px; font-weight: 700; }
@@ -1441,14 +1446,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       explainWhatHappened: "Ne oldu?", explainWhyItMatters: "Bu neden önemli?", explainFirstAction: "Önerilen ilk eylem", explainVerification: "Doğrulama",
       aiCommentBadge: "AI YORUMU", aiCommentConfidence: "Güven", aiCommentLimitations: "Sınırlar",
       technicalEvidence: "Teknik kanıt", technicalDetail: "Teknik ayrıntı", sourceRevisionLabel: "Kaynak revision",
-      deltaActionLinkCheckout: "Bu GitHub kaydının yerel çalışma kopyası yok; kanıt için repoyu yerel olarak bağla.", deltaActionMapItem: "Bu maddeye doğrulanabilir dosya/test yolu bağla veya eşleşen başka bir madde seç."
-    });
-    Object.assign(I18N.tr, {
-      explainCardAria: "Açıklama katmanı", explainLoading: "Açıklama yükleniyor…", explainFailed: "Açıklama alınamadı", explainFailedBody: "Açıklama servisi yanıt vermedi; teknik kanıt bölümü hâlâ erişilebilir.",
-      explainWhatHappened: "Ne oldu?", explainWhyItMatters: "Bu neden önemli?", explainFirstAction: "Önerilen ilk eylem", explainVerification: "Doğrulama",
-      aiCommentBadge: "AI YORUMU", aiCommentConfidence: "Güven", aiCommentLimitations: "Sınırlar",
-      technicalEvidence: "Teknik kanıt", technicalDetail: "Teknik ayrıntı", sourceRevisionLabel: "Kaynak revision",
-      deltaActionLinkCheckout: "Bu GitHub kaydının yerel çalışma kopyası yok; kanıt için repoyu yerel olarak bağla.", deltaActionMapItem: "Bu maddeye doğrulanabilir dosya/test yolu bağla veya eşleşen başka bir madde seç."
+      deltaActionLinkCheckout: "Bu GitHub kaydının yerel çalışma kopyası yok; kanıt için repoyu yerel olarak bağla.", deltaActionMapItem: "Bu maddeye doğrulanabilir dosya/test yolu bağla veya eşleşen başka bir madde seç.",
+      deltaMissingDataStale: "Eksik veri: güncel indeks makbuzu.", deltaMissingDataNoCheckout: "Eksik veri: yerel çalışma kopyası.", deltaMissingDataNoMapping: "Eksik veri: madde ile ölçümlü graf arasındaki eşleme.", deltaMissingDataPaths: "Eksik veri: maddenin ölçülmüş dosya yolları.", deltaMissingDataItem: "Eksik veri: maddenin bu makbuzdaki kaydı.", deltaMissingDataBaseline: "Eksik veri: karşılaştırma taban çizgisi.", deltaMissingDataGeneric: "Eksik veri: bu neden için ölçüm girdisi."
     });
     Object.assign(I18N.en, {
       groupRecordCount: "records", acceptanceOpenBadge: "Acceptance open (plan)",
@@ -1468,7 +1467,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       explainWhatHappened: "What happened?", explainWhyItMatters: "Why does it matter?", explainFirstAction: "Suggested first action", explainVerification: "Verification",
       aiCommentBadge: "AI COMMENT", aiCommentConfidence: "Confidence", aiCommentLimitations: "Limitations",
       technicalEvidence: "Technical evidence", technicalDetail: "Technical detail", sourceRevisionLabel: "Source revision",
-      deltaActionLinkCheckout: "This GitHub record has no local working copy; connect the repository locally for evidence.", deltaActionMapItem: "Connect a verifiable file/test path to this item or select another matching item."
+      deltaActionLinkCheckout: "This GitHub record has no local working copy; connect the repository locally for evidence.", deltaActionMapItem: "Connect a verifiable file/test path to this item or select another matching item.",
+      deltaMissingDataStale: "Missing data: a current index receipt.", deltaMissingDataNoCheckout: "Missing data: a local working copy.", deltaMissingDataNoMapping: "Missing data: the mapping between the item and the measured graph.", deltaMissingDataPaths: "Missing data: measured file paths for the item.", deltaMissingDataItem: "Missing data: the item's record in this receipt.", deltaMissingDataBaseline: "Missing data: the comparison baseline.", deltaMissingDataGeneric: "Missing data: the measurement input for this reason."
     });
     Object.assign(I18N.en, {
       productSections: "Product sections", waitingGo: "Waiting for GO", gateWaitingBody: "The technical scope is visible; progress is waiting for external approval or a human decision.",
@@ -1977,6 +1977,9 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     }
     function updateViewCopy() { const [titleKey, descriptionKey] = viewCopy[activeView]; $('#viewTitle').textContent = t(titleKey); $('#viewDescription').textContent = t(descriptionKey); }
     function showView(view, options = {}) {
+      // Dilim 5.2: görünüm değişince ilgisiz uyum denetçisi açık kalmaz;
+      // yalnız uyum kaydı seçimi sıfırlanır, delta bağlamı korunur.
+      if (view !== "compliance" && selectedNode?.type === "compliance-record") resetInspector();
       activeView = view;
       $$('.view-tab').forEach(tab => { const isActive = tab.dataset.view === view; tab.setAttribute("aria-selected", String(isActive)); tab.tabIndex = isActive ? 0 : -1; });
       $$('.view-panel').forEach(panel => { panel.hidden = panel.id !== `view-${view}`; });
@@ -2040,6 +2043,28 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     }
     function activeDelta() { return deltaState && deltaState.projectId === activeProjectId && deltaState.status !== "loading" ? deltaState : null; }
     const DELTA_REASON_KEYS = { "item-not-found": "deltaReasonItemNotFound", "stale-receipt": "staleReceipt", "no-local-checkout": "noLocalCheckout", "paths-not-measured": "deltaReasonPathsNotMeasured", "edges-not-measurable-yet": "deltaReasonEdgesNotMeasurableYet", "comparison-baseline-unavailable": "deltaReasonBaselineUnavailable", "no-mapping": "deltaReasonNoMapping" };
+    const DELTA_MISSING_KEYS = { "stale-receipt": "deltaMissingDataStale", "no-local-checkout": "deltaMissingDataNoCheckout", "no-mapping": "deltaMissingDataNoMapping", "paths-not-measured": "deltaMissingDataPaths", "item-not-found": "deltaMissingDataItem", "comparison-baseline-unavailable": "deltaMissingDataBaseline" };
+    function deltaSafeActionMarkup(code) {
+      // Dilim 5.2 güvenli eylem sözleşmesi: stale → gerçek yeniden indeksle
+      // butonu; no-local-checkout → asla yeniden indeksle değil, bağlama
+      // açıklaması; eşleme eksikleri → yol/test bağlama yönlendirmesi.
+      if (code === "stale-receipt") return `<button class="text-button primary delta-reason-action" type="button" data-map-reindex="${escapeHtml(activeProjectId)}">${escapeHtml(t("reindexNow"))}</button>`;
+      if (code === "no-local-checkout") return `<span class="delta-reason-action">${escapeHtml(t("deltaActionLinkCheckout"))}</span>`;
+      if (["no-mapping", "paths-not-measured", "item-not-found"].includes(code)) return `<span class="delta-reason-action">${escapeHtml(t("deltaActionMapItem"))}</span>`;
+      return "";
+    }
+    function deltaReasonRowMarkup(reason, options = {}) {
+      const plain = escapeHtml(t(DELTA_REASON_KEYS[reason.code] || reason.code));
+      const missingKey = DELTA_MISSING_KEYS[reason.code];
+      const note = missingKey ? `<span class="delta-reason-note">${escapeHtml(t(missingKey))}</span>` : "";
+      const action = options.skipReindex && reason.code === "stale-receipt" ? "" : deltaSafeActionMarkup(reason.code);
+      return `<li><span>${plain}</span>${note}${action}</li>`;
+    }
+    function deltaTechnicalMarkup(reasons) {
+      // Raw reasonCode yalnız "Teknik ayrıntı" disclosure'ının içindedir.
+      if (!reasons.length) return "";
+      return `<details class="technical-evidence delta-technical"><summary>${escapeHtml(t("technicalDetail"))}</summary><ul class="delta-technical-list">${reasons.map(reason => `<li><code>${escapeHtml(reason.code)}</code></li>`).join("")}</ul></details>`;
+    }
     function compositeKeyFor(phaseHeading, itemId) { return `${phaseHeading}::${itemId}`; }
     function findSelectedItemContext() {
       const state = activeDelta();
@@ -2068,13 +2093,17 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         sections.push(`<section class="delta-card__section" data-delta-section="edges"><h3>${escapeHtml(t("deltaEdgesChanged"))}</h3>${rows}</section>`);
       }
       const reasons = delta.reasons || [];
-      if (reasons.length) sections.push(`<section class="delta-card__section" data-delta-section="not-measurable"><h3>${escapeHtml(t("deltaNotMeasurableTitle"))}</h3><ul class="delta-reason">${reasons.map(reason => `<li>${escapeHtml(t(DELTA_REASON_KEYS[reason.code] || reason.code))} <code>${escapeHtml(reason.code)}</code></li>`).join("")}</ul></section>`);
+      if (reasons.length) sections.push(`<section class="delta-card__section" data-delta-section="not-measurable"><h3>${escapeHtml(t("deltaNotMeasurableTitle"))}</h3><ul class="delta-reason">${reasons.map(reason => deltaReasonRowMarkup(reason)).join("")}</ul>${deltaTechnicalMarkup(reasons)}</section>`);
       return sections.join("");
     }
     function deltaHonestMarkup(state) {
       const stale = state.status === "stale";
-      const reasons = (state.delta?.reasons || []).map(reason => `<li>${escapeHtml(t(DELTA_REASON_KEYS[reason.code] || reason.code))} <code>${escapeHtml(reason.code)}</code></li>`).join("");
-      return `<div class="empty-state"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-delta"></use></svg></div><p class="eyebrow">${escapeHtml(t("honestState"))}</p><h2>${escapeHtml(t(stale ? "staleReceipt" : "deltaNotMeasurableTitle"))}</h2><p>${reasons || escapeHtml(t("noMappingBody"))}</p>${stale ? `<button class="text-button primary" type="button" data-map-reindex="${escapeHtml(state.projectId)}">${escapeHtml(t("reindexNow"))}</button>` : ""}</div>`;
+      const reasons = state.delta?.reasons || [];
+      // Bayat panelinde üst düzey yeniden indeksle butonu zaten var; satır
+      // içi kopyası çizilmez (ölü/çift buton üretilmez).
+      const reasonRows = reasons.map(reason => deltaReasonRowMarkup(reason, { skipReindex: stale })).join("");
+      const reasonsMarkup = reasonRows ? `<ul class="delta-reason">${reasonRows}</ul>${deltaTechnicalMarkup(reasons)}` : escapeHtml(t("noMappingBody"));
+      return `<div class="empty-state"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-delta"></use></svg></div><p class="eyebrow">${escapeHtml(t("honestState"))}</p><h2>${escapeHtml(t(stale ? "staleReceipt" : "deltaNotMeasurableTitle"))}</h2><p>${reasonsMarkup}</p>${stale ? `<button class="text-button primary" type="button" data-map-reindex="${escapeHtml(state.projectId)}">${escapeHtml(t("reindexNow"))}</button>` : ""}</div>`;
     }
     function renderDeltaView() {
       const view = $("#view-delta");
