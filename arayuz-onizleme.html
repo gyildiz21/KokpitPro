@@ -482,6 +482,46 @@
     .phase-overview-row span { color: var(--text-3); font-size: 9.5px; font-variant-numeric: tabular-nums; }
     .inspector-scrim { display: none; }
 
+    /* Dilim 4 · Remap paneli — yalnız mevcut --st-* belirteçleri; kesikli ÖNERİ
+       dili delta öneri düğümlerini aynalar. Panel öneri panelidir: Uygula/Taşı yoktur. */
+    .map-tools .text-button { min-height: 30px; padding: 0 9px; gap: 5px; font-size: 11px; }
+    .map-tools .text-button .icon { width: 14px; height: 14px; }
+    #remapToggle[aria-pressed="true"] { border-color: color-mix(in srgb, var(--accent) 38%, var(--line)); background: var(--accent-soft); color: var(--text); }
+    #remapPanel { display: flex; flex-direction: column; min-width: 0; max-height: clamp(520px, calc(100dvh - 270px), 760px); border-top: 1px solid var(--line); background: var(--bg-elevated); }
+    .remap-head { display: grid; gap: 5px; padding: 13px 15px 11px; border-bottom: 1px solid var(--line); }
+    .remap-head strong { font-size: 13px; }
+    .remap-engine { display: inline-flex; align-items: center; gap: 7px; color: var(--text-3); font-size: 10.5px; }
+    .remap-engine::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--st-open); }
+    .remap-engine.is-ready::before { background: var(--st-done); }
+    .remap-engine.is-unmeasured::before { background: var(--st-partial); }
+    .remap-coverage { margin: 0; color: var(--text-3); font-size: 10px; }
+    .remap-truncated { display: inline-flex; padding: 1px 6px; border: 1px solid var(--st-partial); border-radius: 99px; background: var(--st-partial-soft); color: var(--st-partial); font-size: 9px; font-weight: 720; letter-spacing: .06em; }
+    .remap-list { display: grid; gap: 10px; align-content: start; min-height: 0; padding: 12px 15px 18px; overflow-y: auto; }
+    .remap-card { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 11px 12px; border: 1px dashed var(--st-partial); border-radius: 9px; background: color-mix(in srgb, var(--st-partial-soft) 46%, var(--surface-2)); }
+    .remap-card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .remap-kind { color: var(--text-2); font-size: 10.5px; font-weight: 660; text-align: right; }
+    .remap-card__path { justify-self: start; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+    .remap-reason { margin: 0; }
+    .remap-metrics, .remap-related { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+    .remap-metric { display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text-2); font-size: 10px; }
+    .remap-metric span { color: var(--text-3); }
+    .remap-note { margin: 0; color: var(--text-3); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+    .remap-notrendered { align-self: center; color: var(--text-3); font-size: 10.5px; }
+    .remap-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+    .remap-actions .text-button { min-height: 32px; }
+    .remap-card .source-disabled { width: fit-content; margin-top: 0; max-width: 100%; }
+    .remap-empty, .remap-unmeasurable { display: grid; gap: 8px; justify-items: start; padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); color: var(--text-2); font-size: 11px; line-height: 1.55; }
+    .remap-unmeasurable { border-color: color-mix(in srgb, var(--st-error) 30%, var(--line)); background: color-mix(in srgb, var(--st-error) 8%, var(--surface-2)); }
+    .remap-empty strong, .remap-unmeasurable strong { font-size: 12px; }
+    .remap-empty p, .remap-unmeasurable p { margin: 0; }
+    @media (min-width: 900px) {
+      #view-map.is-remap-open { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; grid-template-rows: auto auto auto; }
+      #view-map.is-remap-open > .map-toolbar { grid-column: 1 / -1; }
+      #view-map.is-remap-open > .graph-viewport { grid-column: 1; }
+      #view-map.is-remap-open > .mermaid-export { grid-column: 1; }
+      #view-map.is-remap-open > #remapPanel { grid-column: 2; grid-row: 2 / 4; border-top: 0; border-left: 1px solid var(--line); }
+    }
+
     .statusbar { display: flex; align-items: center; gap: 16px; min-height: 38px; padding: 6px clamp(14px, 2vw, 28px); border-top: 1px solid var(--line); background: var(--bg-elevated); color: var(--text-3); font-size: 10.5px; }
     .status-meta { gap: 6px; }
     .status-meta .icon { width: 14px; height: 14px; }
@@ -655,6 +695,7 @@
     <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 2.8a9.2 9.2 0 0 0-2.9 17.9c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .8.1-.7.4-1.1.7-1.3-2.3-.3-4.7-1.1-4.7-5.1 0-1.1.4-2.1 1.1-2.8-.1-.3-.5-1.3.1-2.7 0 0 .9-.3 2.9 1.1a10 10 0 0 1 5.3 0c2-1.4 2.9-1.1 2.9-1.1.6 1.4.2 2.4.1 2.7.7.7 1.1 1.7 1.1 2.8 0 4-2.4 4.8-4.7 5.1.4.3.7 1 .7 2v2.9c0 .3.2.6.7.5A9.2 9.2 0 0 0 12 2.8z"></path></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5"></path><path d="M4 17v-5h5"></path><path d="M6.1 8a7 7 0 0 1 11.6-1L20 12M4 12l2.3 5a7 7 0 0 0 11.6-1"></path></symbol>
+    <symbol id="i-remap" viewBox="0 0 24 24"><path d="M4 8h12"></path><path d="m13 5 3 3-3 3"></path><path d="M20 16H8"></path><path d="m11 13-3 3 3 3"></path></symbol>
   </svg>
 
   <div class="app-shell">
@@ -708,12 +749,13 @@
         <header class="view-header"><div class="view-title-wrap"><p class="eyebrow" data-i18n="workspaceLabel">Çalışma alanı</p><h1 id="viewTitle">Mimari harita</h1><p id="viewDescription">Faz ile kod yüzeyini aynı bağlamda inceleyin; bir düğüm seçerek kanıta inin.</p></div><div class="view-actions"><button class="text-button" id="resetPhase" type="button" data-i18n-aria="resetFilter" aria-label="Filtreyi sıfırla"><svg class="icon" aria-hidden="true"><use href="#i-fit"></use></svg><span data-i18n="resetFilter">Filtreyi sıfırla</span></button><button class="text-button primary" id="inspectorToggle" type="button" aria-pressed="true" data-i18n-aria="inspector" aria-label="Denetçi"><svg class="icon" aria-hidden="true"><use href="#i-panel"></use></svg><span data-i18n="inspector">Denetçi</span></button></div></header>
 
         <section class="view-panel" id="view-map" role="tabpanel" aria-labelledby="tab-map">
-          <div class="map-toolbar"><span id="mapCount" aria-live="polite">5 / 30 örnek düğüm</span><label class="map-search" for="mapSearch"><svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><span class="sr-only" data-i18n="mapSearchLabel">Haritada ara</span><input id="mapSearch" type="search" autocomplete="off" data-i18n-placeholder="mapSearchPlaceholder" placeholder="Dosya veya düğüm ara…"></label><div class="map-tools"><button class="icon-button" id="zoomOut" type="button" data-i18n-aria="zoomOut" aria-label="Uzaklaştır"><svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button><button class="icon-button" id="zoomIn" type="button" data-i18n-aria="zoomIn" aria-label="Yakınlaştır"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button><button class="icon-button" id="zoomFit" type="button" data-i18n-aria="fit" aria-label="Haritayı sığdır"><svg class="icon" aria-hidden="true"><use href="#i-fit"></use></svg></button></div></div>
+          <div class="map-toolbar"><span id="mapCount" aria-live="polite">5 / 30 örnek düğüm</span><label class="map-search" for="mapSearch"><svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><span class="sr-only" data-i18n="mapSearchLabel">Haritada ara</span><input id="mapSearch" type="search" autocomplete="off" data-i18n-placeholder="mapSearchPlaceholder" placeholder="Dosya veya düğüm ara…"></label><div class="map-tools"><button class="text-button" id="remapToggle" type="button" aria-pressed="false" aria-controls="remapPanel"><svg class="icon" aria-hidden="true"><use href="#i-remap"></use></svg><span data-i18n="remapToggle">Remap önerileri</span></button><button class="icon-button" id="zoomOut" type="button" data-i18n-aria="zoomOut" aria-label="Uzaklaştır"><svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button><button class="icon-button" id="zoomIn" type="button" data-i18n-aria="zoomIn" aria-label="Yakınlaştır"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg></button><button class="icon-button" id="zoomFit" type="button" data-i18n-aria="fit" aria-label="Haritayı sığdır"><svg class="icon" aria-hidden="true"><use href="#i-fit"></use></svg></button></div></div>
           <div class="graph-viewport"><div class="graph-layer" id="graphLayer">
             <div id="graphNodes"></div><div class="graph-state" id="graphState" role="status" aria-live="polite"><div class="graph-state-card"><strong data-i18n="mapLoading">Repo haritası hazırlanıyor</strong><p data-i18n="mapLoadingBody">İndeks makbuzu ve ölçümlü import grafiği doğrulanıyor.</p></div></div>
             <div class="graph-help"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="mapHelp">Ok, kaynak dosyadan bağımlı olduğu dosyaya gider; kesikli çizgi dinamik veya tür importudur.</span></div>
           </div></div>
           <details class="mermaid-export" id="mermaidExport" hidden><summary data-i18n="mermaidSourceTitle">Deterministik Mermaid kaynağı</summary><pre id="mermaidSource" aria-live="polite"></pre><button class="text-button" id="copyMermaid" type="button"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span data-i18n="copyMermaidAction">Mermaid'i kopyala</span></button></details>
+          <aside class="remap-panel" id="remapPanel" role="region" aria-label="Remap öneri paneli" data-i18n-aria="remapPanelAria" hidden></aside>
         </section>
 
         <section class="view-panel" id="view-timeline" role="tabpanel" aria-labelledby="tab-timeline" hidden><div class="timeline"><div class="preview-note"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg><span data-i18n="timelineProjectScoped">Zaman çizgisi yalnız etkin projenin izlenebilir faz maddelerinden üretilir.</span></div><div id="timelineContent"></div></div></section>
@@ -1120,10 +1162,86 @@ KAPANMIŞ sayılmaz (koşum disiplini).
   birlikte çalışır — ✅ gerçek repoda bizzat doğrulandı (yukarıdaki canlı
   DELTA[measured] çıktısı).
 
-## Dilim 4 · Remap Önerileri (v2'ye ertelenebilir)
+## Dilim 4 · Kanıta Dayalı Remap Önerileri
 
-- [ ] Büyük-dosya / ortak-import / eşleşmeyen-katman sezgileri
-- [ ] Öneri listesi UI paneli
+> **Sözleşme (2026-08-29):** UI-SPEC §1/§4/§5.3 + DESIGN D7. Öneri,
+> ölçülmüş kanıttan türetilen **insan-inceleme adayıdır**; repository
+> gerçeği, ihlal veya otomatik değişiklik olarak sunulamaz. Otomatik
+> taşıma, commit ve dosya yazma YOKTUR; `Uygula` eylemi ürün yüzeyinde
+> bulunmaz. Remap beşinci ana görünüm değildir; Harita bağlamında ayrı
+> öneri paneli/denetçi modudur.
+>
+> **Ölçüm tabanı (Sıfırdıncı Kapı — 2026-08-29, KokpitPro @ `7d1501a`
+> gerçek kaynak ağacı):** 71 taranan dosya · 33 uygun üretim dosyası ·
+> 186 ölçülmüş kenar · 3 unresolved import. Üretim satır dağılımı
+> p50=137, p75=236, p90=355, p95=421, max=426; üretim fan-in p50=1,
+> p90=4, p95=6, max=11; düğüm başına farklı importer mimari grubu
+> p50=1, p75=2, max=3; gerçek `unmatchedPlanItems`=52. Test/fixture/
+> generated/node_modules/dist/build/output/coverage/.kokpit/.codex-tmp
+> /gitdiagram ölçüm dışıdır. **Dondurulan eşikler:** büyük dosya ≥400
+> satır (≈p95; ölçülen kuyruk server.ts=426, check/index.ts=421) veya
+> ≥16384 bayt (p95=17902); ortak import ≥4 üretim importer (p90=4) VE
+> ≥2 farklı importer grubu (ölçülen max=3); cross-layer-placement-review
+> ≥2 farklı yabancı importer grubu (ölçülen kohort: 4 dosya). Eşikler
+> yalnız `kokpit/remap/thresholds.ts` içinde gerekçesiyle yaşar; UI
+> magic number taşımaz.
+
+- [x] **Dilim 4.0 — RemapReport v1 sözleşmesi ve ölçüm tabanı:** strict
+      Zod modeli (`version`, `projectId`, `sourceRevision`, `generatedAt`,
+      `measurement` measured/partial/unmeasurable, `reasons[]`,
+      `coverage` (`eligibleFiles/scannedFiles/excludedFiles/unresolvedImports/
+      renderedNodeCount/truncated`), `suggestions[]`, `truncated`); her öneride kararlı `id`,
+      `kind` (large-file · shared-import · cross-layer-placement-review),
+      `targetPath`, yalnız gerçek eşleşmede `nodeId`, `reasonCode`,
+      ölçülmüş metrics/kanıt, `relatedPaths`/`relatedGroups`,
+      `sourceRevision`, `proposed` durumu; eşiklerin dondurulması —
+      `kokpit/remap/thresholds.ts` + `schema.ts`
+- [x] **Dilim 4.1 — Deterministik öneri motoru:** üç kural; uygun üretim
+      dosyası dışlaması; unresolved kenar öneri kanıtı olamaz; kararlı
+      kimlik ve deterministik sıra; liste sınırı + `truncated`;
+      determinizm/dışlama/olumlu-olumsuz nöbetçileri —
+      `kokpit/remap/{analyze,measure}.ts` + 28 motor nöbetçisi
+- [x] **Dilim 4.2 — Remap API ve freshness sınırı:** `GET
+      /api/projects/:id/remap`; `scanImportGraph` +
+      `architectureGroupIdForPath` yeniden kullanımı; canlı revision
+      doğrulaması; bayat makbuz → `unmeasurable/stale-receipt`; GitHub
+      kaydı → `unmeasurable/no-local-checkout`; hata boş başarıyla
+      gizlenmez; ölçüm sonu revision yeniden doğrulanır ve koşum-içi değişiklik
+      → `unmeasurable/revision-changed-during-scan`; kök-dışı/symlink
+      sınırları Windows junction nöbetçisiyle korunur —
+      `kokpit/remap/service.ts`
+- [x] **Dilim 4.3 — Öneri paneli, kaynak kanıtı ve harita vurgusu:**
+      Harita bağlamında panel/denetçi modu; görünür ÖNERİ/PROPOSED
+      etiketi; kart türü/neden/metrik/hedef/revision/ilgili yollar;
+      `Kaynağı aç` yalnız değişmez commit'te; render dışı ölçülmüş hedef
+      için dürüst açıklama; bayat/no-local-checkout'ta kart yerine
+      gerekçe + güvenli eylem; koşum-içi revision değişiminde eski kart yerine
+      yeniden indeks eylemi; proje/revision değişiminde sıfırlama;
+      TR/EN, klavye/Esc, odak, `prefers-reduced-motion`, `--st-*` —
+      harita bağlamı `#remapPanel`; beşinci görünüm AÇILMADI
+- [x] **Dilim 4.4 — Gerçek-repo ve E2E kabulü:** maskesiz KokpitPro
+      `/api/projects/:id/remap` koşusu; ölçüm revision ↔ HEAD/working-tree
+      makbuz karşılaştırması; en az bir gerçek ölçülmüş önerinin kanıt
+      zinciri doğrulaması; hermetik Playwright senaryoları; 1440/1024/768
+      taşma; TR/EN; klavye/Escape; `Uygula/Taşı` yokluğu nöbetçisi
+- [x] **2026-08-30 nihai kapanış kanıtı:** güncel `origin/main` entegrasyon
+      dalına `43c524e` ile alındı; bağımsız denetimde bulunan dört açık kapı
+      `d848965` ile kapatıldı: ölçüm sonu revision nöbetçisi, ayrıcalıksız
+      Windows junction sınır testi, bozuk yüzde-kodlu remap rotasında güvenli
+      404 ve dürüst `coverage.excludedFiles` sözleşmesi. **Temiz commit
+      maskesiz koşumu:** Windows Node **20.20.2**, `measurement: measured`,
+      `sourceRevision = HEAD = d848965…`, neden 0; 38 uygun üretim dosyası /
+      80 taranan / 42 dışlanan / 34 render düğümü, `truncated: false`;
+      **15 gerçek öneri** (2 large-file: server.ts 453 satır ·
+      check/index.ts 420 satır; 7 shared-import; 6
+      cross-layer-placement-review), dışlanan-yol ihlali 0. TypeScript 0 hata;
+      Vitest **255 passed / 1 opt-in skipped**; Playwright **34 passed /
+      2 opt-in gerçek-API skipped** (Dilim 4 paketi **12/12**);
+      `npm run check:preview`, `npm audit --omit=dev` (0 açık) ve
+      `git diff --check` yeşil. Ürün yüzeyinde `Uygula/Taşı` eylemi yok;
+      öneriler yalnız okunur + kopyalanabilir. **Dilim 4 teknik ve ürün
+      kabulü kapanmıştır.** Push, `main` merge ve deploy bu kabulün parçası
+      değildir; ayrı Patron onayı gerektirir.
 
 ## Dilim 5 · Uyum Telemetrisi (UI-SPEC §10) — [hazirlik-auditi: SAHİPSİZ bulgusuna sahip çıktık]
 
@@ -1230,6 +1348,17 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       deltaReasonEdgesNotMeasurableYet: "Kenar değişimi henüz ölçülebilir değil; uydurma kenar üretilmez.", deltaReasonBaselineUnavailable: "Karşılaştırma taban çizgisi bulunamadı.", deltaReasonNoMapping: "Madde metni ölçümlü graf düğümleriyle eşleşmedi."
     });
     Object.assign(I18N.tr, {
+      remapToggle: "Remap önerileri", remapPanelAria: "Remap öneri paneli", remapTitle: "Yeniden düzenleme önerileri",
+      remapEngineMeasured: "Ölçümlü remap raporu", remapEnginePartial: "Kısmi remap raporu", remapEngineUnmeasurable: "Remap ölçülemedi",
+      remapKindLargeFile: "Büyük dosya", remapKindSharedImport: "Paylaşılan import", remapKindCrossLayer: "Katlar arası yerleşim incelemesi",
+      remapMetricLines: "satır", remapMetricBytes: "bayt", remapMetricImporters: "içe aktaran dosya", remapMetricGroups: "içe aktaran grup", remapMetricForeignGroups: "farklı grup",
+      remapProposalNote: "Öneri insan incelemesi içindir; otomatik değişiklik yapılmaz.", remapShowOnMap: "Haritada göster", remapNotRendered: "Ölçüldü, haritada render edilmedi.",
+      remapCopiedToast: "Öneri özeti kopyalandı.", remapCopyAction: "Özeti kopyala", remapEmptyTitle: "Bu revizyonda öneri üretilmedi",
+      remapEmptyBody: "Eşik altı veri temiz repo anlamına gelmez; yalnız ölçülen aralıkta öneri çıkmadı.", remapCoverageLabel: "Kapsam", remapTruncatedBadge: "liste kısaltıldı",
+      remapSourceRevision: "Kaynak revision", remapLoading: "Remap raporu yükleniyor", remapLoadError: "Remap raporu alınamadı",
+      remapReasonStale: "Makbuz bayat", remapReasonNoLocalCheckout: "Yerel checkout yok", remapReasonScanFailed: "Tarama başarısız", remapReasonRootUnreadable: "Repo kökü okunamıyor", remapReasonRevisionCheckFailed: "Revision doğrulaması başarısız", remapReasonRevisionChanged: "Ölçüm sırasında çalışma ağacı değişti"
+    });
+    Object.assign(I18N.tr, {
       triageGroupAria: "Triage kuyrukları", complianceQueueAria: "Uyum kuyruğu",
       complianceUnmeasuredNote: "Uyum motoru bu projeyi ölçemedi; satırlar yalnız canlı uyum raporundan üretilir.",
       complianceTechnicalReason: "Ölçüm gerekçesi", complianceCoverage: "Taranan kapsam", compliancePartialNote: "Uyum motoru yalnız ölçebildiği kapsamı gösteriyor; sayılar tam repo toplamı değildir.", engineReady: "Canlı uyum raporu", enginePartial: "Kısmi uyum raporu", engineUnmeasured: "Motor ölçemedi", engineError: "Uyum raporu alınamadı", engineStaleBadge: "veri bayat",
@@ -1271,6 +1400,17 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       deltaNotMeasurableTitle: "Delta could not be measured for this item", deltaReasonItemNotFound: "The item was not found in this index receipt.", deltaReasonPathsNotMeasured: "No measured file paths exist for this item.",
       deltaReasonEdgesNotMeasurableYet: "Edge changes are not measurable yet; invented links are never produced.", deltaReasonBaselineUnavailable: "Comparison baseline is unavailable.", deltaReasonNoMapping: "The item text did not match any measured graph node."
     });
+    Object.assign(I18N.en, {
+      remapToggle: "Remap suggestions", remapPanelAria: "Remap suggestion panel", remapTitle: "Restructuring suggestions",
+      remapEngineMeasured: "Measured remap report", remapEnginePartial: "Partial remap report", remapEngineUnmeasurable: "Remap could not be measured",
+      remapKindLargeFile: "Large file", remapKindSharedImport: "Shared import", remapKindCrossLayer: "Cross-layer placement review",
+      remapMetricLines: "lines", remapMetricBytes: "bytes", remapMetricImporters: "importer files", remapMetricGroups: "importer groups", remapMetricForeignGroups: "foreign groups",
+      remapProposalNote: "Suggestions are for human review; no automatic change is made.", remapShowOnMap: "Show on map", remapNotRendered: "Measured, not rendered on the map.",
+      remapCopiedToast: "Suggestion summary copied.", remapCopyAction: "Copy summary", remapEmptyTitle: "No suggestions for this revision",
+      remapEmptyBody: "Below-threshold data does not mean a clean repository; no suggestion was produced within the measured scope.", remapCoverageLabel: "Coverage", remapTruncatedBadge: "list truncated",
+      remapSourceRevision: "Source revision", remapLoading: "Loading remap report", remapLoadError: "Remap report unavailable",
+      remapReasonStale: "Stale receipt", remapReasonNoLocalCheckout: "No local checkout", remapReasonScanFailed: "Scan failed", remapReasonRootUnreadable: "Repository root unreadable", remapReasonRevisionCheckFailed: "Revision check failed", remapReasonRevisionChanged: "Working tree changed during measurement"
+    });
     let PROJECTS = {};
     const viewCopy = { map: ["viewMapTitle", "viewMapBody"], timeline: ["viewTimelineTitle", "viewTimelineBody"], delta: ["viewDeltaTitle", "viewDeltaBody"], compliance: ["viewComplianceTitle", "viewComplianceBody"] };
     let language = localStorage.getItem("kokpit-language") || "tr";
@@ -1290,6 +1430,9 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     let complianceFilter = "all";
     let selectedPhaseItem = null;
     let deltaRequestId = 0;
+    let remapState = null;
+    let remapRequestId = 0;
+    let remapPanelOpen = false;
     let mapRuntimeReady = false;
     let inspectorReturnFocus = null;
     let inspectorReturnNodeId = null;
@@ -1498,9 +1641,11 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       resetInspector();
       diagramState = null;
       deltaState = null;
+      remapState = null;
       complianceState = null;
       selectedPhaseItem = null;
       resetDeltaPanel();
+      resetRemapPanel();
       resetCompliancePanel();
       selectedPhase = "all";
       mapSearchQuery = "";
@@ -1511,6 +1656,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       await loadPlanData();
       await loadDiagramData();
       void loadCompliance();
+      void loadRemap();
       restoreMapContext();
       renderPhaseRail();
       updatePlanSourceLabels();
@@ -1735,6 +1881,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       renderGraph();
       renderDeltaView();
       renderComplianceView();
+      renderRemapPanel();
       paintCachedDeltaCards();
       if (phaseGroups.length) { renderPhaseRail(); updatePlanSourceLabels(); renderTimeline(); }
       if (selectedNode) selectedNode.type === "phase" ? renderPhaseInspector(selectedNode.id) : selectedNode.type === "compliance-record" ? renderComplianceInspector("record", selectedNode.id) : renderInspector(selectedNode.id, selectedNode.type);
@@ -1917,6 +2064,125 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       if (!state || !state.phaseHeading || !state.itemId) return;
       const key = compositeKeyFor(state.phaseHeading, state.itemId);
       $$(".phase-item").forEach(details => paintInspectorDeltaCard(details, details.dataset.compositeItemId === key ? state : null));
+    }
+    // Dilim 4 · Remap öneri paneli: tek veri kaynağı canlı
+    // /api/projects/:id/remap yanıtındaki RemapReport v1'dir; UI hesaplama yapmaz
+    // ve Uygula/Taşı eylemi YOKTUR — yalnız kopyalanabilir özet ve kanıta iniş.
+    const REMAP_KIND_KEYS = { "large-file": "remapKindLargeFile", "shared-import": "remapKindSharedImport", "cross-layer-placement-review": "remapKindCrossLayer" };
+    const REMAP_METRIC_KEYS = { lines: "remapMetricLines", bytes: "remapMetricBytes", importerFiles: "remapMetricImporters", importerGroupCount: "remapMetricGroups", foreignGroupCount: "remapMetricForeignGroups" };
+    const REMAP_REASON_KEYS = { "stale-receipt": "remapReasonStale", "no-local-checkout": "remapReasonNoLocalCheckout", "scan-failed": "remapReasonScanFailed", "root-unreadable": "remapReasonRootUnreadable", "revision-check-failed": "remapReasonRevisionCheckFailed", "revision-changed-during-scan": "remapReasonRevisionChanged" };
+    function activeRemap() { return remapState && remapState.projectId === activeProjectId && remapState.status !== "loading" ? remapState : null; }
+    function remapKindLabel(kind) { return t(REMAP_KIND_KEYS[kind] || kind); }
+    async function loadRemap() {
+      const projectId = activeProjectId;
+      if (!projectId) return;
+      const requestOrder = ++remapRequestId;
+      try {
+        const payload = await apiRequest(`/api/projects/${encodeURIComponent(projectId)}/remap`);
+        if (projectId !== activeProjectId || requestOrder !== remapRequestId) return;
+        const report = payload && payload.report ? payload.report : null;
+        if (!report) remapState = { projectId, status: "error" };
+        else if (report.measurement === "unmeasurable") remapState = { projectId, status: "unmeasurable", report };
+        else remapState = { projectId, status: "ready", report };
+      } catch (error) {
+        if (projectId !== activeProjectId || requestOrder !== remapRequestId) return;
+        // HTTP hatası: örnek veri gösterilmez; önceki dürüst durum korunur, yoksa dürüst hata durumu.
+        const kept = remapState && remapState.projectId === projectId && remapState.status !== "error" ? remapState : null;
+        remapState = kept || { projectId, status: "error" };
+        showToast(`${t("remapLoadError")}: ${error.message}`);
+      }
+      renderRemapPanel();
+    }
+    function remapCoverageMarkup(report) {
+      const coverage = report.coverage;
+      if (!coverage) return "";
+      const truncated = Boolean(report.truncated || coverage.truncated);
+      return `<p class="remap-coverage">${escapeHtml(t("remapCoverageLabel"))}: ${escapeHtml(String(coverage.scannedFiles ?? 0))}/${escapeHtml(String(coverage.eligibleFiles ?? 0))}${truncated ? ` · <span class="remap-truncated">${escapeHtml(t("remapTruncatedBadge"))}</span>` : ""}</p>`;
+    }
+    function remapSourceMarkup(suggestion, report) {
+      // Kanıt semantiği renderRealNodeInspector'ın aynasıdır: yalnız commit
+      // makbuzu + GitHub fileLinkBase ile bağlantı üretilir; working-tree
+      // makbuzuna asla yanlış GitHub adresi eklenmez.
+      const diagram = activeDiagram();
+      const evidence = diagram ? diagram.receipt.nodeEvidence[suggestion.nodeId || ""] || Object.values(diagram.receipt.nodeEvidence)[0] : null;
+      const revision = evidence?.commit || report.sourceRevision;
+      const url = diagram && evidence && evidence.revisionKind === "commit" ? githubBlobUrl(diagram.fileLinkBase, revision, suggestion.targetPath) : null;
+      if (url) return `<a class="text-button remap-source" href="${escapeHtml(url)}" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>${escapeHtml(t("openSourceOnGithub"))}</span></a>`;
+      const note = evidence?.revisionKind === "working-tree" ? t("sourceWorkingTreeNote") : t("sourceLocalNote");
+      return `<button class="text-button source-disabled" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>${escapeHtml(note)}</span></button>`;
+    }
+    function remapCardMarkup(suggestion, report) {
+      const metrics = Object.entries(suggestion.metrics || {})
+        .filter(([key]) => REMAP_METRIC_KEYS[key])
+        .map(([key, value]) => `<span class="remap-metric"><span>${escapeHtml(t(REMAP_METRIC_KEYS[key]))}</span><strong>${escapeHtml(String(value))}</strong></span>`)
+        .join("");
+      const related = [
+        ...(suggestion.relatedPaths || []).map(path => `<span class="test-chip"><code>${escapeHtml(path)}</code></span>`),
+        ...(suggestion.relatedGroups || []).map(group => `<span class="test-chip">${escapeHtml(architectureGroupLabel({ id: group }))}</span>`)
+      ].join("");
+      const jump = suggestion.nodeId
+        ? `<button class="text-button" type="button" data-node-jump="${escapeHtml(suggestion.nodeId)}"><svg class="icon" aria-hidden="true"><use href="#i-map"></use></svg><span>${escapeHtml(t("remapShowOnMap"))}</span></button>`
+        : `<span class="remap-notrendered">${escapeHtml(t("remapNotRendered"))}</span>`;
+      return `<article class="remap-card" data-remap-card="${escapeHtml(suggestion.id)}"><header class="remap-card__head"><strong class="map-flow-node__badge">${escapeHtml(t("proposalBadge"))}</strong><span class="remap-kind">${escapeHtml(remapKindLabel(suggestion.kind))}</span></header><code class="remap-card__path">${escapeHtml(suggestion.targetPath)}</code><p class="remap-reason"><code>${escapeHtml(suggestion.reasonCode)}</code></p>${metrics ? `<div class="remap-metrics">${metrics}</div>` : ""}${related ? `<div class="remap-related">${related}</div>` : ""}<p class="remap-note">${escapeHtml(t("remapSourceRevision"))}: <code>${escapeHtml(String(suggestion.sourceRevision || "").slice(0, 8))}</code> · ${escapeHtml(t("remapProposalNote"))}</p><div class="remap-actions">${jump}<button class="text-button" type="button" data-remap-copy="${escapeHtml(suggestion.id)}"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span>${escapeHtml(t("remapCopyAction"))}</span></button></div>${remapSourceMarkup(suggestion, report)}</article>`;
+    }
+    function remapPanelMarkup(state) {
+      const report = state.report || {};
+      const reasons = report.reasons || [];
+      const suggestions = report.suggestions || [];
+      const unmeasurable = state.status === "unmeasurable";
+      const engineClass = unmeasurable ? "is-unmeasured" : "is-ready";
+      const engineLabel = unmeasurable ? t("remapEngineUnmeasurable") : report.measurement === "partial" ? t("remapEnginePartial") : t("remapEngineMeasured");
+      const reasonLine = unmeasurable
+        ? `<ul class="delta-reason">${reasons.map(reason => `<li>${escapeHtml(t(REMAP_REASON_KEYS[reason.code] || reason.code))} <code>${escapeHtml(reason.code)}</code></li>`).join("")}</ul>`
+        : reasons.length ? `<p class="remap-coverage">${escapeHtml(t("complianceTechnicalReason"))}: ${escapeHtml(reasons.map(reason => reason.code).join(", "))}</p>` : "";
+      const reindexable = reasons.some(reason => reason.code === "stale-receipt" || reason.code === "revision-changed-during-scan");
+      const unmeasurableBody = `<div class="remap-unmeasurable" data-remap-status="unmeasurable"><strong>${escapeHtml(t("remapEngineUnmeasurable"))}</strong>${reasonLine}${reasons.some(reason => reason.code === "no-local-checkout") ? `<p class="remap-note">${escapeHtml(t("noLocalCheckout"))}</p>` : ""}${reindexable ? `<button class="text-button primary" type="button" data-map-reindex="${escapeHtml(state.projectId)}">${escapeHtml(t("reindexNow"))}</button>` : ""}</div>`;
+      const body = unmeasurable ? unmeasurableBody
+        : suggestions.length ? `<div class="remap-list" data-remap-status="${escapeHtml(String(report.measurement))}">${suggestions.map(suggestion => remapCardMarkup(suggestion, report)).join("")}</div>`
+        : `<div class="remap-list" data-remap-status="${escapeHtml(String(report.measurement))}"><div class="remap-empty" data-remap-empty><strong>${escapeHtml(t("remapEmptyTitle"))}</strong><p>${escapeHtml(t("remapEmptyBody"))}</p>${remapCoverageMarkup(report)}</div></div>`;
+      return `<header class="remap-head"><strong>${escapeHtml(t("remapTitle"))}</strong><span class="remap-engine ${engineClass}">${escapeHtml(engineLabel)}</span>${unmeasurable ? "" : remapCoverageMarkup(report)}</header>${body}`;
+    }
+    function renderRemapPanel() {
+      const panel = $("#remapPanel");
+      const toggle = $("#remapToggle");
+      const view = $("#view-map");
+      if (!panel || !toggle || !view) return;
+      view.classList.toggle("is-remap-open", remapPanelOpen);
+      toggle.setAttribute("aria-pressed", String(remapPanelOpen));
+      if (!remapPanelOpen) { panel.hidden = true; panel.innerHTML = ""; return; }
+      const state = activeRemap();
+      panel.hidden = false;
+      if (!state) {
+        panel.innerHTML = `<header class="remap-head"><strong>${escapeHtml(t("remapTitle"))}</strong></header><div class="remap-list"><p class="remap-note">${escapeHtml(t("remapLoading"))}</p></div>`;
+        return;
+      }
+      if (state.status === "error") {
+        panel.innerHTML = `<header class="remap-head"><strong>${escapeHtml(t("remapTitle"))}</strong><span class="remap-engine is-unmeasured">${escapeHtml(t("remapLoadError"))}</span></header><div class="remap-list"><div class="remap-unmeasurable" data-remap-status="error"><strong>${escapeHtml(t("remapLoadError"))}</strong></div></div>`;
+        return;
+      }
+      panel.innerHTML = remapPanelMarkup(state);
+    }
+    function toggleRemapPanel(force) {
+      remapPanelOpen = typeof force === "boolean" ? force : !remapPanelOpen;
+      renderRemapPanel();
+    }
+    function resetRemapPanel() {
+      remapRequestId += 1;
+      remapState = null;
+      remapPanelOpen = false;
+      const panel = $("#remapPanel");
+      if (panel) { panel.hidden = true; panel.innerHTML = ""; }
+      $("#view-map")?.classList.remove("is-remap-open");
+      $("#remapToggle")?.setAttribute("aria-pressed", "false");
+    }
+    async function copyRemapCard(suggestionId) {
+      const state = activeRemap();
+      const suggestion = state?.report?.suggestions?.find(candidate => candidate.id === suggestionId);
+      if (!suggestion) return;
+      const metrics = Object.entries(suggestion.metrics || {}).map(([key, value]) => `${REMAP_METRIC_KEYS[key] ? t(REMAP_METRIC_KEYS[key]) : key}: ${value}`).join(" · ");
+      const summary = [remapKindLabel(suggestion.kind), suggestion.targetPath, metrics, `${t("remapSourceRevision")}: ${suggestion.sourceRevision}`].filter(Boolean).join(" · ");
+      try { await navigator.clipboard.writeText(summary); showToast(t("remapCopiedToast")); }
+      catch (error) { showToast(error.message); }
     }
     // Dilim 5 · Uyum: yüzey yalnız canlı /api/projects/:id/compliance raporundan
     // çizilir; örnek kayıt YOKTUR. Motor ölçemediğinde (measurement:'unmeasured')
@@ -2390,6 +2656,20 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const jumpButton = event.target.closest('[data-node-jump]');
       if (jumpButton) { showView("map"); selectMapNode(jumpButton.dataset.nodeJump); window.KokpitMapFlow?.focusNode(jumpButton.dataset.nodeJump); }
     });
+    $('#remapToggle').addEventListener("click", () => {
+      toggleRemapPanel();
+      // Klavyeyle açılışta ilk odaklanabilir kontrol panelin içine iner; kapanışta
+      // odak tetikleyen #remapToggle'a döner (Escape nöbetçisi genel dinleyicide).
+      if (remapPanelOpen) requestAnimationFrame(() => $('#remapPanel')?.querySelector('button:not([disabled]), a[href]')?.focus());
+    });
+    $('#remapPanel').addEventListener("click", event => {
+      const reindexButton = event.target.closest('[data-map-reindex]');
+      if (reindexButton) { void reindexProject(reindexButton.dataset.mapReindex, reindexButton); return; }
+      const jumpButton = event.target.closest('[data-node-jump]');
+      if (jumpButton) { showView("map"); selectMapNode(jumpButton.dataset.nodeJump); window.KokpitMapFlow?.focusNode(jumpButton.dataset.nodeJump); return; }
+      const copyButton = event.target.closest('[data-remap-copy]');
+      if (copyButton) void copyRemapCard(copyButton.dataset.remapCopy);
+    });
     $('#copyMermaid').addEventListener("click", async () => {
       const diagram = activeDiagram();
       if (!diagram) return;
@@ -2477,7 +2757,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     $('#inspectorToggle').addEventListener("click", toggleInspector); $('#inspectorClose').addEventListener("click", closeInspector); $('#inspectorScrim').addEventListener("click", closeInspector);
     $('#graphState').addEventListener("click", event => { const button = event.target.closest('[data-map-reindex]'); if (button) void reindexProject(button.dataset.mapReindex, button); });
     $('#resetPhase').addEventListener("click", () => setPhaseFilter("all", true)); $('#zoomIn').addEventListener("click", () => setZoom(zoomLevel + .1)); $('#zoomOut').addEventListener("click", () => setZoom(zoomLevel - .1)); $('#zoomFit').addEventListener("click", () => { zoomLevel = 1; window.KokpitMapFlow?.fitView(); });
-    document.addEventListener("keydown", event => { const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName); if (event.key === "Tab" && document.body.classList.contains("inspector-open")) { const focusable = $$('button:not(:disabled), a[href], summary, [tabindex]:not([tabindex="-1"])', $('#inspector')).filter(element => !element.hidden); const first = focusable[0]; const last = focusable.at(-1); if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } } if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openCommand(); return; } if (event.key === "/" && !isTyping) { event.preventDefault(); if (activeSection === "workspace" && activeView === "map") $('#mapSearch').focus(); else openCommand(); return; } if (!isTyping && ['1', '2', '3', '4'].includes(event.key)) { showSection("workspace"); showView(['map', 'timeline', 'delta', 'compliance'][Number(event.key) - 1]); } if (event.key === "Escape" && document.body.classList.contains("inspector-open")) closeInspector(); });
+    document.addEventListener("keydown", event => { const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName); if (event.key === "Tab" && document.body.classList.contains("inspector-open")) { const focusable = $$('button:not(:disabled), a[href], summary, [tabindex]:not([tabindex="-1"])', $('#inspector')).filter(element => !element.hidden); const first = focusable[0]; const last = focusable.at(-1); if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } } if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openCommand(); return; } if (event.key === "/" && !isTyping) { event.preventDefault(); if (activeSection === "workspace" && activeView === "map") $('#mapSearch').focus(); else openCommand(); return; } if (!isTyping && ['1', '2', '3', '4'].includes(event.key)) { showSection("workspace"); showView(['map', 'timeline', 'delta', 'compliance'][Number(event.key) - 1]); } if (event.key === "Escape") { if (document.body.classList.contains("inspector-open")) closeInspector(); else if (remapPanelOpen) { toggleRemapPanel(false); $('#remapToggle')?.focus(); } } });
     async function initializeApp() {
       document.body.dataset.appReady = "loading";
       setTheme(localStorage.getItem("kokpit-theme") || "dark");

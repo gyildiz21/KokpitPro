@@ -9,10 +9,12 @@
 > seçili madde için ölçülmüş kanıt; kanıt yoksa ölçülemiyor. §10 Uyum motoru
 > Dilim 5 ile teknik olarak CANLIYA açıldı (şema + üç denetçi modülü + gerçek
 > rapor triage kuyruğu/kapatma akışı); ancak §10.7#1'deki aynı doğrulanmış
-> korpusta gerçek çelişki adayı kabulü henüz kapanmadı. Remap v2 backlog'tadır.
+> korpusta gerçek çelişki adayı kabulü henüz kapanmadı. Remap kanıta dayalı
+> öneri paneli Dilim 4 ile canlıya açıldı — öneriler insan-inceleme adayıdır;
+> `Uygula`/otomatik değişiklik yoktur (§5.3, DESIGN D7).
 > **Kapsam:** proje kataloğu, kalıcı yerel/GitHub bağlantı servisi, proje
 > değiştirici, veri izolasyonu, portföy karşılaştırması, tam-yükseklik kabuk,
-> Harita/Zaman/Delta/**Uyum** yüzeyleri.
+> Harita/Zaman/Delta/**Uyum** yüzeyleri ve Harita bağlamı Remap öneri paneli.
 > **Canlı önizleme:** `arayuz-onizleme.html` — Projeler / Çalışma alanı /
 > Karşılaştır üst düzey akışları; dört adımlı repo bağlama; proje seçimi;
 > canlı `PLAN.md` faz/alt-madde incelemesi; TR/EN, açık-koyu tema, klavye
@@ -77,7 +79,7 @@ Etkin proje çalışma alanında **dört ana görünüm + bağlamsal denetçi** 
 | **Delta Ön-görünümü** | `delta` | Seçilen plan-adımı kodlanınca haritada ne değişecek | Dilim 3 |
 | **Uyum** | `compliance` | Defter senkronu, kural ihlali ve karar bütünlüğü; özetten kanıta iner | **Dilim 5** (bu PLAN) |
 | Bağlamsal Denetçi | `inspector` | Seçili faz için alt maddeler, durum özeti, kabul ve beklenen çıktı; düğüm/madde/ihlal için kaynak ve kanıt | Her görünüm |
-| Remap Paneli | `remap` | Yeniden düzenleme önerileri; denetçi içinde ayrı mod | v2 backlog (dilimsiz) |
+| Remap Paneli | `remap` | Ölçülmüş kanıttan türetilen yeniden düzenleme önerileri; Harita bağlamında ayrı öneri paneli/denetçi modu | **Dilim 4** (bu PLAN) |
 
 Uygulama birden fazla projeyi hatırlar. Ana çalışma alanında aynı anda tek
 proje etkindir. İlişkili birden fazla repo ancak açıkça oluşturulmuş bir
@@ -261,7 +263,9 @@ graph LR
     S --> C[Repo kaynak kodu]
     P -->|cli.ts| B[projectId/kokpit-ir.json]
     C -->|dependency-cruiser| B
+    C -->|remap analyze| M[RemapReport v1]
     B --> D[UI: Harita/Zaman/Delta/Uyum]
+    M --> D
     R --> K[Projeler kataloğu]
     R --> O[Karşılaştırma özeti]
     B -.opsiyonel.-> E[Mermaid statik ihrac]
@@ -269,6 +273,25 @@ graph LR
 
 - **Kokpit-IR v1 şeması** (`schema.ts` genişletmesi): `nodes[{id,path,status,phaseRefs[]}]`,
   `edges`, `phases[PhaseGroup...]`, `meta{projectId,repoRoot,branch,generatedAt,sources[]}`.
+- **RemapReport v1 sözleşmesi (Dilim 4):** strict Zod modeli — `version`,
+  `projectId`, `sourceRevision`, `generatedAt`, `measurement`
+  (measured · partial · unmeasurable), `reasons[]`, `coverage`,
+  `suggestions[]`, `truncated`. Her öneri kararlı `id`, `kind`
+  (`large-file` · `shared-import` · `cross-layer-placement-review`),
+  `targetPath`, yalnız gerçekten eşleniyorsa `nodeId`, `reasonCode`,
+  ölçülmüş `metrics`/kanıt, `relatedPaths`/`relatedGroups`, kendi
+  `sourceRevision` ve `proposed` durumunu taşır. Öneriler yalnız ölçülmüş
+  resolved import kenarlarından ve uygun üretim dosyalarından üretilir;
+  test/fixture/generated/node_modules/dist/build dışlanır; unresolved
+  kenar öneri kanıtı olamaz. Eşikler repo üzerinde ölçümle dondurulur ve
+  `kokpit/remap/thresholds.ts` dışında yaşamaz; UI hesaplama yapmaz,
+  magic number taşımaz. Kimlikler ve sonuç sırası koşumlar arasında
+  deterministiktir; liste sınırları ve `truncated` açıktır.
+  `coverage` içinde `eligibleFiles`, `scannedFiles`, `excludedFiles`,
+  `unresolvedImports`, `renderedNodeCount` ve `truncated` açıkça taşınır.
+  Başlangıç revisionı ölçüm sonunda yeniden doğrulanır; koşum sırasında
+  değişiklik varsa kart çizilmez, `revision-changed-during-scan` gerekçesi ve
+  yeniden indeks eylemi gösterilir.
 - **Proje kayıt şeması:** `ProjectRecord{id,name,sourceMode,localPath?,remote?,
   defaultBranch,planSources[],lastIndexedAt,connectionState}`. Kimlik görünür
   addan değil kanonik yerel kök veya GitHub `owner/repo` kimliğinden türetilir.
@@ -400,10 +423,42 @@ Veri yetersizse kart **"bu madde için yol eşlemesi yok"** der — tahmin üret
 Statik HTML önizlemesinin varsayılan Delta durumu bu dürüst boş durumdur;
 hayalî test/dosya yolları gösterilmez.
 
-### §5.3 Remap Paneli (v2 backlog)
-Öneri kartı: `[öneri] Neden: X dosyası 3 farklı katmandan import ediliyor →
-öneri: services/ altına taşı`. Uygula butonu YOKTUR (v1) — yalnız kopyalanabilir
-metin; uygulama insan kararıdır.
+### §5.3 Remap Paneli (Dilim 4 — kanıta dayalı öneriler)
+
+Remap beşinci ana görünüm DEĞİLDİR; Harita bağlamında açılan ayrı bir öneri
+paneli/denetçi modudur. Tek veri kaynağı canlı `GET /api/projects/:id/remap`
+yanıtıdır; UI hesaplama yapmaz, yalnız sürümlü ve doğrulanmış
+`RemapReport v1`'i gösterir.
+
+- **Öneri kartı:** her kart görünür `ÖNERİ / PROPOSED` etiketi taşır ve öneri
+  türünü (`large-file` · `shared-import` · `cross-layer-placement-review`),
+  neden kodunu, ölçülmüş metriği (satır/bayt, fan-in, farklı importer
+  grupları), hedef yolu, kaynak revision'ı ve ilgili yolları/grupları
+  gösterir. `Uygula`, `Taşı`, `Otomatik düzelt` eylemi YOKTUR (v1) —
+  kopyalanabilir metin ve kanıta iniş vardır; uygulama insan kararıdır.
+- **Ölçüm dürüstlüğü:** rapor `measurement` (measured · partial ·
+  unmeasurable), `sourceRevision` ve `generatedAt` alanlarını taşır; her
+  öneri kendi `sourceRevision`'ını paylaşır. Ölçülemeyen durumlar sahte
+  boş başarı gibi sunulmaz: `stale-receipt` → gerekçe + `Yeniden indeksle`
+  güvenli eylemi; `no-local-checkout` → bu GitHub kaydının yerel checkout'u
+  yoktur gerekçesi; tarama/okuma hatası boş öneri listesiyle GİZLENMEZ.
+- **Boşluk dili:** eşik altı veri `temiz repo` diye yorumlanmaz; yalnız
+  `bu revizyonda öneri üretilmedi` denir. `truncated` ve kapsam sayıları
+  (uygun dosya/taranan) görünürdür.
+- **Harita bağlamı:** öneri hedefi render edilen graf düğümleri
+  arasındaysa karttan tek etkileşimle düğüm vurgulanır ve seçilir;
+  dosya ölçülmüş fakat render dilimi dışında kalırsa kartta
+  `ölçüldü, haritada render edilmedi` açıklaması görünür. İkinci bir öneri
+  tasarım dili kurulmaz: mevcut kesikli `ÖNERİ` düğüm görsel dili ve
+  `--st-*` belirteçleri yeniden kullanılır; renk tek başına anlam taşımaz.
+- **Kaynak davranışı:** `Kaynağı aç` yalnız doğrulanmış değişmez commit ve
+  repo yolu varsa etkindir; working-tree makbuzunda yanlış GitHub bağlantısı
+  üretilmez, makbuz türü ve gerekçesi görünürdür.
+- **Yaşam döngüsü ve erişilebilirlik:** proje veya revision değişiminde
+  panel, seçim ve harita vurguları temizlenir. Panel klavyeyle erişilebilir;
+  `Esc` kapatır ve odağı açan kontrole döndürür; odak halkası görünürdür;
+  `prefers-reduced-motion` altında hareket kapanır. TR/EN tam parite
+  sözlükten gelir; bileşene hex yazılmaz.
 
 ### §5.4 Boş/Hata durumları (hepsi D2#3'e tabi)
 | Durum | Ekran |
@@ -479,10 +534,11 @@ yapmaz.
 **Onay bloğu:** ✅ **Patron onayı VERİLDİ — 2026-08-24; v1.1 mimari harita ve
 etkileşimli mimari denetim genişletmesi 2026-08-27'de onaylandı.** Bu sözleşme BAĞLAYICIDIR; değişiklikler
 Patron onayıyla sürüm artırarak yapılır. *(§6 bloğu 2026-08-24'te gerçek stack
-ile senkronlandı; Remap v2 backlog'a alındı; Uyum=Dilim 5 olarak PLAN.md'ye
+ile senkronlandı; Uyum=Dilim 5 olarak PLAN.md'ye
 işlendi; §5.0.1 deterministik grup ve ölçülmüş ilişki dili, §5.0.2 grup/kenar
 denetimi, görünüm sürekliliği ve tek-güncellik sözleşmesi 2026-08-27'de
-eklendi.)*
+eklendi. §1/§4/§5.3 Remap paneli 2026-08-29'da Dilim 4 sözleşmesiyle
+genişletildi — öneri = insan-inceleme adayı, DESIGN D7.)*
 
 ---
 

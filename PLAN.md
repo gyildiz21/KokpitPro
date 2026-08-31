@@ -368,10 +368,86 @@ KAPANMIŞ sayılmaz (koşum disiplini).
   birlikte çalışır — ✅ gerçek repoda bizzat doğrulandı (yukarıdaki canlı
   DELTA[measured] çıktısı).
 
-## Dilim 4 · Remap Önerileri (v2'ye ertelenebilir)
+## Dilim 4 · Kanıta Dayalı Remap Önerileri
 
-- [ ] Büyük-dosya / ortak-import / eşleşmeyen-katman sezgileri
-- [ ] Öneri listesi UI paneli
+> **Sözleşme (2026-08-29):** UI-SPEC §1/§4/§5.3 + DESIGN D7. Öneri,
+> ölçülmüş kanıttan türetilen **insan-inceleme adayıdır**; repository
+> gerçeği, ihlal veya otomatik değişiklik olarak sunulamaz. Otomatik
+> taşıma, commit ve dosya yazma YOKTUR; `Uygula` eylemi ürün yüzeyinde
+> bulunmaz. Remap beşinci ana görünüm değildir; Harita bağlamında ayrı
+> öneri paneli/denetçi modudur.
+>
+> **Ölçüm tabanı (Sıfırdıncı Kapı — 2026-08-29, KokpitPro @ `7d1501a`
+> gerçek kaynak ağacı):** 71 taranan dosya · 33 uygun üretim dosyası ·
+> 186 ölçülmüş kenar · 3 unresolved import. Üretim satır dağılımı
+> p50=137, p75=236, p90=355, p95=421, max=426; üretim fan-in p50=1,
+> p90=4, p95=6, max=11; düğüm başına farklı importer mimari grubu
+> p50=1, p75=2, max=3; gerçek `unmatchedPlanItems`=52. Test/fixture/
+> generated/node_modules/dist/build/output/coverage/.kokpit/.codex-tmp
+> /gitdiagram ölçüm dışıdır. **Dondurulan eşikler:** büyük dosya ≥400
+> satır (≈p95; ölçülen kuyruk server.ts=426, check/index.ts=421) veya
+> ≥16384 bayt (p95=17902); ortak import ≥4 üretim importer (p90=4) VE
+> ≥2 farklı importer grubu (ölçülen max=3); cross-layer-placement-review
+> ≥2 farklı yabancı importer grubu (ölçülen kohort: 4 dosya). Eşikler
+> yalnız `kokpit/remap/thresholds.ts` içinde gerekçesiyle yaşar; UI
+> magic number taşımaz.
+
+- [x] **Dilim 4.0 — RemapReport v1 sözleşmesi ve ölçüm tabanı:** strict
+      Zod modeli (`version`, `projectId`, `sourceRevision`, `generatedAt`,
+      `measurement` measured/partial/unmeasurable, `reasons[]`,
+      `coverage` (`eligibleFiles/scannedFiles/excludedFiles/unresolvedImports/
+      renderedNodeCount/truncated`), `suggestions[]`, `truncated`); her öneride kararlı `id`,
+      `kind` (large-file · shared-import · cross-layer-placement-review),
+      `targetPath`, yalnız gerçek eşleşmede `nodeId`, `reasonCode`,
+      ölçülmüş metrics/kanıt, `relatedPaths`/`relatedGroups`,
+      `sourceRevision`, `proposed` durumu; eşiklerin dondurulması —
+      `kokpit/remap/thresholds.ts` + `schema.ts`
+- [x] **Dilim 4.1 — Deterministik öneri motoru:** üç kural; uygun üretim
+      dosyası dışlaması; unresolved kenar öneri kanıtı olamaz; kararlı
+      kimlik ve deterministik sıra; liste sınırı + `truncated`;
+      determinizm/dışlama/olumlu-olumsuz nöbetçileri —
+      `kokpit/remap/{analyze,measure}.ts` + 28 motor nöbetçisi
+- [x] **Dilim 4.2 — Remap API ve freshness sınırı:** `GET
+      /api/projects/:id/remap`; `scanImportGraph` +
+      `architectureGroupIdForPath` yeniden kullanımı; canlı revision
+      doğrulaması; bayat makbuz → `unmeasurable/stale-receipt`; GitHub
+      kaydı → `unmeasurable/no-local-checkout`; hata boş başarıyla
+      gizlenmez; ölçüm sonu revision yeniden doğrulanır ve koşum-içi değişiklik
+      → `unmeasurable/revision-changed-during-scan`; kök-dışı/symlink
+      sınırları Windows junction nöbetçisiyle korunur —
+      `kokpit/remap/service.ts`
+- [x] **Dilim 4.3 — Öneri paneli, kaynak kanıtı ve harita vurgusu:**
+      Harita bağlamında panel/denetçi modu; görünür ÖNERİ/PROPOSED
+      etiketi; kart türü/neden/metrik/hedef/revision/ilgili yollar;
+      `Kaynağı aç` yalnız değişmez commit'te; render dışı ölçülmüş hedef
+      için dürüst açıklama; bayat/no-local-checkout'ta kart yerine
+      gerekçe + güvenli eylem; koşum-içi revision değişiminde eski kart yerine
+      yeniden indeks eylemi; proje/revision değişiminde sıfırlama;
+      TR/EN, klavye/Esc, odak, `prefers-reduced-motion`, `--st-*` —
+      harita bağlamı `#remapPanel`; beşinci görünüm AÇILMADI
+- [x] **Dilim 4.4 — Gerçek-repo ve E2E kabulü:** maskesiz KokpitPro
+      `/api/projects/:id/remap` koşusu; ölçüm revision ↔ HEAD/working-tree
+      makbuz karşılaştırması; en az bir gerçek ölçülmüş önerinin kanıt
+      zinciri doğrulaması; hermetik Playwright senaryoları; 1440/1024/768
+      taşma; TR/EN; klavye/Escape; `Uygula/Taşı` yokluğu nöbetçisi
+- [x] **2026-08-30 nihai kapanış kanıtı:** güncel `origin/main` entegrasyon
+      dalına `43c524e` ile alındı; bağımsız denetimde bulunan dört açık kapı
+      `d848965` ile kapatıldı: ölçüm sonu revision nöbetçisi, ayrıcalıksız
+      Windows junction sınır testi, bozuk yüzde-kodlu remap rotasında güvenli
+      404 ve dürüst `coverage.excludedFiles` sözleşmesi. **Temiz commit
+      maskesiz koşumu:** Windows Node **20.20.2**, `measurement: measured`,
+      `sourceRevision = HEAD = d848965…`, neden 0; 38 uygun üretim dosyası /
+      80 taranan / 42 dışlanan / 34 render düğümü, `truncated: false`;
+      **15 gerçek öneri** (2 large-file: server.ts 453 satır ·
+      check/index.ts 420 satır; 7 shared-import; 6
+      cross-layer-placement-review), dışlanan-yol ihlali 0. TypeScript 0 hata;
+      Vitest **255 passed / 1 opt-in skipped**; Playwright **34 passed /
+      2 opt-in gerçek-API skipped** (Dilim 4 paketi **12/12**);
+      `npm run check:preview`, `npm audit --omit=dev` (0 açık) ve
+      `git diff --check` yeşil. Ürün yüzeyinde `Uygula/Taşı` eylemi yok;
+      öneriler yalnız okunur + kopyalanabilir. **Dilim 4 teknik ve ürün
+      kabulü kapanmıştır.** Push, `main` merge ve deploy bu kabulün parçası
+      değildir; ayrı Patron onayı gerektirir.
 
 ## Dilim 5 · Uyum Telemetrisi (UI-SPEC §10) — [hazirlik-auditi: SAHİPSİZ bulgusuna sahip çıktık]
 

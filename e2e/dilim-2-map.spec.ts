@@ -68,6 +68,9 @@ test('Dilim 2 gerçek harita, dil, klavye ve duyarlı yerleşim kabulü', async 
     await expect(page.locator('#mapCount')).toContainText('arama sonucu');
     expect(await page.locator('.map-flow-node.is-dimmed').count()).toBeGreaterThan(0);
     const viewportBeforeZoom = await page.evaluate(() => (window as any).KokpitMapFlow?.getViewport?.());
+    // Büyük graf fitView'i minZoom tabanına (0.25) indirebilir; tek adım tam
+    // +0.05 ürettiği için artış iddiası iki gerçek zoomIn adımıyla kurulur.
+    await page.evaluate(() => (window as any).KokpitMapFlow?.zoomIn());
     await page.evaluate(() => (window as any).KokpitMapFlow?.zoomIn());
     await expect.poll(() => page.evaluate(() => (window as any).KokpitMapFlow?.getViewport?.()?.zoom ?? 0))
         .toBeGreaterThan(viewportBeforeZoom?.zoom ?? 0);

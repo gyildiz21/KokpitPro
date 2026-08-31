@@ -76,3 +76,28 @@ açacak şekilde tasarlanır (yazma izni ayrı GO konusu).
 4. **Makbuz-kapsamlı görünüm:** zoom/pan, faz filtresi, harita araması ve seçili
    düğüm/grup/kenar `projectId + revision` anahtarıyla oturumda tutulur. Proje
    veya makbuz değişince eski bağlam yeni grafa taşınmaz.
+
+## D7 · Remap önerisi — insan-inceleme adayı (bağlayıcı karar, 2026-08-29)
+
+1. **Remap önerisi ölçülmüş kanıttan türetilen insan-inceleme adayıdır;
+   repository gerçeği veya otomatik değişiklik değildir.** Öneri hiçbir
+   yüzeyde ölçülmüş gerçeklik, uygulanmış değişiklik, ihlal veya kesin
+   mimari hüküm gibi sunulmaz.
+2. Öneriler salt okunur ve kopyalanabilirdir; ürün yüzeyinde `Uygula`,
+   `Taşı` veya otomatik düzeltme eylemi yoktur. Her öneri kaynak revision
+   ve ölçülmüş kanıt (metrik + ilgili yollar/gruplar) taşır.
+3. Eşikler (büyük dosya, ortak import, katmanlar-arası inceleme) repo
+   üzerinde ölçüm koşusundan sonra sabit sayılarla dondurulur ve tek bir
+   motor modülünde gerekçesiyle yaşar; UI eşik veya magic number taşımaz.
+4. İzin verilen katman bağımlılık matrisi mevcut değilse kesin `yanlış
+   katmanda` hükmü ÜRETİLMEZ; yalnız ölçülmüş, deterministik
+   `cross-layer-placement-review` (yerleşimi gözden geçir) dili kullanılır
+   ve otomatik hedef klasör uydurulmaz.
+5. Başlangıçtaki canlı Git makbuzu tarama ve dosya ölçümü bittikten sonra
+   yeniden doğrulanır. Çalışma ağacı koşum sırasında değiştiyse eski
+   `sourceRevision` ile ölçülmüş sonuç yayımlanmaz;
+   `unmeasurable/revision-changed-during-scan` döner ve yeniden indeks istenir.
+6. Kapsam sayaçları anlamını gizlemez: `eligibleFiles` analiz edilen üretim
+   dosyalarını, `scannedFiles` import taramasının tüm dosyalarını,
+   `excludedFiles` ise test/fixture/generated olarak analiz dışı bırakılanları
+   sayar.
