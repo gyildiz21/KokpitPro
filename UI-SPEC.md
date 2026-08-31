@@ -9,7 +9,9 @@
 > seçili madde için ölçülmüş kanıt; kanıt yoksa ölçülemiyor. §10 Uyum motoru
 > Dilim 5 ile teknik olarak CANLIYA açıldı (şema + üç denetçi modülü + gerçek
 > rapor triage kuyruğu/kapatma akışı); ancak §10.7#1'deki aynı doğrulanmış
-> korpusta gerçek çelişki adayı kabulü henüz kapanmadı. Remap kanıta dayalı
+> korpusta gerçek çelişki adayı kabulü henüz kapanmadı; bu kapı **Dilim 5.2**
+> diliminde ayrıca ele alınır — aday uydurulmaz, jenerik eşleşme taşması kabul
+> kanıtı sayılmaz (§10.9). Remap kanıta dayalı
 > öneri paneli Dilim 4 ile canlıya açıldı — öneriler insan-inceleme adayıdır;
 > `Uygula`/otomatik değişiklik yoktur (§5.3, DESIGN D7).
 > **Kapsam:** proje kataloğu, kalıcı yerel/GitHub bağlantı servisi, proje
@@ -48,9 +50,11 @@ rengin tek kayıt yerindeki adı.
 | Kanonik ad (kod ne diyorsa o) | Yasak/dağınık kullanımlar | Sahip dosya |
 |---|---|---|
 | **RoadmapScan + PhaseFileScan** | ~~PhaseSlice[]~~ · ~~"Kokpit-IR v0"~~ | `kokpit/parser/schema.ts` |
-| **Kokpit-IR v0.2** (sync/violations/conflicts) | — | Dilim 5'te gelir |
-| **Dilim 0–5** (faz numaraları) | ~~D0/D1… önekleri~~ — DESIGN D1–D5 ile karışır | PLAN.md |
+| **Kokpit-IR v0.2** (sync/violations/conflicts) | — | Dilim 5'te geldi |
+| **Dilim 0–5.2** (faz numaraları; 5.2 dahil) | ~~D0/D1… önekleri~~ — DESIGN D1–D5 ile karışır | PLAN.md |
 | **D1–D5** | yalnız DESIGN karar ID'sidir, faz DEĞİLDİR | DESIGN.md |
+| **"D5.2" kod yorumu** | DESIGN D5·sürümlü-şema kararının kısaltmasıdır; **"Dilim 5.2" ürün dilimi DEĞİLDİR** | DESIGN.md D5 notu |
+| **ExplanationEnvelope v1** | açıklama katmanı; ölçüm sözleşmelerinden ayrı projection | Dilim 5.2 |
 | **--st-done/partial/open/go** | ~~--done/--progress/--planned~~ | UI-SPEC §3.1 |
 
 
@@ -682,6 +686,80 @@ Tümü Zod'lu; UI yalnız kayıtları dizer, tek sağlık yüzdesi üretmez.
 
 > Sentezin tamamı: `docs/arastirma/kokpit/` yan dosyası yerine bu bölümde
 > kalır — tasarım kanıtı sözleşmeden ayrı yaşamaz.
+
+### §10.9 Açıklanabilir Kokpit ve gerçek korpus karar bütünlüğü (Dilim 5.2)
+
+> **Dilim 5.2 — "Gerçek Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit"**
+> ayrı bir ürün dilimidir (PLAN.md). Bu bölüm onun arayüz sözleşmesidir;
+> DESIGN D8 ile birlikte okunur. Adlandırma: DESIGN D5 altındaki "D5.2"
+> kod-yorum kısaltması **bu dilim değildir** (bkz. §0.1, DESIGN D5 notu).
+
+#### §10.9.1 Karar bütünlüğü — gerçek korpus sertliği
+
+1. Uyum motorunun çelişki adayları gerçek korpus üzerinde yanlış-pozitif
+   reddedecek şekilde serttir: tarih, yıl, "açık", "adı", "backend" gibi
+   genel/tek başına ayırt edici olmayan tokenlar konu kesişimi SAYILMAZ;
+   salt kelime kesişimi çelişki değildir.
+2. Aday, cümle/madde düzeyinde ölçülür: eski otorite gerçekten sınırlayıcı,
+   yeni otorite gerçekten genişletici/ters yönlü hüküm taşımalıdır. Farklı
+   karar akışlarının ilgisiz bölümleri eşleştirilemez.
+3. Aday kaydında iki kaynak yolu, satır/bölüm konumu, gözlem tarihleri,
+   yön (kısıt→genişletme) ve ayırt edici ortak konu bulunur.
+4. Hiç gerçek aday yoksa sonuç dürüstçe **0** kalır; kayıt sınırının (64)
+   dolması başarı değil, jenerik eşleşme taşmasıdır ve raporda ayrıca
+   belirtilir.
+5. Gerçek tarama salt okunurdur; korpus test fixture'ına topluca
+   kopyalanmaz, kişisel veri kaydedilmez. Testlerde yalnız en küçük
+   anonim/sentetik karşı örnekler kullanılır.
+6. Gerçek aday bulunursa teknik motor sonucu `candidate` olarak kalır;
+   insan doğrulaması olmadan `open-conflict` veya kabul kanıtına dönüşmez.
+   Dilim 5'in gerçek korpus kabul kutusu, doğrulanmış bir karar/otorite
+   çifti insanca onaylanmadan AÇIK kalır.
+
+#### §10.9.2 Açıklama sözleşmesi — ExplanationEnvelope v1
+
+1. Uyum/Delta/Zaman yüzeyleri, ölçüm sözleşmelerini bozmadan ayrı ve
+   sürümlü bir açıklama katmanı (`ExplanationEnvelope v1`, DESIGN D8)
+   tüketir: `Ne oldu? · Bu neden önemli? · Önerilen ilk eylem nedir? ·
+   Düzeltmenin doğrulandığı nasıl anlaşılır?` dörtlüsü her bulgu için
+   görünürdür.
+2. Dosya yolu, `reasonCode`, `ruleReference`, `sourceRevision` ve teknik
+   mesaj **"Teknik kanıt"** açılır ikincil bölümünde kalır; kapalıyken bile
+   kullanıcı eylemi anlaşılırdır.
+3. AI kapalıyken bütün yolculuk deterministik TR/EN katalogla çalışır;
+   AI bağlıysa ek açıklama ayrı **"AI YORUMU"** katmanında, provenance
+   (provider/model/zaman/revision/sınırlar) görünür şekilde durur ve
+   ölçülen bulguyu, kenarı, ciddiyeti, durumu veya kabul sonucunu
+   değiştiremez.
+
+#### §10.9.3 Uyum kuyruğu bilgi mimarisi (güncelleme)
+
+1. Satır: sade bulgu adı → etkilenen dosya/kayıt sayısı → neden önemli →
+   önerilen eylem → ciddiyet → açılabilir teknik ayrıntı.
+2. Aynı kurala ait tekrarlar kural + uygun kapsam temelinde gruplanır;
+   kullanıcı tekil satırlara iner. **Gruplama ölçülen kayıt sayısını
+   değiştırmaz.**
+3. "Bileşende hex" bulgusu en az: tasarım tutarsızlığı riski, rengin
+   `--st-*` tokenına taşınması gerektiği ve düzeltme sonrası koşulacak
+   kontrol bilgisini taşır.
+4. Defter senkronunda `near-miss`, `roadmapBox`, `handoff` kodları ilk
+   katmanda gösterilmez; "Plan kaydı ile teslim kaydı uyuşmuyor", "Faz
+   belgesi eksik veya eski", "Teslim kaydı bu dilime bağlanmamış" gibi
+   kullanıcı diline çevrilir; kod açılır teknik bölümde kalır.
+
+#### §10.9.4 Delta ve zaman (güncelleme)
+
+1. Delta ölçülemediğinde boş beyaz alan yoktur: neden ölçülemediği, hangi
+   verinin eksik olduğu ve güvenli eylem görünür (`stale-receipt` →
+   Yeniden indeksle; `no-local-checkout` → yerel çalışma kopyası bağlama
+   açıklaması — yeniden indeksleme olarak YANLIŞ sunulmaz; `no-mapping` →
+   plan maddesine doğrulanabilir yol/test bağlama eylemleri).
+2. Görünüm değişiminde ilgisiz denetçi açık kalmaz; denetçi seçili Delta
+   maddesiyle eşleşir veya sıfırlanır.
+3. Zaman görünümünde "Dilim 5" ve "Dilim 5.2" ayrı başlık ve maddelerle
+   görünür; dilim açıkken bile listede kalır. "Kabul açık" ile "teknik
+   motor yapılmadı" aynı gibi sunulmaz; başlık, amaç, yapılan kısımlar ve
+   gerçek korpus/insan-kabulu sınırı ayrı gösterilir.
 
 ---
 

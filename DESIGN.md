@@ -59,6 +59,59 @@ açacak şekilde tasarlanır (yazma izni ayrı GO konusu).
 4. Bu karar tek-başına SaaS taahhüdü DEĞİLDİR — yalnızca bugünkü seçimlerin
    o kapıyı kapatmamasıdır.
 
+> **Adlandırma notu (2026-08-31):** Kod yorumlarında geçen **"D5.2"**
+> kısaltması, yalnızca bu maddedeki (D5) **sürümlü şema** kararını işaretler.
+> Bu bir DESIGN karar referansıdır ve PLAN.md'deki **"Dilim 5.2 — Gerçek
+> Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit"** ürün dilimiyle hiçbir
+> ilişkisi YOKTUR. İkisi karıştırılmaz: D-kararları DESIGN kararlarıdır,
+> "Dilim N" satırları PLAN ürün fazlarıdır.
+
+## D8 · Açıklama katmanı — ExplanationEnvelope v1 (Dilim 5.2 sözleşmesi, 2026-08-31)
+
+1. **Açıklama, ölçümden ayrı ve sürümlü bir katmandır.** `ExplanationEnvelope
+   v1` (Zod `.strict()`) ComplianceReport v1, DiagramGraph v1 ve Delta
+   sözleşmelerindeki **ölçülmüş gerçekleri tüketen** bir projection'dır;
+   bu sözleşmelerin hiçbir alanı açıklama üretmek için sessizce değiştirilmez.
+   Açıklama katmanı hiçbir ölçümlü kaydı ekleyemez, çıkaramaz, ciddiyetini
+   veya durumunu değiştiremez.
+2. **Zarif alanlar:** `schemaVersion`, `projectId`, `sourceRevision`,
+   `subjectKind`, `subjectId`, `origin` (`deterministic | ai`), `summary`,
+   `whatItMeans`, `whyItMatters`, `recommendedActions[]`,
+   `verificationSteps[]`, `evidenceRefs[]`, `limitations[]`, `generatedAt`.
+   `provider` / `model` / `confidence` alanları **yalnız `origin:'ai'`
+   iken** bulunabilir; deterministik zarfta yasaktır. Kullanıcıya görünen
+   metinler TR/EN çift kanallıdır (DESIGN D1); makine alan adları İngilizce
+   sabittir.
+3. **Deterministik taban zorunludur:** AI kapalıyken bütün kullanıcı yolculuğu
+   deterministik TR/EN açıklama kataloğuyla çalışır; eksik alan veya boş kart
+   üretilmez. Katalog teknik kodu tekrar etmek yerine sade anlamı, kullanıcı
+   etkisini, ilk güvenli eylemi ve doğrulama adımını verir.
+4. **AI yorumu opsiyoneldir ve sınırlıdır:** Repo bazında açık opt-in/GO
+   olmadan çağrı yapılmaz; gerçek ücretli çağrı ayrı Patron GO'sudur. AI
+   çıktısı ayrı bir **"AI YORUMU"** katmanında görünür; provider, model,
+   `generatedAt`, `sourceRevision` ve `limitations` her zaman görünürdür.
+   Kaynak revizyonu değişirse eski AI yorumu **bayat** sayılır ve servis
+   edilmez. Sağlayıcı hatalıysa deterministik açıklama korunur; teknik hata
+   kullanıcı kanıtı gibi sunulmaz. AI ölçülmüş import kenarı ekleyemez,
+   ciddiyet değiştiremez, kayıt kapatamaz, çelişkiyi doğrulayamaz, Delta'yı
+   `measured` yapamaz, otomatik kod değişikliği başlatamaz; olası yol/çözüm
+   önerisi yalnız `ÖNERİ / PROPOSED` statüsünde olabilir.
+5. **Uyum kuyruğu kullanıcı-önceliklidir:** satır sırası sade bulgu adı →
+   etkilenen kayıt sayısı → neden önemli → önerilen eylem → ciddiyet;
+   dosya yolu, `reasonCode`, `ruleReference`, `sourceRevision` ve teknik
+   mesaj **"Teknik kanıt"** adlı açılır ikincil bölümde kalır. Aynı kurala
+   ait tekrarlar kural+kapsam temelinde gruplanır; gruplama ölçülen kayıt
+   sayısını değiştirmaz ve kullanıcı tekil satırlara inebilir. Defter
+   senkronunda `near-miss/roadmapBox/handoff` kodları ilk katmanda gösterilmez;
+   kullanıcı diline çevrilir (ör. "Plan kaydı ile teslim kaydı uyuşmuyor").
+6. **Delta ve zaman dürüstlüğü sürer:** delta ölçülemediğinde boş beyaz alan
+   yerine neden + eksik veri + güvenli eylem gösterilir (`stale-receipt` →
+   Yeniden indeksle; `no-local-checkout` → yerel çalışma kopyası bağlama
+   açıklaması; `no-mapping` → eşleme bağlama eylemi). Görünüm değişince
+   ilgisiz denetçi bağlamı sıfırlanır veya seçili Delta maddesiyle eşleşir.
+   Zaman görünümünde "Dilim 5" ve "Dilim 5.2" ayrı fazlardır; "kabul açık"
+   ile "teknik motor yapılmadı" aynı şey gibi sunulmaz.
+
 ## D6 · Kanıt yaşam döngüsü ve etkileşim durumu
 
 1. **Tek güncellik gerçeği:** yerel proje için katalog, üst bağlam, harita,
