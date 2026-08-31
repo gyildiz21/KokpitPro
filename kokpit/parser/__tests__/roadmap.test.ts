@@ -144,3 +144,78 @@ describe('kenar durumlar', () => {
         expect(results.some((r) => r.sourceFile.endsWith('roadmap-ornek.md'))).toBe(true);
     });
 });
+
+describe('Dilim 5 vs Dilim 5.2 — parser kimlik nöbetçisi (PLAN.md §Dilim 5.2 / UI-SPEC §10.9.4)', () => {
+    // Sentetik PLAN kesiti: üst dilim "Dilim 5" ile alt dilim "Dilim 5.2"
+    // yan yana; 5.2'nin maddeleri AÇIK ([ ]) kabul durumundadır. UI'nin
+    // faz kimliği sözleşmesi `Dilim-N`'dir (phaseIdFromHeading ile aynı).
+    const HEADING_5 = 'Dilim 5 · Uyum Telemetrisi';
+    const HEADING_52 = 'Dilim 5.2 · Gerçek Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit';
+    const PHASE_ID_RE = /^Dilim\s+([0-9]+(?:\.[0-9]+)?)/i;
+
+    const text = [
+        '# Plan',
+        '',
+        `## ${HEADING_5}`,
+        '',
+        '- [x] **Uyum kuyruğu:** kodlandı — **Tamamlandı 2026-08-28**',
+        '- [ ] Gerçek korpus kabulü',
+        '',
+        `## ${HEADING_52}`,
+        '',
+        '- [ ] **5.2.0 — Sözleşme dondurma:** ExplanationEnvelope v1',
+        '- [ ] **#5.2 özel kimlikli madde:** alt dilim kimliği gölgelenmez',
+        '',
+    ].join('\n');
+
+    const scan = scanRoadmapText(text, 'PLAN.md');
+
+    it('iki AYRI grup üretir; alt dilim üst dilimin grubuna eritilmez', () => {
+        expect(scan.groups).toHaveLength(2);
+        expect(scan.groups.map((g) => g.heading)).toEqual([HEADING_5, HEADING_52]);
+    });
+
+    it('grup kimlikleri Dilim-5 ve Dilim-5.2 olarak ayrışır; önek benzerliği karışım yaratmaz', () => {
+        const ids = scan.groups.map((g) => {
+            const match = PHASE_ID_RE.exec(g.heading);
+            return `Dilim-${match?.[1] ?? ''}`;
+        });
+        // 'Dilim-5.2' dizgesi 'Dilim-5' ile başlar: kimlik eşitliği asla
+        // önek karşılaştırması olamaz; iki kimlik birbirinden farklıdır.
+        expect(ids).toEqual(['Dilim-5', 'Dilim-5.2']);
+        expect(new Set(ids).size).toBe(2);
+        expect(ids[1]?.startsWith('Dilim-5')).toBe(true); // tuzak gerçekten vardır…
+        expect(ids[0]).not.toBe(ids[1]); // …ve nöbetçi ona rağmen ayrıştırır
+    });
+
+    it('madde id\u2019leri grup başına sıfırlanır; iki gruptaki madde-1 çakışma karışımı yaratmaz', () => {
+        const [g5, g52] = scan.groups;
+        expect(g5?.items.map((item) => item.id)).toEqual(['madde-1', 'madde-2']);
+        expect(g52?.items.map((item) => item.id)).toEqual(['madde-1', '#5.2']);
+        // Bileşik kimlik (faz başlığı :: madde id) evrensel olarak tekildir:
+        // aynı madde-1 iki farklı fazın deltasına sızmaz (Dilim 3 sözleşmesi).
+        const compositeKeys = scan.groups.flatMap((group) =>
+            group.items.map((item) => `${group.heading}::${item.id}`),
+        );
+        expect(new Set(compositeKeys).size).toBe(compositeKeys.length);
+        expect(compositeKeys).toContain(`${HEADING_5}::madde-1`);
+        expect(compositeKeys).toContain(`${HEADING_52}::madde-1`);
+    });
+
+    it('Dilim 5.2 açık kabul durumundayken de gruba dahildir; maddeleri görünürdür', () => {
+        const g52 = scan.groups.find((g) => g.heading === HEADING_52);
+        expect(g52).toBeDefined();
+        expect(g52?.items).toHaveLength(2);
+        expect(g52?.items.every((item) => item.status === 'open')).toBe(true);
+        // Maddeler üst dilimin başlığına değil KENDİ başlığına işaret eder.
+        for (const item of g52?.items ?? []) {
+            expect(item.phaseHeading).toBe(HEADING_52);
+            expect(item.phaseHeading).not.toBe(HEADING_5);
+        }
+        // Açık kabul ≠ motor yapılmadı: madde satırları kayıpsız listelenir.
+        expect(g52?.items.map((item) => item.title)).toEqual([
+            '5.2.0 — Sözleşme dondurma',
+            '#5.2 özel kimlikli madde',
+        ]);
+    });
+});
