@@ -1333,6 +1333,65 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `npm audit --omit=dev` (**0 açık**) doğrulandı. Bunlar dış GitHub App
       kurulumu veya gerçek çelişki korpusu kabulünün yerine geçmez.
 
+## Dilim 5.2 · Gerçek Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit
+
+> **Adlandırma (bağlayıcı):** Bu başlık ayrı bir ürün dilimidir. Kod
+> yorumlarındaki **"D5.2"** kısaltması DESIGN D5 altındaki **sürümlü şema**
+> kararını işaretler; bu ürün dilimiyle karıştırılmaz (UI-SPEC §0.1,
+> DESIGN D5 notu).
+>
+> **Sözleşme:** UI-SPEC §10.9 + DESIGN D8. Dilim 5'in açık gerçek-korpus
+> kabul kutusu uydurma adayla KAPATILMAZ; jenerik eşleşme taşması başarı
+> sayılmaz. Gerçek aday yoksa teknik sonuç dürüstçe 0 kalır ve kabul
+> `REAL_CORPUS_ACCEPTANCE_OPEN` olarak açık bırakılır.
+
+- [ ] **5.2.0 — Sözleşme dondurma:** `ExplanationEnvelope v1` (Zod `.strict()`):
+      `schemaVersion/projectId/sourceRevision/subjectKind/subjectId/origin/
+      summary/whatItMeans/whyItMatters/recommendedActions/verificationSteps/
+      evidenceRefs/limitations/generatedAt`; `provider/model/confidence`
+      yalnız `origin:'ai'` iken. Ölçüm sözleşmeleri (ComplianceReport v1,
+      DiagramGraph v1, Delta) açıklama için sessizce DEĞİŞTİRİLMEZ.
+- [ ] **5.2.1 — Karar bütünlüğü motoru sertliği (`kokpit/check/conflicts.ts`):**
+      genel/tek-başına ayırt edici olmayan tokenlar (tarih, yıl, "açık",
+      "adı", "backend"…) konu kesişimi sayılmaz; cümle/madde düzeyinde
+      gerçek kısıt→genişletme yönü ölçülür; ilgisiz karar akışları
+      eşleştirilemez; aday iki kaynak yolu + konum + tarih + yön + ayırt
+      edici ortak konu taşır; gerçek aday yoksa dürüst 0; 64 sınırının
+      dolması jenerik taşma olarak raporlanır; gerçek tarama salt okunur.
+- [ ] **5.2.2 — Deterministik açıklama kataloğu (TR/EN):** hex-in-component,
+      koşumsuz-commit, hardcode-metin, sahte-kapı, bayat-kutu,
+      ks-band-delinmesi, sync near-miss kodları, no-mapping, stale-receipt,
+      no-local-checkout, paths-not-measured, edges-not-measurable-yet,
+      comparison-baseline-unavailable, item-not-found ve partial/unmeasured
+      kapsam nedenleri — her biri sade anlam + kullanıcı etkisi + ilk güvenli
+      eylem + doğrulama adımı.
+- [ ] **5.2.3 — Opsiyonel AI açıklama altyapısı:** repo-bazlı opt-in/GO
+      olmadan çağrı yok; "AI YORUMU" etiketi + provider/model/generatedAt/
+      sourceRevision/limitations görünür; revizyon bayatlığı AI yorumunu
+      reddeder; sağlayıcı hatasında deterministik açıklamaya dönüş; AI
+      ölçülen hiçbir gerçeği değiştiremez; öneri yalnız ÖNERİ/PROPOSED.
+      Hermetik fixture + atlanan gerçek-provider koşumu yeterlidir; gerçek
+      API anahtarı ve ücretli çağrı YOKTUR.
+- [ ] **5.2.4 — Uyum kuyruğu kullanıcı-öncelikli mimari:** sade bulgu adı →
+      etkilenen kayıt sayısı → neden önemli → önerilen eylem → ciddiyet;
+      "Teknik kanıt" açılır bölümü; kural+kapsam gruplaması (ölçülen sayı
+      korunur) ve tekil satıra iniş; near-miss/roadmapBox/handoff kodları
+      ilk katmanda kullanıcı diline çevrilir.
+- [ ] **5.2.5 — Delta ve zaman davranışı:** ölçülemeyen deltada neden +
+      eksik veri + güvenli eylem (boş beyaz alan yok); `stale-receipt` →
+      Yeniden indeksle; `no-local-checkout` → yerel çalışma kopyası bağlama
+      (yeniden indeksleme olarak yanlış sunulmaz); görünüm değişiminde
+      ilgisiz denetçi sıfırlanır; zaman görünümünde "Dilim 5" ve "Dilim 5.2"
+      ayrı fazlar; "kabul açık" ≠ "motor yapılmadı"; parser kimlik
+      nöbetçisi.
+- [ ] **5.2.6 — Gerçek korpus ölçümü ve kabul:** MethodLogos korpusunda
+      salt-okunur sertleştirilmiş koşum; kapsam sayaçları + kırpma nedenleri
+      + ham/filtrelenmiş aday + red nedeni dağılımı raporlanır; gerçek aday
+      insan doğrulamasına sunulur. **Kapanış kuralı:** teknik sertlik +
+      hermetik testler → `TECHNICALLY_HARDENED`; doğrulanmış gerçek
+      karar/otorite çifti → `REAL_CORPUS_ACCEPTED`; gerçek aday yoksa
+      `REAL_CORPUS_ACCEPTANCE_OPEN` (teknik başarısızlık DEĞİLDİR).
+
 ## Sabit kurallar (bu projede de geçerli)
 
 1. Sahte kapı yok: capability yoksa yüzey çizilmez.
