@@ -2073,7 +2073,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const item = group?.items.find(candidate => candidate.id === state.itemId);
       return group && item ? { group, item } : null;
     }
-    function deltaSectionsMarkup(delta) {
+    function deltaSectionsMarkup(delta, options = {}) {
       const sections = [];
       if (delta.affectedPaths?.length) {
         const hitSet = new Set(delta.affectedNodeIds || []);
@@ -2093,7 +2093,14 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         sections.push(`<section class="delta-card__section" data-delta-section="edges"><h3>${escapeHtml(t("deltaEdgesChanged"))}</h3>${rows}</section>`);
       }
       const reasons = delta.reasons || [];
-      if (reasons.length) sections.push(`<section class="delta-card__section" data-delta-section="not-measurable"><h3>${escapeHtml(t("deltaNotMeasurableTitle"))}</h3><ul class="delta-reason">${reasons.map(reason => deltaReasonRowMarkup(reason)).join("")}</ul>${deltaTechnicalMarkup(reasons)}</section>`);
+      if (reasons.length) {
+        // Inline faz-madde kartı (phase-item gövdesi) teknik disclosure
+        // SUMMARI içermemeli: faz maddesinin kendi summary'si tek doğal
+        // kontrol olarak kalır. Raw kodlar bu yüzeyde hiç gösterilmez;
+        // tam teknik disclosure delta panelinde ve denetçilerdedir.
+        const technical = options.inline ? "" : deltaTechnicalMarkup(reasons);
+        sections.push(`<section class="delta-card__section" data-delta-section="not-measurable"><h3>${escapeHtml(t("deltaNotMeasurableTitle"))}</h3><ul class="delta-reason">${reasons.map(reason => deltaReasonRowMarkup(reason)).join("")}</ul>${technical}</section>`);
+      }
       return sections.join("");
     }
     function deltaHonestMarkup(state) {
@@ -2167,7 +2174,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       wrapper.className = "delta-card-wrap";
       wrapper.dataset.inspectorDeltaCard = "";
       if (state.status === "ready") {
-        wrapper.innerHTML = `<section class="delta-card delta-card--inline" data-delta-mode="${escapeHtml(state.delta.mode)}" aria-label="${escapeHtml(t("deltaCardAria"))}"><h3>${escapeHtml(t("viewDeltaTitle"))}</h3>${deltaSectionsMarkup(state.delta)}</section>`;
+        wrapper.innerHTML = `<section class="delta-card delta-card--inline" data-delta-mode="${escapeHtml(state.delta.mode)}" aria-label="${escapeHtml(t("deltaCardAria"))}"><h3>${escapeHtml(t("viewDeltaTitle"))}</h3>${deltaSectionsMarkup(state.delta, { inline: true })}</section>`;
       } else {
         const stale = state.status === "stale";
         wrapper.innerHTML = `<section class="delta-card delta-card--inline" data-delta-mode="${escapeHtml(state.status)}" aria-label="${escapeHtml(t("deltaCardAria"))}"><div class="delta-state-note"><span>${escapeHtml(t(stale ? "staleReceipt" : "deltaNotMeasurableTitle"))}</span>${stale ? `<button class="text-button primary" type="button" data-map-reindex="${escapeHtml(state.projectId)}">${escapeHtml(t("reindexNow"))}</button>` : ""}</div></section>`;
