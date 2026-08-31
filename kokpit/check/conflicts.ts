@@ -1,9 +1,13 @@
 // Dilim 5 · Karar bütünlüğü (UI-SPEC §10.5).
 //
-// v1 yarım-otomatiktir ve bunu açıkça söyler: anahtar-kelime + tarih sırası
-// sezgiseli ile aday çelişki üretir; insan onayı olmadan hiçbir kayıt
-// "çözüldü" sayılmaz. Kararlar asla silinmez; superseded zinciri taşınır.
-// Modül saftır: I/O yok, girdi metinler ctx ile gelir.
+// v2 sertleştirmesi: gerçek korpuslarda jenerik tokenların (2026, açık, adı,
+// backend…) aday doldurması kapatıldı. Artık (1) saf sayı/yıl ve genel
+// sözcükler tokenize aşamasında elenir; (2) kısıt/genişletme yönü konu
+// terimleriyle AYNI CÜMLEDE ölçülür; (3) plan cümlesi ile liderin KARAR
+// metni arasında en az 2 ayırt edici ortak token (ya da 1 token + başlıkta
+// aynı token) aranır — farklı karar akışları eşleşemez; (4) lider-içi
+// düzeltme akışı (eski kısıt KARAR → yeni genişletici KARAR) aynı sıkı
+// kurallarla izlenir. Modül saftır: I/O yok, girdi metinler ctx ile gelir.
 
 import type { ConflictEntry } from './schema';
 import { slugify } from './rules';
@@ -42,29 +46,103 @@ const EXPANSION_MARKERS = [
     'devreye al',
 ];
 
+/**
+ * Genel sözcük kümesi: konu ayırt ediciliği taşımayan idari/bağlam sözcükleri.
+ * Bu kümedeki tokenlar konu kanıtı olarak asla kullanılmaz.
+ */
 const STOPWORDS = new Set([
-    'için', 'olarak', 'kadar', 'ancak', 'daha', 'sonra', 'göre', 'kararı', 'karar',
-    'durum', 'sahibi', 'protokol', 'kural', 'seçenek', 'tavsiye', 'bedel', 'notu',
-    'bu', 'şu', 'veya', 'ile', 'biri', 'hâlâ', 'bugün', 'bugünkü', 'yeni',
-    'yoktur', 'varsa', 'yoksa', 'olan', 'olur', 'oldu', 'olduğu', 'olmalı',
+    // bağlaç / edat / yardımcı
+    'için', 'olarak', 'kadar', 'ancak', 'daha', 'sonra', 'önce', 'göre', 'veya',
+    'ile', 'ama', 've', 'gibi', 'her', 'tüm', 'bazı', 'değil', 'yani', 'yine',
+    'tekrar', 'ayrıca', 'çünkü', 'eğer', 'nasıl', 'neden', 'böyle', 'şöyle',
+    'sadece', 'yalnız', 'zaten', 'henüz', 'birlikte', 'diğer', 'karşı',
+    // işaret / nicelik
+    'bu', 'şu', 'o', 'bir', 'iki', 'üç', 'biri', 'hepsi',
+    // genel idari/kavram sözcükleri (Dilim 5.2 sertleştirmesi)
+    'açık', 'adı', 'backend', 'frontend', 'ayrı', 'eski', 'yeni', 'kapsam',
+    'plan', 'planı', 'sistem', 'sistemi', 'kullanıcı', 'karar', 'kararı',
+    'tarih', 'tarihli', 'yıl', 'gün', 'form', 'filtre', 'arama', 'erişim',
+    'kalem', 'geçerli', 'kapanış', 'kapalı', 'durum', 'sahibi', 'protokol',
+    'kural', 'seçenek', 'tavsiye', 'bedel', 'notu', 'hâlâ', 'bugün',
+    'bugünkü', 'yoktur', 'varsa', 'yoksa', 'olan', 'olur', 'oldu', 'olduğu',
+    'olmalı', 'olmalıdır', 'yapılır', 'edilir', 'gerekli', 'amaç', 'hedef',
+    'öncelik', 'süreç', 'işlem', 'bölüm', 'rapor', 'sayfa', 'ekran', 'dilim',
+    'faz', 'madde', 'proje', 'güncelleme', 'son', 'ilk', 'genel', 'temel',
+    'closed', 'open', 'default', 'scope', 'topic', 'roadmap', 'milestone',
+    'task', 'todo', 'done', 'list', 'file', 'line', 'name', 'date', 'user',
+    // tokenleştirici asla üretemez; kuralların açık kalması için taşınır
+    'kapsam-dışı', 'karar-defteri',
 ]);
 
+const TOKEN_RE = /[a-zçğıöşü0-9]{3,}/g;
+const PURE_NUMBER_RE = /^\d+$/;
+/** Ayırt edici önek eşiği: kısa taraf en az bu kadar karakter olmalı. */
+const MIN_DISTINCTIVE_LENGTH = 4;
+
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** İşaretleyici eşleşmesi: işaret sözcük başında olmalı ("açılır"✓, "araç"✗). */
+function matchesMarker(sentence: string, marker: string): boolean {
+    return new RegExp(`\\b${escapeRegExp(marker)}`).test(sentence);
+}
+
+/** Cümle bölücü: nokta, ünlem, soru, noktalı virgül ve iki nokta. */
+function splitSentences(paragraph: string): string[] {
+    return paragraph
+        .split(/(?<=[.!?;:])\s+/)
+        .map((sentence) => sentence.trim())
+        .filter(Boolean);
+}
+
+/**
+ * Ham token kümesi: filtre uygulanmaz; yalnız "yalnız jenerik ortak token"
+ * reddini dürüst sınıflandırmak için kullanılır.
+ */
+function tokenizeRaw(text: string): Set<string> {
+    return new Set(text.toLocaleLowerCase('tr-TR').match(TOKEN_RE) ?? []);
+}
+
+function isQualifiedToken(token: string): boolean {
+    if (PURE_NUMBER_RE.test(token)) return false;
+    if (STOPWORDS.has(token)) return false;
+    if (NEGATION_MARKERS.includes(token)) return false;
+    return true;
+}
+
+/** Konu adayı tokenlar: sayı/yıl ve genel sözcükler elenmiş küme. */
 function tokenize(text: string): Set<string> {
     const tokens = new Set<string>();
-    const matches = text.toLocaleLowerCase('tr-TR').match(/[a-zçğıöşü0-9]{3,}/g) ?? [];
-    for (const token of matches) {
-        if (STOPWORDS.has(token) || NEGATION_MARKERS.includes(token)) continue;
+    for (const token of text.toLocaleLowerCase('tr-TR').match(TOKEN_RE) ?? []) {
+        if (!isQualifiedToken(token)) continue;
         tokens.add(token);
     }
     return tokens;
 }
 
 /**
- * Türkçe sonek varyantları (korpus/korpusu, tez/tezi) tek karakter farklıdır;
- * eşikli önek eşleşmesi bu aileyi yakalar. İki yönlü önek koşulu, kısa olan
- * tarafın en az 3 karakter olmasıyla korunur.
+ * Türkçe sonek varyantları (korpus/korpusu) tek karakter farklıdır; eşikli
+ * önek eşleşmesi bu aileyi yakalar. Kısa taraf EN AZ 4 karakter olmalı ve
+ * genel sözcük kümesinde OLMAMALIDIR — aksi hâlde "2026/2026", "tez/tezi"
+ * gibi çöp veya zayıf çiftler konu kanıtı sayılır.
  */
 function tokensIntersect(a: Set<string>, b: Set<string>): string[] {
+    const hits = new Set<string>();
+    for (const left of a) {
+        for (const right of b) {
+            const shorter = left.length <= right.length ? left : right;
+            const longer = shorter === left ? right : left;
+            if (shorter.length < MIN_DISTINCTIVE_LENGTH) continue;
+            if (STOPWORDS.has(shorter)) continue;
+            if (longer.startsWith(shorter)) hits.add(shorter);
+        }
+    }
+    return [...hits].sort();
+}
+
+/** Eski gevşek kural (≥3 önek, genel sözcük dahil) — yalnız red sınıflaması için. */
+function looseIntersect(a: Set<string>, b: Set<string>): string[] {
     const hits = new Set<string>();
     for (const left of a) {
         for (const right of b) {
@@ -85,37 +163,60 @@ interface PlanStatement {
     line: number;
     text: string;
     tokens: Set<string>;
+    rawTokens: Set<string>;
     observedAt: string;
 }
 
-function planNegationStatements(planText: string, limit: number, fallbackDate: string): PlanStatement[] {
+/**
+ * Planın KISITLAYICI cümleleri: negasyon işaretleyicisi konu terimleriyle
+ * aynı cümlede olan tekil cümleler. Paragraf tamponu değil, cümle ölçüsü
+ * ölçülür — yön kanıtı cümle sınırlıdır.
+ */
+function planRestrictiveStatements(planText: string, fallbackDate: string): PlanStatement[] {
     const statements: PlanStatement[] = [];
     const lines = planText.split(/\r?\n/);
     let buffer = '';
     let bufferLine = 0;
+    const flush = (): void => {
+        if (!buffer) return;
+        const paragraph = buffer.trim();
+        buffer = '';
+        const paragraphDate = /\d{4}-\d{2}-\d{2}/.exec(paragraph)?.[0] ?? planDate(planText, fallbackDate);
+        for (const sentence of splitSentences(paragraph)) {
+            const lowered = sentence.toLocaleLowerCase('tr-TR');
+            if (!NEGATION_MARKERS.some((marker) => matchesMarker(lowered, marker))) continue;
+            statements.push({
+                line: bufferLine,
+                text: sentence,
+                tokens: tokenize(sentence),
+                rawTokens: tokenizeRaw(sentence),
+                observedAt: paragraphDate,
+            });
+        }
+    };
     for (let index = 0; index < lines.length; index += 1) {
         const line = lines[index] ?? '';
         // Markdown başlığı cümle sınırıdır: tamponu boşaltır, kendisi cümle olamaz.
         if (/^#{1,6}\s/.test(line)) {
-            buffer = '';
+            flush();
             continue;
         }
         if (!line.trim()) {
-            buffer = '';
+            flush();
             continue;
         }
         if (!buffer) bufferLine = index + 1;
         buffer += ` ${line}`;
-        const statementEnds = /[.;:]\s*$/.test(line) || index === lines.length - 1;
-        if (!statementEnds) continue;
-        if (NEGATION_MARKERS.some((marker) => buffer.includes(marker))) {
-            const observedAt = /\d{4}-\d{2}-\d{2}/.exec(buffer)?.[0] ?? planDate(planText, fallbackDate);
-            statements.push({ line: bufferLine, text: buffer.trim(), tokens: tokenize(buffer), observedAt });
-            if (statements.length >= limit) return statements;
-        }
-        buffer = '';
+        if (/[.;:]\s*$/.test(line) || index === lines.length - 1) flush();
     }
+    flush();
     return statements;
+}
+
+interface DecisionSentence {
+    tokens: Set<string>;
+    hasExpansion: boolean;
+    hasNegation: boolean;
 }
 
 interface LedgerSection {
@@ -125,7 +226,23 @@ interface LedgerSection {
     isDecision: boolean;
     body: string;
     tokens: Set<string>;
+    rawTokens: Set<string>;
+    headingTokens: Set<string>;
     decisionText: string;
+    decisionTokens: Set<string>;
+    decisionRawTokens: Set<string>;
+    decisionSentences: DecisionSentence[];
+}
+
+function decisionSentencesOf(decisionText: string): DecisionSentence[] {
+    return splitSentences(decisionText).map((sentence) => {
+        const lowered = sentence.toLocaleLowerCase('tr-TR');
+        return {
+            tokens: tokenize(sentence),
+            hasExpansion: EXPANSION_MARKERS.some((marker) => matchesMarker(lowered, marker)),
+            hasNegation: NEGATION_MARKERS.some((marker) => matchesMarker(lowered, marker)),
+        };
+    });
 }
 
 function ledgerSections(text: string): LedgerSection[] {
@@ -158,7 +275,12 @@ function ledgerSections(text: string): LedgerSection[] {
             isDecision: /KARAR/i.test(authorityText),
             body: `${current.heading}\n${body}`,
             tokens: tokenize(authorityText),
+            rawTokens: tokenizeRaw(authorityText),
+            headingTokens: tokenize(current.heading),
             decisionText,
+            decisionTokens: tokenize(decisionText),
+            decisionRawTokens: tokenizeRaw(decisionText),
+            decisionSentences: decisionSentencesOf(decisionText),
         });
         current = null;
     };
@@ -175,33 +297,124 @@ function ledgerSections(text: string): LedgerSection[] {
     return sections;
 }
 
+/** Sertleştirilmiş çelişki reddi nedenleri — sabit sıra, deterministik rapor. */
+export type ConflictRejectionReason =
+    | 'generic-token-only'
+    | 'no-restrictive-direction'
+    | 'no-expansive-direction'
+    | 'weak-topic-overlap'
+    | 'unrelated-flow'
+    | 'repeated-restriction'
+    | 'chronology-invalid';
+
+export const CONFLICT_REJECTION_REASONS: ConflictRejectionReason[] = [
+    'generic-token-only',
+    'no-restrictive-direction',
+    'no-expansive-direction',
+    'weak-topic-overlap',
+    'unrelated-flow',
+    'repeated-restriction',
+    'chronology-invalid',
+];
+
+export interface ConflictEvaluation {
+    entries: ConflictEntry[];
+    rawCandidateCount: number;
+    rejectionCounts: Record<ConflictRejectionReason, number>;
+    truncationReasons: string[];
+    scannedScope: {
+        planStatements: number;
+        ledgerSections: number;
+        ledgerDecisions: number;
+        pairsEvaluated: number;
+    };
+}
+
+const MAX_CONFLICT_ENTRIES = 64;
+
+/** Ayırt edici konu: karar metniyle ≥2 ortak token, ya da 1 token + başlıkta aynı token. */
+function establishFlow(
+    sideATokens: Set<string>,
+    sideARawTokens: Set<string>,
+    section: LedgerSection,
+): { status: 'ok' | ConflictRejectionReason; topic: string[] } {
+    const sectionTopic = tokensIntersect(sideATokens, section.tokens);
+    if (sectionTopic.length === 0) {
+        const loose = looseIntersect(sideARawTokens, section.rawTokens);
+        return { status: loose.length ? 'generic-token-only' : 'weak-topic-overlap', topic: [] };
+    }
+    const decisionTopic = tokensIntersect(sideATokens, section.decisionTokens);
+    if (decisionTopic.length >= 2) return { status: 'ok', topic: decisionTopic.slice(0, 3) };
+    if (
+        decisionTopic.length === 1 &&
+        tokensIntersect(new Set(decisionTopic), section.headingTokens).length >= 1
+    ) {
+        return { status: 'ok', topic: decisionTopic };
+    }
+    return { status: 'unrelated-flow', topic: sectionTopic };
+}
+
+function sentenceSharesTopic(topic: string[], sentence: DecisionSentence): boolean {
+    return tokensIntersect(new Set(topic), sentence.tokens).length > 0;
+}
+
 /**
- * Çelişki adayı: plan cümlesi konuyu NEGASYONLA sınırlandırırken karar
- * defterindeki sonraki tarihli KARAR aynı konuyu genişletme yönünde
- * işliyorsa, iki otorite farklı yön bildiriyor demektir. Kesişim ≥2
- * anlamlı öbek zorunludur; tek kelime tesadüf üretir.
+ * Çelişki değerlendiricisi: (1) plan kısıt cümlesi × lider KARAR bölümü ve
+ * (2) lider-içi düzeltme akışı (aynı defterde eski kısıt KARAR → yeni
+ * genişletici KARAR) aynı kapı dizisiyle ölçülür:
+ *   konu kalitesi → karar-akışı şartı → kısıt yönü → genişletme yönü →
+ *   tekrar-kısıt → kronoloji. Ham adaylar; çıktı sınırı ve id tekrarı
+ * dışında hiçbir ayıklama yapılmadan sayılır (dürüst ölçüm).
  */
-export function detectConflicts(ctx: ConflictContext): ConflictEntry[] {
-    const entries: ConflictEntry[] = [];
-    if (!ctx.ledgerText) return entries;
+export function evaluateConflicts(ctx: ConflictContext): ConflictEvaluation {
+    const rejectionCounts = Object.fromEntries(
+        CONFLICT_REJECTION_REASONS.map((reason) => [reason, 0]),
+    ) as Record<ConflictRejectionReason, number>;
+    const scannedScope = { planStatements: 0, ledgerSections: 0, ledgerDecisions: 0, pairsEvaluated: 0 };
+    if (!ctx.ledgerText) {
+        return { entries: [], rawCandidateCount: 0, rejectionCounts, truncationReasons: [], scannedScope };
+    }
     const sections = ledgerSections(ctx.ledgerText);
-    const statements = planNegationStatements(ctx.planText, 64, ctx.fallbackDate);
-    const seen = new Set<string>();
+    const decisionSections = sections.filter((section) => section.isDecision);
+    const statements = planRestrictiveStatements(ctx.planText, ctx.fallbackDate);
+    scannedScope.planStatements = statements.length;
+    scannedScope.ledgerSections = sections.length;
+    scannedScope.ledgerDecisions = decisionSections.length;
+
+    const seeds: ConflictEntry[] = [];
+    const reject = (reason: ConflictRejectionReason): void => {
+        rejectionCounts[reason] += 1;
+    };
+    const topicText = (topic: string[]): string => `${topic.join(', ')} (kısıt→genişletme)`;
+
     for (const statement of statements) {
-        for (const section of sections) {
-            if (!section.isDecision) continue;
-            if (section.date <= statement.observedAt) continue;
-            const expands = EXPANSION_MARKERS.some((marker) => section.decisionText.toLocaleLowerCase('tr-TR').includes(marker));
-            const repeatsRestriction = NEGATION_MARKERS.some((marker) => section.decisionText.toLocaleLowerCase('tr-TR').includes(marker));
-            if (!expands || repeatsRestriction) continue;
-            const intersection = tokensIntersect(statement.tokens, section.tokens).slice(0, 3);
-            if (intersection.length < 2) continue;
-            const conflictId = `conflict:${slugify(intersection.join('-'))}`;
-            if (seen.has(conflictId)) continue;
-            seen.add(conflictId);
-            entries.push({
-                id: conflictId,
-                topic: intersection.join(', '),
+        for (const section of decisionSections) {
+            scannedScope.pairsEvaluated += 1;
+            // Kısıt yönü yapısal olarak doğrudur: ifade tek cümledir ve
+            // seçimi negasyonla yapılmıştır; konu terimleri aynı cümlededir.
+            const flow = establishFlow(statement.tokens, statement.rawTokens, section);
+            if (flow.status !== 'ok') {
+                reject(flow.status);
+                continue;
+            }
+            const expansionSentences = section.decisionSentences.filter(
+                (sentence) => sentence.hasExpansion && sentenceSharesTopic(flow.topic, sentence),
+            );
+            if (!expansionSentences.length) {
+                reject('no-expansive-direction');
+                continue;
+            }
+            if (!expansionSentences.some((sentence) => !sentence.hasNegation)) {
+                reject('repeated-restriction');
+                continue;
+            }
+            if (section.date <= statement.observedAt) {
+                reject('chronology-invalid');
+                continue;
+            }
+            seeds.push({
+                id: `conflict:${slugify(flow.topic.join('-')).slice(0, 48)}:${slugify(ctx.planPath).slice(0, 32)}:${slugify(ctx.ledgerPath).slice(0, 32)}`,
+                topic: topicText(flow.topic),
                 status: 'candidate',
                 authorityA: `${ctx.planPath} · L${statement.line} — "…${statement.text.slice(0, 90)}…"`,
                 authorityB: `${ctx.ledgerPath} · L${section.line} — ${section.heading.slice(0, 90)} (${section.date})`,
@@ -210,10 +423,78 @@ export function detectConflicts(ctx: ConflictContext): ConflictEntry[] {
                 suggestion:
                     'Add a superseded-note to the older authority line, or record this as an accepted conflict in the decision ledger (human confirmation required).',
             });
-            if (entries.length >= 64) return sortConflicts(entries);
         }
     }
-    return sortConflicts(entries);
+
+    // Lider-içi düzeltme akışı: aynı defter içinde eski kısıtlayıcı KARAR
+    // cümlesi → yeni genişletici KARAR cümlesi (ör. DÜZELTİLMİŞ KART).
+    for (const restrictive of decisionSections) {
+        for (const expansive of decisionSections) {
+            if (restrictive === expansive) continue;
+            scannedScope.pairsEvaluated += 1;
+            const flow = establishFlow(restrictive.tokens, restrictive.rawTokens, expansive);
+            if (flow.status !== 'ok') {
+                reject(flow.status);
+                continue;
+            }
+            const restrictionSentences = restrictive.decisionSentences.filter(
+                (sentence) => sentence.hasNegation && sentenceSharesTopic(flow.topic, sentence),
+            );
+            if (!restrictionSentences.length) {
+                reject('no-restrictive-direction');
+                continue;
+            }
+            const expansionSentences = expansive.decisionSentences.filter(
+                (sentence) => sentence.hasExpansion && sentenceSharesTopic(flow.topic, sentence),
+            );
+            if (!expansionSentences.length) {
+                reject('no-expansive-direction');
+                continue;
+            }
+            if (!expansionSentences.some((sentence) => !sentence.hasNegation)) {
+                reject('repeated-restriction');
+                continue;
+            }
+            if (restrictive.date >= expansive.date) {
+                reject('chronology-invalid');
+                continue;
+            }
+            seeds.push({
+                id: `conflict:${slugify(flow.topic.join('-')).slice(0, 48)}:${slugify(ctx.ledgerPath).slice(0, 32)}:duzeltme`,
+                topic: topicText(flow.topic),
+                status: 'candidate',
+                authorityA: `${ctx.ledgerPath} · L${restrictive.line} — ${restrictive.heading.slice(0, 90)} (${restrictive.date})`,
+                authorityB: `${ctx.ledgerPath} · L${expansive.line} — ${expansive.heading.slice(0, 90)} (${expansive.date})`,
+                observedAtA: restrictive.date,
+                observedAtB: expansive.date,
+                suggestion:
+                    'Add a superseded-note to the older authority line, or record this as an accepted conflict in the decision ledger (human confirmation required).',
+            });
+        }
+    }
+
+    const rawCandidateCount = seeds.length;
+    const truncationReasons: string[] = [];
+    const seen = new Set<string>();
+    const deduped = seeds.filter((entry) => {
+        if (seen.has(entry.id)) return false;
+        seen.add(entry.id);
+        return true;
+    });
+    if (deduped.length < seeds.length) truncationReasons.push('duplicate-candidate-id');
+    const entries = deduped.slice(0, MAX_CONFLICT_ENTRIES);
+    if (deduped.length > entries.length) truncationReasons.push('candidate-cap-64');
+    return { entries: sortConflicts(entries), rawCandidateCount, rejectionCounts, truncationReasons, scannedScope };
+}
+
+/**
+ * Çelişki adayı: plan cümlesi konuyu negasyonla sınırlandırırken karar
+ * defterindeki sonraki tarihli KARAR aynı konuyu aynı cümlede genişletme
+ * yönünde işliyorsa iki otorite farklı yön bildiriyordur. Jenerik tokenlar,
+ * cümle-dışı yön sinyalleri ve ilgisiz karar akışları aday üretmez.
+ */
+export function detectConflicts(ctx: ConflictContext): ConflictEntry[] {
+    return evaluateConflicts(ctx).entries;
 }
 
 /**
