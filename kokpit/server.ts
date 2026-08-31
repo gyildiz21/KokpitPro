@@ -1,5 +1,5 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { extname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildProjectDiagram } from './diagram/diagram-service';
@@ -19,6 +19,8 @@ import { buildUiAssets, type UiAssets } from './ui/assets';
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const PORT = Number.parseInt(process.env.PORT || '4173', 10);
 const HOST = process.env.HOST || '127.0.0.1';
+const KEEP_ALIVE_TIMEOUT_MS = 65_000;
+const HEADERS_TIMEOUT_MS = 66_000;
 const registry = new ProjectRegistry();
 const deltaHistory = new DeltaHistoryStore(registry.dataDir);
 const complianceClosures = new ComplianceClosureStore(registry.dataDir);
@@ -78,6 +80,18 @@ export function isAllowedHostHeader(
         `localhost:${configuredPort}`,
     ]);
     return allowed.has(normalized);
+}
+
+/**
+ * Node 20'nin 5 saniyelik varsayılan keep-alive penceresi, yoğun ölçüm
+ * sırasında bekleyen istemcinin kapanmış sokete POST göndermesine yol açabilir.
+ * Başlık penceresini keep-alive'dan biraz uzun tutarak yarım kapanma yarışını
+ * engelleriz; istek çalışma süresi sınırı Node'un ayrı requestTimeout'udur.
+ */
+export function configureHttpTransport(server: Server): Server {
+    server.keepAliveTimeout = KEEP_ALIVE_TIMEOUT_MS;
+    server.headersTimeout = HEADERS_TIMEOUT_MS;
+    return server;
 }
 
 /**
@@ -420,7 +434,7 @@ export async function startServer(): Promise<void> {
     uiAssets = await buildUiAssets(ROOT);
     await bootstrap();
     // K1: Host header doğrulaması — DNS-rebinding'e karşı (auditi §1.5).
-    const server = createServer(async (request, response) => {
+    const server = configureHttpTransport(createServer(async (request, response) => {
         try {
             const hostHeader = (request.headers.host || '').trim().toLowerCase();
             if (!isAllowedHostHeader(hostHeader)) {
@@ -441,7 +455,7 @@ export async function startServer(): Promise<void> {
                 ...(retryAfter ? { retryAfter } : {}),
             });
         }
-    });
+    }));
     server.listen(PORT, HOST, () => {
         console.log(`KokpitPro ready: http://${HOST}:${PORT}/arayuz-onizleme.html`);
         console.log(`Registry: ${registry.filePath}`);

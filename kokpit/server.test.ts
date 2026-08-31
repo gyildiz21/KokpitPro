@@ -1,6 +1,7 @@
+import { createServer } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import { GithubVerificationError } from './projects/github';
-import { githubVerificationHttpStatus, isAllowedHostHeader, isStaticPathBlocked, remapRouteProjectId } from './server';
+import { configureHttpTransport, githubVerificationHttpStatus, isAllowedHostHeader, isStaticPathBlocked, remapRouteProjectId } from './server';
 
 describe('local server security boundaries', () => {
     it('blocks secret, registry, dependency, and reference-engine paths', () => {
@@ -27,6 +28,12 @@ describe('local server security boundaries', () => {
         expect(isAllowedHostHeader('attacker.example:4173')).toBe(false);
         expect(isAllowedHostHeader('localhost:4174')).toBe(false);
         expect(isAllowedHostHeader(undefined)).toBe(false);
+    });
+
+    it('keeps idle HTTP connections alive through long measurement requests', () => {
+        const server = configureHttpTransport(createServer());
+        expect(server.keepAliveTimeout).toBe(65_000);
+        expect(server.headersTimeout).toBeGreaterThan(server.keepAliveTimeout);
     });
 
     it('maps GitHub network failures to a valid gateway status and preserves valid upstream classes', () => {
