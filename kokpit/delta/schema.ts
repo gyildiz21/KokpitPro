@@ -65,9 +65,11 @@ export const BaseRevision = z
 export type BaseRevision = z.infer<typeof BaseRevision>;
 
 /**
- * Tek bir plan maddesinin dürüst deltası. D5.2: şema sürümlüdür — uyumsuz
- * üretici çıktısını tüketici reddeder. Liste alanlarındaki `max` sınırları
- * patlama nöbetçisidir; aşım hesaplayıcı tarafından kırpmayla önlenir.
+ * Tek bir plan maddesinin dürüst deltası. DESIGN D5 · sürümlü şema kararı
+ * (eski kod yorumundaki "D5.2" kısaltması; PLAN'daki Dilim 5.2 ürün dilimiyle
+ * ilişkisi yoktur): şema sürümlüdür — uyumsuz üretici çıktısını tüketici
+ * reddeder. Liste alanlarındaki `max` sınırları patlama nöbetçisidir; aşım
+ * hesaplayıcı tarafından kırpmayla önlenir.
  */
 export const DeltaResult = z
     .object({
