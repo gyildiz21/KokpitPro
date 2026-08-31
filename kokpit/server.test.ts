@@ -192,6 +192,14 @@ describe('dilim 5.2 explain yüzeyi', () => {
         expect(older.summary.tr).toContain('Uyum Telemetrisi');
         expect(older.summary.tr).not.toContain('Dilim 5.2');
         expect(older.verificationSteps[0]?.tr ?? '').toContain('ayrı kabul metni yok');
+        // Grup sırası tersine döndüğünde de kısmi sürüm öneki eşleşmez:
+        // "Dilim-5" isteği asla "Dilim 5.2" başlığına düşmez.
+        const reversed = projectFixture();
+        const groups = reversed.index.groups.slice().reverse();
+        reversed.index.groups = groups;
+        const reversedSlice = await buildProjectExplain(reversed, { kind: 'plan-slice', id: 'Dilim-5', phase: null, item: null }, { provider: null });
+        expect(reversedSlice.summary.tr).toContain('Uyum Telemetrisi');
+        expect(reversedSlice.summary.tr).not.toContain('Dilim 5.2');
     });
 
     it('fixture sağlayıcı açıkken zarf AI katmanı taşır; sağlayıcı hatasında deterministik zarf korunur', async () => {

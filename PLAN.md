@@ -574,7 +574,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `unmeasurable/no-mapping`); `e2e/dilim-5-2-delta-timeline.spec.ts`
       5/5 (S3–S5 maskesiz gerçek-sunucu: plan başlıkları, measured kart,
       5.2 no-mapping sınırı).
-- [x] **5.2.6 — Gerçek korpus ölçümü ve kabul:** MethodLogos korpusunda
+- [ ] **5.2.6 — Gerçek korpus ölçümü ve kabul:** MethodLogos korpusunda
       salt-okunur sertleştirilmiş koşum; kapsam sayaçları + kırpma nedenleri
       + ham/filtrelenmiş aday + red nedeni dağılımı raporlanır; gerçek aday
       insan doğrulamasına sunulur. **Kapanış kuralı:** teknik sertlik +
@@ -583,12 +583,18 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `REAL_CORPUS_ACCEPTANCE_OPEN` (teknik başarısızlık DEĞİLDİR).
       — **Durum (2026-08-31):** `TECHNICALLY_HARDENED` +
       `REAL_CORPUS_ACCEPTANCE_OPEN`. Sertleştirilmiş motor güncel
-      MethodLogos korpusunda 0 aday üretir (yukarıdaki dağılımla); aday
-      uydurulmadı. İnsan gözcüsü için not: defterdeki D1 "Yıl aralığı
-      politikası" kartı (bayat-bilgi düzeltmesi) yarı-otomatik sezgiselin
-      kasıtlı olarak yakalayamadığı anlam-düzeyi bir düzeltmedir; makine
-      kanıtı DEĞİLDİR ve tek başına kabul sayılmaz. Dilim 5'in gerçek
-      korpus kabul kutusu insan doğrulaması olmadan AÇIK kalır.
+      MethodLogos korpusunda 0 aday üretir (red dağılımı: generic-token-only
+      590 · weak-topic-overlap 956 · unrelated-flow 235 ·
+      no-restrictive-direction 42 · no-expansive-direction 17; kırpma yok);
+      aday uydurulmadı. Bağımsız denetçi ilk turda plan-defteri kapanışının
+      kendi nöbetçisini kırmasını engelleyici bulgu olarak raporladı;
+      5.2.6 kutusu bu nedenle ve gerçek-korpus kabulü insan doğrulamasına
+      bağlı olduğu için AÇIK bırakıldı — kutu yalnız bir insanın
+      doğrulanmış karar/otorite çiftini onaylamasıyla kapanır. İnsan
+      gözcüsü için not: defterdeki D1 "Yıl aralığı politikası" kartı
+      (bayat-bilgi düzeltmesi) yarı-otomatik sezgiselin kasıtlı olarak
+      yakalayamadığı anlam-düzeyi bir düzeltmedir; makine kanıtı DEĞİLDİR
+      ve tek başına kabul sayılmaz.
 
 ## Sabit kurallar (bu projede de geçerli)
 

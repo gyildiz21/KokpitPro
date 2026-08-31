@@ -222,8 +222,9 @@ async function buildDeterministicExplain(
         const match = /^Dilim-([0-9]+(?:\.[0-9]+)?)$/.exec(query.id);
         const heading = project.index.groups.find((group) => {
             // Kimlik "Dilim-5.2" biçimindeyse başlık metniyle eşle; değilse doğrudan başlık ara.
+            // Sürüm öneki kısmi eşleşemez: "Dilim-5" isteği "Dilim 5.2" başlığıyla eşleşmez.
             if (!match?.[1]) return group.heading === query.id;
-            return new RegExp(`^Dilim\\s+${match[1].replace('.', '\\.')}\\b`).test(group.heading);
+            return new RegExp(`^Dilim\\s+${match[1].replace('.', '\\.')}(?![0-9.])`).test(group.heading);
         });
         if (!heading) throw new HttpError(404, `Plan slice not found: ${query.id}`);
         const counts = { done: 0, partial: 0, open: 0, blocked: 0 };
