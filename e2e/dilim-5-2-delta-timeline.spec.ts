@@ -226,15 +226,22 @@ test.describe('Dilim 5.2 zaman ve delta (hermetik maskeler)', () => {
         await installMocks(page);
         await openWorkspace(page, 'Mock Proje');
 
-        // EN sözlüğünde "Dilim-5.2" girdisi yoktur (o dosya Alt D'de); bu test TR başlıkla eşleşir.
-        const has52Entry = await page.evaluate(() => {
+        // Entegre üründe EN sözlüğü Dilim-5.2'yi ayrı adlandırır; alt dilim üst
+        // dilimin adını asla devralmaz (Dilim-5 girdisinden ayrı girdi).
+        const entries = await page.evaluate(() => {
             try {
-                return Object.prototype.hasOwnProperty.call(PHASE_NAMES_EN, 'Dilim-5.2');
+                return {
+                    has52: Object.prototype.hasOwnProperty.call(PHASE_NAMES_EN, 'Dilim-5.2'),
+                    has5: Object.prototype.hasOwnProperty.call(PHASE_NAMES_EN, 'Dilim-5'),
+                    distinct: (PHASE_NAMES_EN as Record<string, string>)['Dilim-5.2'] !== (PHASE_NAMES_EN as Record<string, string>)['Dilim-5'],
+                };
             } catch {
-                return false; // sözlük bu derlemede görünmüyorsa nöbetçi zaten sağlanır
+                return { has52: false, has5: false, distinct: true }; // sözlük bu derlemede görünmüyorsa grup-başlığı nöbetçisi yeterlidir
             }
         });
-        expect(has52Entry).toBe(false);
+        expect(entries.has52).toBe(true);
+        expect(entries.has5).toBe(true);
+        expect(entries.distinct).toBe(true);
 
         // Zaman görünümü: iki AYRI grup başlığı; alt dilim üst dilime eritilmez.
         await page.locator('#tab-timeline').click();
