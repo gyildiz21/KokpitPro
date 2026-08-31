@@ -235,12 +235,14 @@ describe('karar bütünlüğü — çelişki adayları (UI-SPEC §10.5, yarım-o
     });
 
     it('superseded zinciri kronolojisi bozuksa ayrı bütünlük kaydı üretir', () => {
+        // Dilim 5.2: "yeni/eski/kural" artık jenerik kümede olduğundan düzenek,
+        // ≥2 ayırt edici ortak token (bağlayıcı, kanal) taşıyacak şekilde güncellendi.
         const ledger = [
-            '### Yeni · Kural sürümü',
+            '### Yeni · Bağlayıcı kanal sürümü',
             '',
-            '**Durum:** ✅ KARAR (2026-08-01) → eski kuralı yürürlükten kaldırır.',
+            '**Durum:** ✅ KARAR (2026-08-01) → eski bağlayıcı kanalını yürürlükten kaldırır.',
             '',
-            '### Eski · Kural',
+            '### Eski · Bağlayıcı kanalı',
             '',
             '**Durum:** ✅ KARAR (2026-08-10) → yürürlükte.',
         ].join('\n');
