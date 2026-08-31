@@ -58,6 +58,9 @@ const STOPWORDS = new Set([
     'sadece', 'yalnız', 'zaten', 'henüz', 'birlikte', 'diğer', 'karşı',
     // işaret / nicelik
     'bu', 'şu', 'o', 'bir', 'iki', 'üç', 'biri', 'hepsi',
+    // sayı sıfatı / zarf / genel ad (entegrasyon ölçümü: zayıf çapa eleme)
+    'ikinci', 'üçüncü', 'dördüncü', 'kaldı', 'kalıcı', 'geçici', 'başına',
+    'yerine', 'kendi', 'kapı', 'satır', 'satırı', 'değer', 'özet',
     // genel idari/kavram sözcükleri (Dilim 5.2 sertleştirmesi)
     'açık', 'adı', 'backend', 'frontend', 'ayrı', 'eski', 'yeni', 'kapsam',
     'plan', 'planı', 'sistem', 'sistemi', 'kullanıcı', 'karar', 'kararı',
@@ -77,7 +80,7 @@ const STOPWORDS = new Set([
 const TOKEN_RE = /[a-zçğıöşü0-9]{3,}/g;
 const PURE_NUMBER_RE = /^\d+$/;
 /** Ayırt edici önek eşiği: kısa taraf en az bu kadar karakter olmalı. */
-const MIN_DISTINCTIVE_LENGTH = 4;
+const MIN_DISTINCTIVE_LENGTH = 5;
 
 function escapeRegExp(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -123,9 +126,12 @@ function tokenize(text: string): Set<string> {
 
 /**
  * Türkçe sonek varyantları (korpus/korpusu) tek karakter farklıdır; eşikli
- * önek eşleşmesi bu aileyi yakalar. Kısa taraf EN AZ 4 karakter olmalı ve
+ * önek eşleşmesi bu aileyi yakalar. Kısa taraf EN AZ 5 karakter olmalı ve
  * genel sözcük kümesinde OLMAMALIDIR — aksi hâlde "2026/2026", "tez/tezi"
- * gibi çöp veya zayıf çiftler konu kanıtı sayılır.
+ * gibi çöp veya zayıf çiftler konu kanıtı sayılır. Aynı kökün sonek
+ * ailesi (testler/testleri) TEK hit sayılır: aile içi üye çift öneki
+ * başka bir hite yer ise yalnız en uzun üye korunur — tek sözcük ailesi
+ * "2 ayrı ortak token" izlenimi uyduramaz.
  */
 function tokensIntersect(a: Set<string>, b: Set<string>): string[] {
     const hits = new Set<string>();
@@ -138,7 +144,11 @@ function tokensIntersect(a: Set<string>, b: Set<string>): string[] {
             if (longer.startsWith(shorter)) hits.add(shorter);
         }
     }
-    return [...hits].sort();
+    const sorted = [...hits].sort();
+    return sorted.filter((hit, index) => {
+        const next = sorted[index + 1];
+        return !(next && next.startsWith(hit));
+    });
 }
 
 /** Eski gevşek kural (≥3 önek, genel sözcük dahil) — yalnız red sınıflaması için. */

@@ -202,3 +202,70 @@ describe('çelişki sertleştirmesi — jenerik token ve yön kuralları (Dilim 
         ).toBeGreaterThanOrEqual(1);
     });
 });
+
+describe('çelişki sertleştirmesi — entegrasyon kalite kapısı (Dilim 5.2)', () => {
+    it('aynı kökün sonek ailesi (testler/testleri) tek hit sayılır; tek aile aday taşıyamaz', () => {
+        // İki tarafın ortak konusu yalnız aynı kökün sonek üyeleriyse: 2 token
+        // izlenimi uydurulamaz; karar cümlesinde genişletme olsa bile konu
+        // kanıtı tekileşir ve aday üretilmez.
+        const ctx = ctxWith(
+            [
+                '# Plan',
+                '',
+                'Değerlendirme testleri ve testleri raporları dışında tutulmaz.',
+            ].join('\n'),
+            [
+                '# Karar Defteri',
+                '',
+                '### Değerlendirme bölümü',
+                '',
+                '**Durum:** ✅ KARAR (2026-09-01) → Değerlendirme testleri raporları eklenerek genişletilir.',
+            ].join('\n'),
+        );
+        const evaluation = evaluateConflicts(ctx);
+        expect(evaluation.entries).toEqual([]);
+    });
+
+    it('4 karakterlik çapalar (kapı, inde) konu kanıtı olamaz; başlık yardımıyla bile aday çıkmaz', () => {
+        const ctx = ctxWith(
+            [
+                '# Plan',
+                '',
+                'Kapı inde kontrolü tek başına yeterli değildir.',
+            ].join('\n'),
+            [
+                '# Karar Defteri',
+                '',
+                '### Kapı hijyeni bölümü',
+                '',
+                '**Durum:** ✅ KARAR (2026-09-01) → Kapı inde kontrolü kapsamı genişletilir.',
+            ].join('\n'),
+        );
+        expect(detectConflicts(ctx)).toEqual([]);
+        const evaluation = evaluateConflicts(ctx);
+        expect(
+            evaluation.rejectionCounts['weak-topic-overlap'] +
+            evaluation.rejectionCounts['unrelated-flow'] +
+            evaluation.rejectionCounts['generic-token-only'],
+        ).toBeGreaterThanOrEqual(1);
+    });
+
+    it('gözlemlenen genel sözcükler (kalıcı, satır, başına, ikinci) konu çapası değildir', () => {
+        const ctx = ctxWith(
+            [
+                '# Plan',
+                '',
+                'Kalıcı ikinci satır başına sayı girmez.',
+            ].join('\n'),
+            [
+                '# Karar Defteri',
+                '',
+                '### Genel bölüm',
+                '',
+                '**Durum:** ✅ KARAR (2026-09-01) → Kalıcı ikinci satır başına sayı artırılarak genişletilir.',
+            ].join('\n'),
+        );
+        expect(detectConflicts(ctx)).toEqual([]);
+        expect(evaluateConflicts(ctx).rejectionCounts['generic-token-only']).toBe(1);
+    });
+});
