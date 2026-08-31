@@ -407,6 +407,31 @@
     .queue-group .issue-path { white-space: normal; line-height: 1.45; }
     .issue-row.is-member { padding-left: 20px; }
     .issue-row.is-member .issue-path { word-break: break-all; white-space: normal; }
+    .technical-evidence { margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+    .technical-evidence > summary { display: flex; align-items: center; gap: 7px; min-height: 40px; padding: 7px 10px; cursor: pointer; color: var(--text-2); font-size: 10px; font-weight: 660; list-style: none; }
+    .technical-evidence > summary::-webkit-details-marker { display: none; }
+    .technical-evidence > summary::before { content: ""; border-left: 4px solid currentColor; border-top: 3px solid transparent; border-bottom: 3px solid transparent; transition: transform 160ms ease; }
+    .technical-evidence[open] > summary::before { transform: rotate(90deg); }
+    .technical-evidence-body { padding: 2px 10px 10px; }
+    .technical-evidence-body .detail-section { margin-top: 12px; padding-top: 10px; }
+    .technical-evidence code, .technical-evidence .detail-section p { overflow-wrap: anywhere; word-break: break-all; }
+    .explain-slot { display: contents; }
+    .explain-card { display: grid; gap: 9px; margin-bottom: 13px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+    .explain-q h3 { margin: 0 0 3px; color: var(--text-3); font-size: 9px; font-weight: 720; letter-spacing: .07em; text-transform: uppercase; }
+    .explain-q p, .explain-q li { margin: 0; color: var(--text-2); font-size: 10.5px; line-height: 1.55; }
+    .explain-steps { display: grid; gap: 4px; margin: 0; padding-left: 16px; }
+    .explain-card.is-error strong { color: var(--text); font-size: 11px; }
+    .explain-loading { margin: 0; color: var(--text-3); font-size: 10.5px; }
+    .explain-skeleton { display: block; height: 8px; border-radius: 99px; background: var(--surface-3); animation: explain-pulse 1.2s ease-in-out infinite; }
+    .explain-skeleton.is-short { width: 46%; }
+    @keyframes explain-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+    .explain-action { display: grid; gap: 3px; color: var(--text-2); font-size: 10.5px; }
+    .explain-action .text-button { justify-self: start; }
+    .explain-action-label { color: var(--text); }
+    .ai-comment { display: grid; gap: 5px; margin-top: 3px; padding-top: 9px; border-top: 1px dashed var(--line-strong); }
+    .ai-comment-badge { color: var(--text); font-size: 9px; font-weight: 720; letter-spacing: .07em; text-transform: uppercase; }
+    .ai-comment-meta, .ai-comment-confidence { margin: 0; color: var(--text-3); font-size: 9.5px; }
+    .ai-comment-limitations { display: grid; gap: 4px; margin: 0; padding-left: 16px; color: var(--text-2); font-size: 10px; line-height: 1.5; }
     .sample-label { display: inline-flex; align-items: center; justify-content: center; width: fit-content; min-height: 22px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--text-3); font-size: 9px; font-weight: 740; letter-spacing: .07em; text-transform: uppercase; }
     .mermaid-export { margin: 10px 0 0; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
     .mermaid-export summary { cursor: pointer; padding: 9px 12px; color: var(--text-2); font-size: 11px; font-weight: 700; }
@@ -1411,6 +1436,20 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       syncNearMissRowTitle: "Plan kaydı ile teslim kaydı uyuşmuyor", syncPhaseFileRowTitle: "Faz belgesi eksik veya eski", syncSliceRowTitle: "Teslim kaydı bu dilime bağlanmamış",
       syncRowNearMissBody: "İki kayıt aynı dilimi farklı tarihlerle anlatıyor.", syncRowPhaseFileBody: "Bu dilimin ilerleme bilgisi eski bir faz belgesinden geliyor.", syncRowHandoffBody: "Bu dilim için devir teslim kanıtı eksik.", syncRowCurrentBody: "Kayıtlar güncel; uyumsuzluk sinyali yok."
     });
+    Object.assign(I18N.tr, {
+      explainCardAria: "Açıklama katmanı", explainLoading: "Açıklama yükleniyor…", explainFailed: "Açıklama alınamadı", explainFailedBody: "Açıklama servisi yanıt vermedi; teknik kanıt bölümü hâlâ erişilebilir.",
+      explainWhatHappened: "Ne oldu?", explainWhyItMatters: "Bu neden önemli?", explainFirstAction: "Önerilen ilk eylem", explainVerification: "Doğrulama",
+      aiCommentBadge: "AI YORUMU", aiCommentConfidence: "Güven", aiCommentLimitations: "Sınırlar",
+      technicalEvidence: "Teknik kanıt", technicalDetail: "Teknik ayrıntı", sourceRevisionLabel: "Kaynak revision",
+      deltaActionLinkCheckout: "Bu GitHub kaydının yerel çalışma kopyası yok; kanıt için repoyu yerel olarak bağla.", deltaActionMapItem: "Bu maddeye doğrulanabilir dosya/test yolu bağla veya eşleşen başka bir madde seç."
+    });
+    Object.assign(I18N.tr, {
+      explainCardAria: "Açıklama katmanı", explainLoading: "Açıklama yükleniyor…", explainFailed: "Açıklama alınamadı", explainFailedBody: "Açıklama servisi yanıt vermedi; teknik kanıt bölümü hâlâ erişilebilir.",
+      explainWhatHappened: "Ne oldu?", explainWhyItMatters: "Bu neden önemli?", explainFirstAction: "Önerilen ilk eylem", explainVerification: "Doğrulama",
+      aiCommentBadge: "AI YORUMU", aiCommentConfidence: "Güven", aiCommentLimitations: "Sınırlar",
+      technicalEvidence: "Teknik kanıt", technicalDetail: "Teknik ayrıntı", sourceRevisionLabel: "Kaynak revision",
+      deltaActionLinkCheckout: "Bu GitHub kaydının yerel çalışma kopyası yok; kanıt için repoyu yerel olarak bağla.", deltaActionMapItem: "Bu maddeye doğrulanabilir dosya/test yolu bağla veya eşleşen başka bir madde seç."
+    });
     Object.assign(I18N.en, {
       groupRecordCount: "records", acceptanceOpenBadge: "Acceptance open (plan)",
       ruleWhyKosulsuzCommit: "An unconditional commit marks a plan item complete without evidence; the record misleads when no file or test proof exists.", ruleWhyHardcodeMetin: "Hardcoded text locks interface language and content updates inside code; it grows maintenance cost.",
@@ -1423,6 +1462,13 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       ruleActionGeneric: "Verify the record with its evidence or select another matching item.",
       syncNearMissRowTitle: "Plan record and delivery record disagree", syncPhaseFileRowTitle: "Phase file missing or stale", syncSliceRowTitle: "Delivery record not tied to this slice",
       syncRowNearMissBody: "The two records describe the same slice with different dates.", syncRowPhaseFileBody: "This slice's progress comes from an outdated phase document.", syncRowHandoffBody: "Handoff evidence is missing for this slice.", syncRowCurrentBody: "Records are current; no disagreement signal."
+    });
+    Object.assign(I18N.en, {
+      explainCardAria: "Explanation layer", explainLoading: "Loading explanation…", explainFailed: "Explanation unavailable", explainFailedBody: "The explanation service did not respond; the technical evidence section remains accessible.",
+      explainWhatHappened: "What happened?", explainWhyItMatters: "Why does it matter?", explainFirstAction: "Suggested first action", explainVerification: "Verification",
+      aiCommentBadge: "AI COMMENT", aiCommentConfidence: "Confidence", aiCommentLimitations: "Limitations",
+      technicalEvidence: "Technical evidence", technicalDetail: "Technical detail", sourceRevisionLabel: "Source revision",
+      deltaActionLinkCheckout: "This GitHub record has no local working copy; connect the repository locally for evidence.", deltaActionMapItem: "Connect a verifiable file/test path to this item or select another matching item."
     });
     Object.assign(I18N.en, {
       productSections: "Product sections", waitingGo: "Waiting for GO", gateWaitingBody: "The technical scope is visible; progress is waiting for external approval or a human decision.",
@@ -1465,6 +1511,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     let complianceRequestId = 0;
     let complianceFilter = "all";
     let expandedQueueGroups = new Set();
+    let explainState = null;
+    let explainRequestId = 0;
     let selectedPhaseItem = null;
     let deltaRequestId = 0;
     let remapState = null;
@@ -1676,6 +1724,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       }
       activeProjectId = projectId;
       resetInspector();
+      resetExplain();
       diagramState = null;
       deltaState = null;
       remapState = null;
@@ -2404,27 +2453,105 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       if (violation.state !== "closed") return "";
       return `<section class="detail-section"><h3>${escapeHtml(t("closureClosedReceipt"))}</h3><p>${escapeHtml(t("closureBy"))}: <strong>${escapeHtml(violation.closedBy || "—")}</strong></p><p>${escapeHtml(formatIndexDate(violation.closedAt || ""))}</p><p>${escapeHtml(violation.closureJustification || "")}</p></section>`;
     }
+    // Dilim 5.2 · Açıklama katmanı: ExplanationEnvelope v1 tüketicisi. Açıklama
+    // ölçümden ayrıdır: zarf hiçbir ciddiyeti, durumu veya sayacı değiştiremez.
+    // Fetch hataları dürüst notla karşılanır; teknik kanıt bölümü erişilebilir kalır.
+    function langPair(pair) {
+      if (!pair) return "";
+      if (typeof pair === "string") return pair;
+      return pair[language] || pair.tr || pair.en || "";
+    }
+    function activeExplainState(subjectKind, subjectId) {
+      return explainState && explainState.projectId === activeProjectId && explainState.subjectKind === subjectKind && explainState.subjectId === subjectId ? explainState : null;
+    }
+    function resetExplain() { explainRequestId += 1; explainState = null; }
+    async function loadExplain(subjectKind, subjectId) {
+      const projectId = activeProjectId;
+      const requestOrder = ++explainRequestId;
+      explainState = { projectId, subjectKind, subjectId, status: "loading" };
+      paintExplainCard(subjectKind, subjectId);
+      try {
+        const payload = await apiRequest(`/api/projects/${encodeURIComponent(projectId)}/explain?kind=${encodeURIComponent(subjectKind)}&id=${encodeURIComponent(subjectId)}`);
+        if (projectId !== activeProjectId || requestOrder !== explainRequestId) return;
+        const envelope = payload && payload.envelope ? payload.envelope : null;
+        // Sözleşme dışı zarf kısmi kart üretmez; dürüst "alınamadı" durumuna düşer.
+        const valid = Boolean(envelope && envelope.schemaVersion === 1 && envelope.whatItMeans && envelope.whyItMatters && Array.isArray(envelope.recommendedActions) && Array.isArray(envelope.verificationSteps));
+        explainState = valid ? { projectId, subjectKind, subjectId, status: "ready", envelope } : { projectId, subjectKind, subjectId, status: "error" };
+      } catch (error) {
+        if (projectId !== activeProjectId || requestOrder !== explainRequestId) return;
+        explainState = { projectId, subjectKind, subjectId, status: "error", error: error.message };
+      }
+      paintExplainCard(subjectKind, subjectId);
+    }
+    function paintExplainCard(subjectKind, subjectId) {
+      if (!explainState || explainState.subjectKind !== subjectKind || explainState.subjectId !== subjectId || explainState.projectId !== activeProjectId) return;
+      const slot = $('#inspectorBody')?.querySelector("[data-explain-card]");
+      if (!slot || slot.dataset.explainCard !== `${subjectKind}:${subjectId}`) return;
+      slot.innerHTML = renderExplainMarkup(explainState);
+    }
+    function explainActionMarkup(action) {
+      if (!action) return "";
+      const label = langPair(action.label);
+      if (action.id === "reindex") return `<div class="explain-action"><button class="text-button primary" type="button" data-map-reindex="${escapeHtml(activeProjectId)}">${escapeHtml(t("reindexNow"))}</button></div>`;
+      if (action.id === "link-local-checkout") return `<div class="explain-action"><span>${escapeHtml(t("deltaActionLinkCheckout"))}</span>${label ? `<span class="explain-action-label">${escapeHtml(label)}</span>` : ""}</div>`;
+      if (action.id === "map-plan-path" || action.id === "select-item") return `<div class="explain-action"><span>${escapeHtml(t("deltaActionMapItem"))}</span>${label ? `<span class="explain-action-label">${escapeHtml(label)}</span>` : ""}</div>`;
+      return label ? `<div class="explain-action"><span class="explain-action-label">${escapeHtml(label)}</span></div>` : "";
+    }
+    function aiCommentMarkup(envelope) {
+      // AI yorumu ayrı katmandır: deterministic metinlerle karışmaz; provenance
+      // (sağlayıcı · model · zaman · revision · sınırlar) her zaman görünürdür.
+      if (!envelope || envelope.origin !== "ai") return "";
+      const meta = [envelope.provider, envelope.model, envelope.generatedAt ? formatIndexDate(envelope.generatedAt) : "", envelope.sourceRevision ? String(envelope.sourceRevision).slice(0, 8) : ""].filter(Boolean).join(" · ");
+      const limitations = (envelope.limitations || []).map(limitation => `<li>${escapeHtml(langPair(limitation))}</li>`).join("");
+      const confidence = typeof envelope.confidence === "number" ? `<p class="ai-comment-confidence">${escapeHtml(t("aiCommentConfidence"))}: ${Math.round(envelope.confidence * 100)}%</p>` : "";
+      return `<section class="ai-comment" data-ai-comment="true"><strong class="ai-comment-badge">${escapeHtml(t("aiCommentBadge"))}</strong>${meta ? `<p class="ai-comment-meta">${escapeHtml(meta)}</p>` : ""}${confidence}${limitations ? `<ul class="ai-comment-limitations">${limitations}</ul>` : ""}</section>`;
+    }
+    function renderExplainMarkup(state) {
+      if (state.status === "loading") return `<div class="explain-card" data-explain-status="loading" role="status"><p class="explain-loading">${escapeHtml(t("explainLoading"))}</p><span class="explain-skeleton" aria-hidden="true"></span><span class="explain-skeleton is-short" aria-hidden="true"></span></div>`;
+      if (state.status !== "ready" || !state.envelope) return `<div class="explain-card is-error" data-explain-status="error" role="status"><strong>${escapeHtml(t("explainFailed"))}</strong><p>${escapeHtml(t("explainFailedBody"))}</p></div>`;
+      const envelope = state.envelope;
+      const actions = (envelope.recommendedActions || []).map(explainActionMarkup).join("");
+      const steps = (envelope.verificationSteps || []).map(step => `<li>${escapeHtml(langPair(step))}</li>`).join("");
+      return `<div class="explain-card" data-explain-status="ready" data-explain-origin="${escapeHtml(envelope.origin || "deterministic")}" role="region" aria-label="${escapeHtml(t("explainCardAria"))}"><section class="explain-q"><h3>${escapeHtml(t("explainWhatHappened"))}</h3><p>${escapeHtml(langPair(envelope.whatItMeans))}</p></section><section class="explain-q"><h3>${escapeHtml(t("explainWhyItMatters"))}</h3><p>${escapeHtml(langPair(envelope.whyItMatters))}</p></section>${actions ? `<section class="explain-q"><h3>${escapeHtml(t("explainFirstAction"))}</h3>${actions}</section>` : ""}${steps ? `<section class="explain-q"><h3>${escapeHtml(t("explainVerification"))}</h3><ul class="explain-steps">${steps}</ul></section>` : ""}${aiCommentMarkup(envelope)}</div>`;
+    }
+    function startExplain(subjectKind, subjectId) {
+      if (activeExplainState(subjectKind, subjectId)) { paintExplainCard(subjectKind, subjectId); return; }
+      void loadExplain(subjectKind, subjectId);
+    }
+    function technicalEvidenceDetails(sectionsMarkup) {
+      return `<details class="technical-evidence" data-technical-evidence><summary>${escapeHtml(t("technicalEvidence"))}</summary><div class="technical-evidence-body">${sectionsMarkup}</div></details>`;
+    }
     function renderComplianceInspector(kind, id) {
       const state = activeCompliance();
       const report = state && state.status === "ready" ? state.report : null;
       if (!report) return;
       selectedNode = { id, type: "compliance-record" };
       let body = "";
+      let subject = null;
       const violation = report.violations.find(candidate => candidate.id === id);
       if (violation) {
+        // Dilim 5.2: dosya yolu, kural kodu, ruleReference, teknik mesaj ve
+        // sourceRevision "Teknik kanıt" disclosure'ının içindedir; açıklama
+        // kartının dört sorusu disclosure DIŞINDA her zaman görünürdür.
         const target = `${violation.targetPath}${violation.targetLine ? ":" + violation.targetLine : ""}`;
-        body = `<div class="detail-title">${escapeHtml(ruleLabel(violation.rule))}</div><div class="detail-path">${escapeHtml(target)}</div><div class="detail-status"><span class="severity ${escapeHtml(violation.severity)}"><span>${escapeHtml(severityLabel(violation.severity))}</span></span>${violation.state === "closed" ? `<span class="queue-kind">${escapeHtml(t("kindClosed"))}</span>` : ""}</div><section class="detail-section"><h3>${escapeHtml(t("evidenceTarget"))}</h3><p><code>${escapeHtml(target)}</code></p></section><section class="detail-section"><h3>${escapeHtml(t("technicalMessage"))}</h3><p>${escapeHtml(violation.message)}</p></section><section class="detail-section"><h3>${escapeHtml(t("contextFriction"))}</h3><p>${escapeHtml(frictionLabel(violation.contextFriction))}${violation.contextFriction === "unmeasured" ? "" : ` · ${escapeHtml(String(violation.changeCount))}`}</p></section><section class="detail-section"><h3>${escapeHtml(t("ruleReference"))}</h3><p>${escapeHtml(violation.ruleReference)}</p><p><code>${escapeHtml(violation.rule)}</code></p></section>${closureReceiptMarkup(violation)}${violation.state === "open" ? closureFormMarkup(violation.id) : ""}`;
+        const technical = technicalEvidenceDetails(`<section class="detail-section"><h3>${escapeHtml(t("evidenceTarget"))}</h3><p><code>${escapeHtml(target)}</code></p></section><section class="detail-section"><h3>${escapeHtml(t("technicalMessage"))}</h3><p>${escapeHtml(violation.message)}</p></section><section class="detail-section"><h3>${escapeHtml(t("ruleReference"))}</h3><p>${escapeHtml(violation.ruleReference)}</p><p><code>${escapeHtml(violation.rule)}</code></p></section><section class="detail-section"><h3>${escapeHtml(t("sourceRevisionLabel"))}</h3><p><code>${escapeHtml(report.sourceRevision || "—")}</code></p></section>`);
+        body = `<div class="detail-title">${escapeHtml(ruleLabel(violation.rule))}</div><div class="detail-status"><span class="severity ${escapeHtml(violation.severity)}"><span>${escapeHtml(severityLabel(violation.severity))}</span></span>${violation.state === "closed" ? `<span class="queue-kind">${escapeHtml(t("kindClosed"))}</span>` : ""}</div>${technical}<section class="detail-section"><h3>${escapeHtml(t("contextFriction"))}</h3><p>${escapeHtml(frictionLabel(violation.contextFriction))}${violation.contextFriction === "unmeasured" ? "" : ` · ${escapeHtml(String(violation.changeCount))}`}</p></section>${closureReceiptMarkup(violation)}${violation.state === "open" ? closureFormMarkup(violation.id) : ""}`;
+        subject = { kind: "violation", id: violation.id };
       } else {
         const entry = report.sync.find(candidate => `sync:${candidate.sliceId}` === id);
         if (entry) {
-          body = `<div class="detail-title">${escapeHtml(entry.sliceId)}</div><div class="detail-path">${escapeHtml(t("syncSlice"))}</div><dl class="sync-facts"><div class="phase-fact"><dt>${escapeHtml(t("syncRoadmapBox"))}</dt><dd>${escapeHtml(syncStatusLabel(entry.roadmapBox))}</dd></div><div class="phase-fact"><dt>${escapeHtml(t("syncPhaseFile"))}</dt><dd>${escapeHtml(syncStatusLabel(entry.phaseFile))}</dd></div><div class="phase-fact"><dt>${escapeHtml(t("syncHandoff"))}</dt><dd>${escapeHtml(syncStatusLabel(entry.handoff))}</dd></div></dl>${entry.nearMiss ? `<section class="detail-section"><h3>${escapeHtml(t("syncNearMiss"))}</h3><p><code>${escapeHtml(entry.nearMiss.reasonCode)}</code></p><p>${escapeHtml(entry.nearMiss.message)}</p></section>` : ""}`;
+          const technical = entry.nearMiss ? technicalEvidenceDetails(`<section class="detail-section"><h3>${escapeHtml(t("syncNearMiss"))}</h3><p><code>${escapeHtml(entry.nearMiss.reasonCode)}</code></p><p>${escapeHtml(entry.nearMiss.message)}</p></section><section class="detail-section"><h3>${escapeHtml(t("sourceRevisionLabel"))}</h3><p><code>${escapeHtml(report.sourceRevision || "—")}</code></p></section>`) : "";
+          body = `<div class="detail-title">${escapeHtml(entry.sliceId)}</div><div class="detail-path">${escapeHtml(t("syncSlice"))}</div><dl class="sync-facts"><div class="phase-fact"><dt>${escapeHtml(t("syncRoadmapBox"))}</dt><dd>${escapeHtml(syncStatusLabel(entry.roadmapBox))}</dd></div><div class="phase-fact"><dt>${escapeHtml(t("syncPhaseFile"))}</dt><dd>${escapeHtml(syncStatusLabel(entry.phaseFile))}</dd></div><div class="phase-fact"><dt>${escapeHtml(t("syncHandoff"))}</dt><dd>${escapeHtml(syncStatusLabel(entry.handoff))}</dd></div></dl>${technical}`;
+          subject = { kind: "sync", id: entry.sliceId };
         } else {
           const conflict = report.conflicts.find(candidate => candidate.id === id);
           if (!conflict) return;
           body = `<div class="detail-title">${escapeHtml(conflict.topic)}</div><div class="detail-path">${escapeHtml(conflict.status)}</div><section class="detail-section"><h3>${escapeHtml(t("conflictAuthorityA"))}</h3><p>${escapeHtml(conflict.authorityA)}</p><p>${escapeHtml(t("conflictObserved"))}: ${escapeHtml(conflict.observedAtA)}</p></section><section class="detail-section"><h3>${escapeHtml(t("conflictAuthorityB"))}</h3><p>${escapeHtml(conflict.authorityB)}</p><p>${escapeHtml(t("conflictObserved"))}: ${escapeHtml(conflict.observedAtB)}</p></section><section class="detail-section"><h3>${escapeHtml(t("conflictSuggestion"))}</h3><p>${escapeHtml(conflict.suggestion)}</p></section>`;
+          subject = { kind: "conflict", id: conflict.id };
         }
       }
-      $('#inspectorBody').innerHTML = `${body}<section class="detail-section"><h3>${escapeHtml(t("recordGenerated"))}</h3><p>${escapeHtml(formatIndexDate(report.generatedAt))}</p></section>`;
+      $('#inspectorBody').innerHTML = `<div class="explain-slot" data-explain-card="${escapeHtml(subject.kind)}:${escapeHtml(subject.id)}"></div>${body}<section class="detail-section"><h3>${escapeHtml(t("recordGenerated"))}</h3><p>${escapeHtml(formatIndexDate(report.generatedAt))}</p></section>`;
+      startExplain(subject.kind, subject.id);
       openInspector();
     }
     function renderGraph() {
