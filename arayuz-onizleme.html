@@ -367,8 +367,10 @@
     .preview-note { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 8px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--st-partial) 30%, var(--line)); border-radius: 9px; background: var(--st-partial-soft); color: var(--text-2); font-size: 11.5px; }
     .timeline-group { padding: 16px 0; border-bottom: 1px solid var(--line); }
     .timeline-group:last-child { border-bottom: 0; }
-    .timeline-head { display: grid; grid-template-columns: 180px minmax(120px, 1fr) 52px; align-items: center; gap: 16px; }
-    .timeline-name { color: var(--text); font-size: 12px; font-weight: 640; }
+    .timeline-head { display: flex; align-items: center; gap: 16px; }
+    .timeline-name { flex: none; max-width: 240px; overflow: hidden; color: var(--text); font-size: 12px; font-weight: 640; text-overflow: ellipsis; white-space: nowrap; }
+    .acceptance-badge { flex: none; padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--text-3); font-size: 8.5px; white-space: nowrap; }
+    .timeline-head .phase-progress { flex: 1; margin-top: 0; width: auto; }
     .timeline-count { color: var(--text-3); font-size: 10.5px; text-align: right; }
     .timeline-items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
     .timeline-item { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg-elevated); color: var(--text-2); cursor: pointer; font-size: 11px; }
@@ -398,6 +400,13 @@
     .issue-row { display: grid; grid-template-columns: 84px minmax(180px, 1.2fr) minmax(220px, 1.6fr) 110px 28px; align-items: center; gap: 14px; min-height: 66px; padding: 9px 7px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; transition: background 160ms ease; }
     .issue-row:hover { background: var(--surface-2); }
     .issue-row.is-filtered { display: none; }
+    .queue-group { background: var(--surface-2); }
+    .queue-group:hover { background: var(--surface-3); }
+    .queue-group .issue-chevron { transition: transform 160ms ease; }
+    .queue-group .issue-chevron.is-open { transform: rotate(90deg); }
+    .queue-group .issue-path { white-space: normal; line-height: 1.45; }
+    .issue-row.is-member { padding-left: 20px; }
+    .issue-row.is-member .issue-path { word-break: break-all; white-space: normal; }
     .sample-label { display: inline-flex; align-items: center; justify-content: center; width: fit-content; min-height: 22px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--text-3); font-size: 9px; font-weight: 740; letter-spacing: .07em; text-transform: uppercase; }
     .mermaid-export { margin: 10px 0 0; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
     .mermaid-export summary { cursor: pointer; padding: 9px 12px; color: var(--text-2); font-size: 11px; font-weight: 700; }
@@ -660,7 +669,8 @@
       .signal-links { display: grid; grid-template-columns: repeat(3, minmax(118px, 1fr)); }
       .view-actions .text-button span { display: none; }
       .view-title-wrap p { display: none; }
-      .timeline-head { grid-template-columns: 130px 1fr 42px; gap: 9px; }
+      .timeline-head { gap: 9px; }
+      .timeline-name { max-width: 150px; }
       .issue-row { grid-template-columns: 68px minmax(120px, 1fr) 20px; }
       .severity { display: none; }
       .delta-empty { padding: 28px 18px; }
@@ -1388,6 +1398,32 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       closureTitle: "Close with reason", closureJustificationLabel: "Justification (required)", closureJustificationHelp: "A closure without justification is never produced; reason + who + when are written to the audit file.", closureByLabel: "Who (session-friendly alias)", closureSave: "Save closure", closureCancel: "Discard",
       closureSavedToast: "Record closed with justification; the audit entry was written.", closureFailedToast: "Closure failed", closureAlreadyClosed: "This record is already closed.", closureClosedReceipt: "Closure receipt", closureBy: "Closed by"
     });
+    Object.assign(I18N.tr, {
+      groupRecordCount: "kayıt", acceptanceOpenBadge: "Kabul açık (plan)",
+      ruleWhyKosulsuzCommit: "Koşulsuz commit, plan maddesini kanıtsız tamamlandı sayar; gerçek dosya ve test kanıtı yoksa kayıt yanıltır.", ruleWhyHardcodeMetin: "Sabit metin, arayüz dilini ve içerik güncellemesini kod içine kilitler; bakım maliyetini büyütür.",
+      ruleWhyHexInComponent: "Sabit renk, tasarım token sistemini bypass eder; tema ve sağlık bandı tutarlılığını bozar.", ruleWhySahteKapi: "Sahte kapı, doğrulanmamış adımı tamamlanmış gibi gösterir; kabul kanıtı güvenilmez hale gelir.",
+      ruleWhyBayatKutu: "Kutunun tarihi eski; ilerleme bilgisi güncel kod durumuyla örtüşmeyebilir.", ruleWhyKsBand: "Sağlık bandı ölçümle uyumsuz; durum okuması yanıltıcı olur.",
+      ruleWhyGeneric: "Bu bulgu, ölçülen kayıt ile sözleşme arasında uyumsuzluk gösterir; kanıt zinciri bozulabilir.",
+      ruleActionKosulsuzCommit: "Commiti plan maddesine doğrulanabilir dosya ve test kanıtıyla bağla.", ruleActionHardcodeMetin: "Metni içerik katmanına veya sözlüğe taşı.",
+      ruleActionHexInComponent: "Rengi --st-* tasarım tokenına taşı; düzeltme sonrası uyum taramasını yeniden koş.", ruleActionSahteKapi: "Kapıyı gerçek doğrulama adımına bağla veya kaldır.",
+      ruleActionBayatKutu: "Kutuyu güncel kod durumuyla yeniden doğrula ve gerekçeyi kaydet.", ruleActionKsBand: "Bandı ölçülen değerle yeniden hizala.",
+      ruleActionGeneric: "Kaydı kanıtıyla doğrula veya eşleşen başka bir madde seç.",
+      syncNearMissRowTitle: "Plan kaydı ile teslim kaydı uyuşmuyor", syncPhaseFileRowTitle: "Faz belgesi eksik veya eski", syncSliceRowTitle: "Teslim kaydı bu dilime bağlanmamış",
+      syncRowNearMissBody: "İki kayıt aynı dilimi farklı tarihlerle anlatıyor.", syncRowPhaseFileBody: "Bu dilimin ilerleme bilgisi eski bir faz belgesinden geliyor.", syncRowHandoffBody: "Bu dilim için devir teslim kanıtı eksik.", syncRowCurrentBody: "Kayıtlar güncel; uyumsuzluk sinyali yok."
+    });
+    Object.assign(I18N.en, {
+      groupRecordCount: "records", acceptanceOpenBadge: "Acceptance open (plan)",
+      ruleWhyKosulsuzCommit: "An unconditional commit marks a plan item complete without evidence; the record misleads when no file or test proof exists.", ruleWhyHardcodeMetin: "Hardcoded text locks interface language and content updates inside code; it grows maintenance cost.",
+      ruleWhyHexInComponent: "A literal color bypasses the design token system; it breaks theme and health-band consistency.", ruleWhySahteKapi: "A fake gate presents an unverified step as complete; acceptance evidence becomes unreliable.",
+      ruleWhyBayatKutu: "The box is stale; its progress may no longer match the current code state.", ruleWhyKsBand: "The health band disagrees with the measurement; the status reading misleads.",
+      ruleWhyGeneric: "This finding shows a mismatch between the measured record and the contract; the evidence chain may be broken.",
+      ruleActionKosulsuzCommit: "Tie the commit to the plan item with verifiable file and test evidence.", ruleActionHardcodeMetin: "Move the text to the content layer or dictionary.",
+      ruleActionHexInComponent: "Move the color to an --st-* design token and rerun the compliance scan after the fix.", ruleActionSahteKapi: "Bind the gate to a real verification step or remove it.",
+      ruleActionBayatKutu: "Re-verify the box against the current code state and record the justification.", ruleActionKsBand: "Realign the band with the measured value.",
+      ruleActionGeneric: "Verify the record with its evidence or select another matching item.",
+      syncNearMissRowTitle: "Plan record and delivery record disagree", syncPhaseFileRowTitle: "Phase file missing or stale", syncSliceRowTitle: "Delivery record not tied to this slice",
+      syncRowNearMissBody: "The two records describe the same slice with different dates.", syncRowPhaseFileBody: "This slice's progress comes from an outdated phase document.", syncRowHandoffBody: "Handoff evidence is missing for this slice.", syncRowCurrentBody: "Records are current; no disagreement signal."
+    });
     Object.assign(I18N.en, {
       productSections: "Product sections", waitingGo: "Waiting for GO", gateWaitingBody: "The technical scope is visible; progress is waiting for external approval or a human decision.",
       mapLoading: "Preparing repository map", mapLoadingBody: "Verifying the index receipt and measured import graph.", mapUnavailable: "A verified map cannot be shown", mapRuntimeUnavailable: "The graph runtime could not load. Sample data was not shown as repository evidence.",
@@ -1428,6 +1464,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     let complianceState = null;
     let complianceRequestId = 0;
     let complianceFilter = "all";
+    let expandedQueueGroups = new Set();
     let selectedPhaseItem = null;
     let deltaRequestId = 0;
     let remapState = null;
@@ -1443,7 +1480,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
     const t = key => I18N[language][key] ?? key;
     const activeProject = () => PROJECTS[activeProjectId];
-    const PHASE_NAMES_EN = { "Dilim-0": "Engine bootstrap", "Dilim-0.1": "Parser acceptance run", "Dilim-0.2": "External audit response", "Dilim-1": "Phase-document parser", "Dilim-2.0": "Pure diagram engine port", "Dilim-2": "Map and status coloring", "Dilim-2.1": "Project hub and repository lifecycle", "Dilim-2.2": "Evidence-backed semantic architecture", "Dilim-2.3": "Interactive architecture inspection", "Dilim-3": "Delta preview", "Dilim-4": "Remap suggestions", "Dilim-5": "Compliance telemetry" };
+    const PHASE_NAMES_EN = { "Dilim-0": "Engine bootstrap", "Dilim-0.1": "Parser acceptance run", "Dilim-0.2": "External audit response", "Dilim-1": "Phase-document parser", "Dilim-2.0": "Pure diagram engine port", "Dilim-2": "Map and status coloring", "Dilim-2.1": "Project hub and repository lifecycle", "Dilim-2.2": "Evidence-backed semantic architecture", "Dilim-2.3": "Interactive architecture inspection", "Dilim-3": "Delta preview", "Dilim-4": "Remap suggestions", "Dilim-5": "Compliance telemetry", "Dilim-5.2": "Real-corpus decision integrity and explainable cockpit" };
 
     function mapStateKey() {
       const metadata = activeDiagram()?.receipt?.graph?.metadata;
@@ -1617,7 +1654,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     }
     function renderTimeline() {
       if (!phaseGroups.length) { $('#timelineContent').innerHTML = `<div class="empty-state"><h2>${language === "tr" ? "İzlenebilir faz bulunamadı" : "No traceable phases found"}</h2><p>${language === "tr" ? "Bu proje için plan kaynağı doğrulanmadan zaman çizgisi üretilmez." : "A timeline is not produced until this project's plan source is verified."}</p></div>`; return; }
-      $('#timelineContent').innerHTML = phaseGroups.map(group => { const counts = phaseCounts(group.items); const items = group.items.map(item => `<button class="timeline-item" type="button" data-timeline-phase="${escapeHtml(group.id)}"><span class="status-mark ${statusClass(item.status)}"></span><span>${escapeHtml(item.title)}</span></button>`).join(""); return `<article class="timeline-group"><div class="timeline-head"><span class="timeline-name">${escapeHtml(phaseDisplayName(group))}</span><progress class="phase-progress" max="${Math.max(counts.total, 1)}" value="${counts.done}" aria-label="${escapeHtml(phaseDisplayName(group))}"></progress><span class="timeline-count">${counts.done} / ${counts.total}</span></div><div class="timeline-items">${items}</div></article>`; }).join("");
+      $('#timelineContent').innerHTML = phaseGroups.map(group => { const counts = phaseCounts(group.items); const acceptanceOpen = Boolean(group.acceptance) && group.items.some(item => item.status !== "done"); const items = group.items.map(item => `<button class="timeline-item" type="button" data-timeline-phase="${escapeHtml(group.id)}"><span class="status-mark ${statusClass(item.status)}"></span><span>${escapeHtml(item.title)}</span></button>`).join(""); return `<article class="timeline-group"><div class="timeline-head"><span class="timeline-name">${escapeHtml(phaseDisplayName(group))}</span>${acceptanceOpen ? `<span class="acceptance-badge">${escapeHtml(t("acceptanceOpenBadge"))}</span>` : ""}<progress class="phase-progress" max="${Math.max(counts.total, 1)}" value="${counts.done}" aria-label="${escapeHtml(phaseDisplayName(group))}"></progress><span class="timeline-count">${counts.done} / ${counts.total}</span></div><div class="timeline-items">${items}</div></article>`; }).join("");
     }
     function showSection(section) {
       if (section === "workspace" && activeProject().locked) { section = "projects"; showToast(language === "tr" ? "Bu proje için GitHub yetkisi doğrulanmadan çalışma alanı açılamaz." : "Verify GitHub access before opening this workspace."); }
@@ -2190,8 +2227,13 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     // asla tek yüzdeye katılmaz.
     function activeCompliance() { return complianceState && complianceState.projectId === activeProjectId && complianceState.status !== "loading" ? complianceState : null; }
     const RULE_LABEL_KEYS = { "koşumsuz-commit": "ruleKosulsuzCommit", "hardcode-metin": "ruleHardcodeMetin", "hex-in-component": "ruleHexInComponent", "sahte-kapı": "ruleSahteKapi", "bayat-kutu": "ruleBayatKutu", "ks-band-delinmesi": "ruleKsBand" };
+    const RULE_WHY_KEYS = { "koşumsuz-commit": "ruleWhyKosulsuzCommit", "hardcode-metin": "ruleWhyHardcodeMetin", "hex-in-component": "ruleWhyHexInComponent", "sahte-kapı": "ruleWhySahteKapi", "bayat-kutu": "ruleWhyBayatKutu", "ks-band-delinmesi": "ruleWhyKsBand" };
+    const RULE_ACTION_KEYS = { "koşumsuz-commit": "ruleActionKosulsuzCommit", "hardcode-metin": "ruleActionHardcodeMetin", "hex-in-component": "ruleActionHexInComponent", "sahte-kapı": "ruleActionSahteKapi", "bayat-kutu": "ruleActionBayatKutu", "ks-band-delinmesi": "ruleActionKsBand" };
+    const SEVERITY_RANK = { error: 3, warning: 2, note: 1 };
     const SYNC_STATUS_KEYS = { current: "syncStatusCurrent", stale: "syncStatusStale", missing: "syncStatusMissing", partial: "syncStatusPartial" };
     function ruleLabel(rule) { return t(RULE_LABEL_KEYS[rule] || rule); }
+    function ruleWhy(rule) { return t(RULE_WHY_KEYS[rule] || "ruleWhyGeneric"); }
+    function ruleFirstAction(rule) { return t(RULE_ACTION_KEYS[rule] || "ruleActionGeneric"); }
     function syncStatusLabel(status) { return t(SYNC_STATUS_KEYS[status] || status); }
     function severityLabel(severity) { return severity === "error" ? t("error") : severity === "warning" ? t("warning") : t("review"); }
     function frictionLabel(friction) { return t({ unmeasured: "frictionUnmeasured", low: "frictionLow", elevated: "frictionElevated", high: "frictionHigh" }[friction] || "frictionUnmeasured"); }
@@ -2199,6 +2241,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       complianceRequestId += 1;
       complianceState = null;
       complianceFilter = "all";
+      expandedQueueGroups.clear();
       $$('.queue-filter').forEach(button => button.setAttribute("aria-pressed", String(button.dataset.queueFilter === "all")));
       renderComplianceView();
     }
@@ -2258,11 +2301,18 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       }
       if (record.entry) {
         const entry = record.entry;
+        // Dilim 5.2: ilk katmanda near-miss/roadmapBox/handoff ve status kodları
+        // görünmez; kullanıcı dili başlık + kısa cümle, kodlar denetçi teknik
+        // bölümünde kalır.
+        const copy = entry.nearMiss ? { title: t("syncNearMissRowTitle"), body: t("syncRowNearMissBody") }
+          : ["missing", "stale"].includes(entry.phaseFile) ? { title: t("syncPhaseFileRowTitle"), body: t("syncRowPhaseFileBody") }
+          : entry.handoff !== "current" ? { title: t("syncSliceRowTitle"), body: t("syncRowHandoffBody") }
+          : { title: entry.sliceId, body: t("syncRowCurrentBody") };
         return {
           state: "sync", kind: "sync", id: record.id, kindLabel: t("kindSync"),
-          title: entry.sliceId,
-          path: `${t("syncRoadmapBox")}: ${syncStatusLabel(entry.roadmapBox)} · ${t("syncPhaseFile")}: ${syncStatusLabel(entry.phaseFile)} · ${t("syncHandoff")}: ${syncStatusLabel(entry.handoff)}`,
-          rule: entry.nearMiss ? `${t("syncNearMiss")}: ${entry.nearMiss.reasonCode} — ${entry.nearMiss.message}` : t("syncSlice"),
+          title: copy.title,
+          path: `${entry.sliceId} · ${copy.body}`,
+          rule: `${t("syncRoadmapBox")}: ${syncStatusLabel(entry.roadmapBox)} · ${t("syncPhaseFile")}: ${syncStatusLabel(entry.phaseFile)} · ${t("syncHandoff")}: ${syncStatusLabel(entry.handoff)}`,
           severity: record.severity
         };
       }
@@ -2274,6 +2324,37 @@ KAPANMIŞ sayılmaz (koşum disiplini).
         rule: conflict.authorityA.slice(0, 96),
         severity: record.severity
       };
+    }
+    function queueRowMarkup(row, extraClass = "") {
+      return `<button class="issue-row${extraClass ? ` ${extraClass}` : ""}" type="button" role="listitem" data-record-kind="${escapeHtml(row.kind)}" data-record-id="${escapeHtml(row.id)}" data-state="${escapeHtml(row.state)}"><span class="queue-kind">${escapeHtml(row.kindLabel)}</span><span><span class="issue-title">${escapeHtml(row.title)}</span><span class="issue-path">${escapeHtml(row.path)}</span></span><span class="issue-rule">${escapeHtml(row.rule)}</span><span class="severity ${escapeHtml(row.severity)}"><span>${escapeHtml(severityLabel(row.severity))}</span></span><svg class="icon issue-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></button>`;
+    }
+    function queueGroupMarkup(rule, count, severity, expanded) {
+      return `<button class="issue-row queue-group" type="button" role="listitem" data-queue-group="${escapeHtml(rule)}" aria-expanded="${expanded ? "true" : "false"}"><span class="queue-kind">${escapeHtml(t("kindViolation"))}</span><span><span class="issue-title">${escapeHtml(ruleLabel(rule))} · ${count} ${escapeHtml(t("groupRecordCount"))}</span><span class="issue-path">${escapeHtml(ruleWhy(rule))}</span></span><span class="issue-rule">${escapeHtml(ruleFirstAction(rule))}</span><span class="severity ${escapeHtml(severity)}"><span>${escapeHtml(severityLabel(severity))}</span></span><svg class="icon issue-chevron${expanded ? " is-open" : ""}" aria-hidden="true"><use href="#i-chevron"></use></svg></button>`;
+    }
+    function renderQueueRows(records) {
+      // Dilim 5.2 kullanıcı-öncelikli kuyruk: aynı kurala ait AÇIK tekrarlar
+      // gruplanır; tekil bulgu, sync, karar ve kapalı kayıtlar tekil kalır.
+      // Gruplama ölçülen sayıları değiştirmez: #queueCount* complianceRecords
+      // toplamından aynen hesaplanır.
+      const rows = [];
+      const emittedRules = new Set();
+      for (const record of records) {
+        if (record.kind === "violation" && record.violation) {
+          const rule = record.violation.rule;
+          if (emittedRules.has(rule)) continue;
+          const members = records.filter(candidate => candidate.kind === "violation" && candidate.violation && candidate.violation.rule === rule);
+          if (members.length > 1) {
+            emittedRules.add(rule);
+            const expanded = expandedQueueGroups.has(rule);
+            const topSeverity = members.reduce((acc, candidate) => ((SEVERITY_RANK[candidate.severity] || 0) > (SEVERITY_RANK[acc] || 0) ? candidate.severity : acc), members[0].severity);
+            rows.push(queueGroupMarkup(rule, members.length, topSeverity, expanded));
+            if (expanded) for (const member of members) rows.push(queueRowMarkup(complianceRowMarkup(member), "is-member"));
+            continue;
+          }
+        }
+        rows.push(queueRowMarkup(complianceRowMarkup(record)));
+      }
+      return rows.join("");
     }
     function renderComplianceView() {
       const list = $("#issueList");
@@ -2313,10 +2394,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const filtered = complianceRecords(report).filter(record => complianceFilter === "all" ? record.kind !== "closed" : record.kind === complianceFilter);
       if (!filtered.length) { list.innerHTML = ""; empty.hidden = false; return; }
       empty.hidden = true;
-      list.innerHTML = filtered.map(record => {
-        const row = complianceRowMarkup(record);
-        return `<button class="issue-row" type="button" role="listitem" data-record-kind="${escapeHtml(row.kind)}" data-record-id="${escapeHtml(row.id)}" data-state="${escapeHtml(row.state)}"><span class="queue-kind">${escapeHtml(row.kindLabel)}</span><span><span class="issue-title">${escapeHtml(row.title)}</span><span class="issue-path">${escapeHtml(row.path)}</span></span><span class="issue-rule">${escapeHtml(row.rule)}</span><span class="severity ${escapeHtml(row.severity)}"><span>${escapeHtml(severityLabel(row.severity))}</span></span><svg class="icon issue-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></button>`;
-      }).join("");
+      list.innerHTML = renderQueueRows(filtered);
     }
     function closureFormMarkup(violationId) {
       const savedBy = localStorage.getItem("kokpit-compliance-by") || "";
@@ -2677,7 +2755,18 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       catch (error) { showToast(error.message); }
     });
     $('#timelineContent').addEventListener("click", event => { const button = event.target.closest('[data-timeline-phase]'); if (button) renderPhaseInspector(button.dataset.timelinePhase); });
-    $('#issueList').addEventListener("click", event => { const row = event.target.closest('.issue-row'); if (row) renderComplianceInspector(row.dataset.recordKind, row.dataset.recordId); });
+    $('#issueList').addEventListener("click", event => {
+      const groupButton = event.target.closest('[data-queue-group]');
+      if (groupButton) {
+        const rule = groupButton.dataset.queueGroup || "";
+        if (expandedQueueGroups.has(rule)) expandedQueueGroups.delete(rule); else expandedQueueGroups.add(rule);
+        renderComplianceView();
+        $(`#issueList [data-queue-group="${CSS.escape(rule)}"]`)?.focus();
+        return;
+      }
+      const row = event.target.closest('.issue-row');
+      if (row) renderComplianceInspector(row.dataset.recordKind, row.dataset.recordId);
+    });
     $('#inspectorBody').addEventListener("submit", async event => {
       const form = event.target instanceof Element ? event.target.closest('.closure-form') : null;
       if (!form) return;
