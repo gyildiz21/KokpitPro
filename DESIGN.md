@@ -68,7 +68,9 @@ açacak şekilde tasarlanır (yazma izni ayrı GO konusu).
 
 ## D8 · Açıklama katmanı — ExplanationEnvelope v1 (Dilim 5.2 sözleşmesi, 2026-08-31)
 
-1. **Açıklama, ölçümden ayrı ve sürümlü bir katmandır.** `ExplanationEnvelope
+1. **Kullanıcı sonucu tespitle bitmez:** her faz, Uyum ve Delta kaydı
+   `tespit → anlama → eylem → yeniden ölçüm/doğrulama` zincirini tamamlar.
+   **Açıklama, ölçümden ayrı ve sürümlü bir katmandır.** `ExplanationEnvelope
    v1` (Zod `.strict()`) ComplianceReport v1, DiagramGraph v1 ve Delta
    sözleşmelerindeki **ölçülmüş gerçekleri tüketen** bir projection'dır;
    bu sözleşmelerin hiçbir alanı açıklama üretmek için sessizce değiştirilmez.

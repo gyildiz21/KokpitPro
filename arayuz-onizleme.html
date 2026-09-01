@@ -420,6 +420,7 @@
     .explain-q h3 { margin: 0 0 3px; color: var(--text-3); font-size: 9px; font-weight: 720; letter-spacing: .07em; text-transform: uppercase; }
     .explain-q p, .explain-q li { margin: 0; color: var(--text-2); font-size: 10.5px; line-height: 1.55; }
     .explain-steps { display: grid; gap: 4px; margin: 0; padding-left: 16px; }
+    .explain-limitations { display: grid; gap: 4px; margin: 0; padding-left: 16px; color: var(--text-2); font-size: 10.5px; line-height: 1.55; }
     .explain-card.is-error strong { color: var(--text); font-size: 11px; }
     .explain-loading { margin: 0; color: var(--text-3); font-size: 10.5px; }
     .explain-skeleton { display: block; height: 8px; border-radius: 99px; background: var(--surface-3); animation: explain-pulse 1.2s ease-in-out infinite; }
@@ -812,7 +813,7 @@
       <button class="inspector-scrim" id="inspectorScrim" type="button" aria-label="Denetçiyi kapat" data-i18n-aria="closeInspector" tabindex="-1"></button>
     </main>
 
-    <footer class="statusbar"><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span id="planScope" data-i18n="planLoading">PLAN.md yükleniyor</span></span><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span id="previewGenerated">Kalıcı proje indeksi yükleniyor</span></span><span class="build-label">UI-SPEC v1.1 · persistent</span></footer>
+    <footer class="statusbar"><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-file"></use></svg><span id="planScope" data-i18n="planLoading">PLAN.md yükleniyor</span></span><span class="status-meta"><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg><span id="previewGenerated">Kalıcı proje indeksi yükleniyor</span></span><span class="build-label">UI-SPEC v1.2 · persistent</span></footer>
     </section>
 
     <section class="product-screen" id="compareScreen" hidden>
@@ -1363,10 +1364,14 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       dolması jenerik taşma olarak raporlanır; gerçek tarama salt okunur.
       — kanıt: entegrasyon dalları `6813be3`+`d672b97`; sentetik nöbetçiler
       `conflicts-integrity.test.ts` (11) + `corpus-report.test.ts`;
-      MethodLogos salt-okunur koşumu: 73 plan cümlesi × 20 KARAR, 1840 çift
-      → ham 0 aday, kırpma yok, red dağılımı: generic-token-only 590 ·
-      weak-topic-overlap 956 · unrelated-flow 235 · no-restrictive-direction
-      42 · no-expansive-direction 17 (`output/methodlogos-conflict-report.json`).
+      MethodLogos salt-okunur makbuzu (2026-09-01, temiz kaynak commit'i
+      `2b071c19d36e649b424feac46f0750b4a49eb9fe`): 73 plan cümlesi · 23
+      defter bölümü · 21 KARAR · 1953 çift → ham/korunan 0 aday, kırpma yok;
+      red dağılımı generic-token-only 617 · weak-topic-overlap 1018 ·
+      unrelated-flow 252 · no-restrictive-direction 49 ·
+      no-expansive-direction 17. Kalıcı köken/hash kanıtı:
+      `docs/analiz/dilim-5-2-methodlogos-corpus-receipt.json`, reportId
+      `c094598c882a88fad1496871052f74b4277db8abbca344622ae0fb0b3340d6ca`.
 - [x] **5.2.2 — Deterministik açıklama kataloğu (TR/EN):** hex-in-component,
       koşumsuz-commit, hardcode-metin, sahte-kapı, bayat-kutu,
       ks-band-delinmesi, sync near-miss kodları, no-mapping, stale-receipt,
@@ -1406,8 +1411,9 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       — kanıt: `76ddfc5`+`8cc0d49`+`bcb5e7f`; delta motorunda dürüstlük
       düzeltmesi (ne eşlemesi ne bildirilen yolu olan madde artık
       `unmeasurable/no-mapping`); `e2e/dilim-5-2-delta-timeline.spec.ts`
-      5/5 (S3–S5 maskesiz gerçek-sunucu: plan başlıkları, measured kart,
-      5.2 no-mapping sınırı).
+      6/6 (S3–S5 maskesiz gerçek-sunucu: plan başlıkları, plan-slice
+      açıklaması + çift yönlü denetçi sıfırlama, measured kart ve 5.2
+      no-mapping sınırı).
 - [ ] **5.2.6 — Gerçek korpus ölçümü ve kabul:** MethodLogos korpusunda
       salt-okunur sertleştirilmiş koşum; kapsam sayaçları + kırpma nedenleri
       + ham/filtrelenmiş aday + red nedeni dağılımı raporlanır; gerçek aday
@@ -1415,12 +1421,11 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       hermetik testler → `TECHNICALLY_HARDENED`; doğrulanmış gerçek
       karar/otorite çifti → `REAL_CORPUS_ACCEPTED`; gerçek aday yoksa
       `REAL_CORPUS_ACCEPTANCE_OPEN` (teknik başarısızlık DEĞİLDİR).
-      — **Durum (2026-08-31):** `TECHNICALLY_HARDENED` +
-      `REAL_CORPUS_ACCEPTANCE_OPEN`. Sertleştirilmiş motor güncel
-      MethodLogos korpusunda 0 aday üretir (red dağılımı: generic-token-only
-      590 · weak-topic-overlap 956 · unrelated-flow 235 ·
-      no-restrictive-direction 42 · no-expansive-direction 17; kırpma yok);
-      aday uydurulmadı. Bağımsız denetçi ilk turda plan-defteri kapanışının
+      — **Durum (2026-09-01):** `TECHNICALLY_HARDENED` +
+      `REAL_CORPUS_ACCEPTANCE_OPEN`. Kaynak commit'i, kaynak/motor hashleri,
+      ölçüm zamanı ve sabit reportId taşıyan kalıcı makbuzda 1953 çift
+      üzerinde 0 ham/korunan aday ve 0 kırpma ölçüldü; aday uydurulmadı.
+      Bağımsız denetçi ilk turda plan-defteri kapanışının
       kendi nöbetçisini kırmasını engelleyici bulgu olarak raporladı;
       5.2.6 kutusu bu nedenle ve gerçek-korpus kabulü insan doğrulamasına
       bağlı olduğu için AÇIK bırakıldı — kutu yalnız bir insanın
@@ -1429,6 +1434,19 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       (bayat-bilgi düzeltmesi) yarı-otomatik sezgiselin kasıtlı olarak
       yakalayamadığı anlam-düzeyi bir düzeltmedir; makine kanıtı DEĞİLDİR
       ve tek başına kabul sayılmaz.
+      — **2026-09-01 eksik-kapatma kanıtı:** Faz denetçisi gerçek
+      `ExplanationEnvelope plan-slice` zarfını ve açık kabul sınırını gösterir;
+      görünüm-denetçi sahipliği iki yönde sıfırlanır; korpus CLI kalıcı
+      revision/hash makbuzu üretir; UI-SPEC v1.2 otoritesi DESIGN/PLAN/
+      önizlemeyle uzlaştırıldı. Node 20 typecheck, 33 dosyada 405 Vitest
+      (1 opt-in skipped), Playwright 51 passed (2 opt-in gerçek GitHub turu
+      skipped), önizleme senkronu, `git diff --check` ve üretim bağımlılığı
+      auditi (0 açık) yeşildir.
+
+- **Kabul:** Teknik açıklama ve karar-bütünlüğü kapsamı
+  `TECHNICALLY_HARDENED` durumundadır; doğrulanmış gerçek karar/otorite çifti
+  bulunmadığı sürece 5.2.6 `REAL_CORPUS_ACCEPTANCE_OPEN` kalır ve yalnız insan
+  doğrulamasıyla `REAL_CORPUS_ACCEPTED` olabilir.
 
 ## Sabit kurallar (bu projede de geçerli)
 
@@ -1540,7 +1558,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     });
     Object.assign(I18N.tr, {
       explainCardAria: "Açıklama katmanı", explainLoading: "Açıklama yükleniyor…", explainFailed: "Açıklama alınamadı", explainFailedBody: "Açıklama servisi yanıt vermedi; teknik kanıt bölümü hâlâ erişilebilir.",
-      explainWhatHappened: "Ne oldu?", explainWhyItMatters: "Bu neden önemli?", explainFirstAction: "Önerilen ilk eylem", explainVerification: "Doğrulama",
+      explainWhatHappened: "Ne oldu?", explainWhyItMatters: "Bu neden önemli?", explainFirstAction: "Önerilen ilk eylem", explainVerification: "Doğrulama", explainLimitations: "Açık sınırlar",
       aiCommentBadge: "AI YORUMU", aiCommentConfidence: "Güven", aiCommentLimitations: "Sınırlar",
       technicalEvidence: "Teknik kanıt", technicalDetail: "Teknik ayrıntı", sourceRevisionLabel: "Kaynak revision",
       deltaActionLinkCheckout: "Bu GitHub kaydının yerel çalışma kopyası yok; kanıt için repoyu yerel olarak bağla.", deltaActionMapItem: "Bu maddeye doğrulanabilir dosya/test yolu bağla veya eşleşen başka bir madde seç.",
@@ -1561,7 +1579,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     });
     Object.assign(I18N.en, {
       explainCardAria: "Explanation layer", explainLoading: "Loading explanation…", explainFailed: "Explanation unavailable", explainFailedBody: "The explanation service did not respond; the technical evidence section remains accessible.",
-      explainWhatHappened: "What happened?", explainWhyItMatters: "Why does it matter?", explainFirstAction: "Suggested first action", explainVerification: "Verification",
+      explainWhatHappened: "What happened?", explainWhyItMatters: "Why does it matter?", explainFirstAction: "Suggested first action", explainVerification: "Verification", explainLimitations: "Open limitations",
       aiCommentBadge: "AI COMMENT", aiCommentConfidence: "Confidence", aiCommentLimitations: "Limitations",
       technicalEvidence: "Technical evidence", technicalDetail: "Technical detail", sourceRevisionLabel: "Source revision",
       deltaActionLinkCheckout: "This GitHub record has no local working copy; connect the repository locally for evidence.", deltaActionMapItem: "Connect a verifiable file/test path to this item or select another matching item.",
@@ -2018,7 +2036,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const firstUnfinishedIndex = group.items.findIndex(item => item.status !== "done");
       const items = group.items.map((item, index) => `<details class="phase-item" data-composite-item-id="${escapeHtml(compositeKeyFor(group.heading, item.id))}"${index === firstUnfinishedIndex || selectedPhaseItem?.key === compositeKeyFor(group.heading, item.id) ? " open" : ""}><summary><span class="status-mark ${statusClass(item.status)}"></span><span class="phase-item-title">${escapeHtml(item.title)}</span><span class="phase-item-state">${escapeHtml(planStatusLabel(item.status))}</span><svg class="phase-item-chevron" aria-hidden="true"><use href="#i-chevron"></use></svg></summary><div class="phase-item-body"><dl><div class="phase-fact"><dt>${t("currentRecord")}</dt><dd>${escapeHtml(planRecordLabel(item.status))}</dd></div><div class="phase-fact"><dt>${t("expectedOutput")}</dt><dd>${escapeHtml(item.detail || t("expectedUnspecified"))}</dd></div><div class="phase-fact"><dt>${t("codeEvidence")}</dt><dd>${itemEvidenceMarkup(group, item)}</dd></div><div class="phase-fact"><dt>${t("sourceLocation")}</dt><dd>${escapeHtml(activeProject().planFile)} · L${item.line}</dd></div></dl></div></details>`).join("");
       const gate = group.gateStatus === "waiting-go" ? `<div class="phase-gate"><strong>${escapeHtml(t("waitingGo"))}</strong><br>${escapeHtml(t("gateWaitingBody"))}${group.gateLine ? ` · L${group.gateLine}` : ""}</div>` : "";
-      $('#inspectorBody').innerHTML = `<div class="phase-detail-kicker"><p class="eyebrow">${t("planOverview")}</p>${planSourceChipMarkup()}</div><div class="detail-title">${escapeHtml(phaseDisplayName(group))}</div><div class="detail-path">${escapeHtml(activeProject().planFile)} · L${group.line}${language === "en" ? ` · ${t("planSourceLanguage")}` : ""}</div>${gate}${phaseSummaryMarkup(counts)}<p class="phase-truth-note">${t("planTruthNote")}</p><section class="phase-acceptance"><strong>${t("acceptance")}</strong><p>${escapeHtml(group.acceptance || t("noAcceptance"))}</p></section><div class="phase-items-heading"><h3>${t("planItems")}</h3><span>${counts.total} ${t("planItemCount")}</span></div><div class="phase-items">${items}</div>${planSourceActionMarkup()}`;
+      $('#inspectorBody').innerHTML = `<div class="phase-detail-kicker"><p class="eyebrow">${t("planOverview")}</p>${planSourceChipMarkup()}</div><div class="detail-title">${escapeHtml(phaseDisplayName(group))}</div><div class="detail-path">${escapeHtml(activeProject().planFile)} · L${group.line}${language === "en" ? ` · ${t("planSourceLanguage")}` : ""}</div>${gate}${phaseSummaryMarkup(counts)}<p class="phase-truth-note">${t("planTruthNote")}</p><div class="explain-slot" data-explain-card="plan-slice:${escapeHtml(group.id)}"></div><section class="phase-acceptance"><strong>${t("acceptance")}</strong><p>${escapeHtml(group.acceptance || t("noAcceptance"))}</p></section><div class="phase-items-heading"><h3>${t("planItems")}</h3><span>${counts.total} ${t("planItemCount")}</span></div><div class="phase-items">${items}</div>${planSourceActionMarkup()}`;
+      startExplain("plan-slice", group.id);
       openInspector();
     }
     async function loadPlanData() {
@@ -2073,10 +2092,17 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       if ($('#connectDialog').open) renderConnectDialog();
     }
     function updateViewCopy() { const [titleKey, descriptionKey] = viewCopy[activeView]; $('#viewTitle').textContent = t(titleKey); $('#viewDescription').textContent = t(descriptionKey); }
+    function inspectorSelectionBelongsToView(selection, view) {
+      if (!selection) return true;
+      if (selection.type === "compliance-record") return view === "compliance";
+      if (selection.type === "phase") return view === "map" || view === "timeline";
+      if (["node", "group", "edge", "issue"].includes(selection.type)) return view === "map";
+      return false;
+    }
     function showView(view, options = {}) {
-      // Dilim 5.2: görünüm değişince ilgisiz uyum denetçisi açık kalmaz;
-      // yalnız uyum kaydı seçimi sıfırlanır, delta bağlamı korunur.
-      if (view !== "compliance" && selectedNode?.type === "compliance-record") resetInspector();
+      // Dilim 5.2: denetçi tek görünüm bağlamı taşır. Faz yalnız Harita/Zaman,
+      // uyum kaydı yalnız Uyum, graf seçimi yalnız Harita görünümünde geçerlidir.
+      if (selectedNode && !inspectorSelectionBelongsToView(selectedNode, view)) resetInspector();
       activeView = view;
       $$('.view-tab').forEach(tab => { const isActive = tab.dataset.view === view; tab.setAttribute("aria-selected", String(isActive)); tab.tabIndex = isActive ? 0 : -1; });
       $$('.view-panel').forEach(panel => { panel.hidden = panel.id !== `view-${view}`; });
@@ -2645,7 +2671,8 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const envelope = state.envelope;
       const actions = (envelope.recommendedActions || []).map(explainActionMarkup).join("");
       const steps = (envelope.verificationSteps || []).map(step => `<li>${escapeHtml(langPair(step))}</li>`).join("");
-      return `<div class="explain-card" data-explain-status="ready" data-explain-origin="${escapeHtml(envelope.origin || "deterministic")}" role="region" aria-label="${escapeHtml(t("explainCardAria"))}"><section class="explain-q"><h3>${escapeHtml(t("explainWhatHappened"))}</h3><p>${escapeHtml(langPair(envelope.whatItMeans))}</p></section><section class="explain-q"><h3>${escapeHtml(t("explainWhyItMatters"))}</h3><p>${escapeHtml(langPair(envelope.whyItMatters))}</p></section>${actions ? `<section class="explain-q"><h3>${escapeHtml(t("explainFirstAction"))}</h3>${actions}</section>` : ""}${steps ? `<section class="explain-q"><h3>${escapeHtml(t("explainVerification"))}</h3><ul class="explain-steps">${steps}</ul></section>` : ""}${aiCommentMarkup(envelope)}</div>`;
+      const limitations = envelope.origin === "ai" ? "" : (envelope.limitations || []).map(limitation => `<li>${escapeHtml(langPair(limitation))}</li>`).join("");
+      return `<div class="explain-card" data-explain-status="ready" data-explain-origin="${escapeHtml(envelope.origin || "deterministic")}" role="region" aria-label="${escapeHtml(t("explainCardAria"))}"><section class="explain-q"><h3>${escapeHtml(t("explainWhatHappened"))}</h3><p>${escapeHtml(langPair(envelope.whatItMeans))}</p></section><section class="explain-q"><h3>${escapeHtml(t("explainWhyItMatters"))}</h3><p>${escapeHtml(langPair(envelope.whyItMatters))}</p></section>${actions ? `<section class="explain-q"><h3>${escapeHtml(t("explainFirstAction"))}</h3>${actions}</section>` : ""}${steps ? `<section class="explain-q"><h3>${escapeHtml(t("explainVerification"))}</h3><ul class="explain-steps">${steps}</ul></section>` : ""}${limitations ? `<section class="explain-q"><h3>${escapeHtml(t("explainLimitations"))}</h3><ul class="explain-limitations">${limitations}</ul></section>` : ""}${aiCommentMarkup(envelope)}</div>`;
     }
     function startExplain(subjectKind, subjectId) {
       if (activeExplainState(subjectKind, subjectId)) { paintExplainCard(subjectKind, subjectId); return; }

@@ -314,6 +314,44 @@ test.describe('Dilim 5.2 gerçek sunucu sözleşmesi (maskesiz — S9 deseni)', 
         for (const item of group52?.items ?? []) {
             expect(item.id).toBeTruthy();
         }
+
+        const explainResponse = await request.get(
+            `/api/projects/${encodeURIComponent(kokpit.id)}/explain?kind=plan-slice&id=${encodeURIComponent('Dilim-5.2')}`,
+        );
+        expect(explainResponse.ok()).toBe(true);
+        const { envelope } = await explainResponse.json();
+        expect(envelope.subjectKind).toBe('plan-slice');
+        expect(envelope.verificationSteps[0]?.tr).toContain('TECHNICALLY_HARDENED');
+        expect(envelope.limitations.some((limit: { tr: string }) => limit.tr.includes('açık madde'))).toBe(true);
+    });
+
+    test('S3b · gerçek UI faz açıklamasını ve kabul sınırını gösterir; Uyum geçişinde faz denetçisini sıfırlar', async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.goto('/arayuz-onizleme.html');
+        await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true', { timeout: 30_000 });
+        await expect(page.locator('#activeProjectName')).toHaveText('KokpitPro');
+        await page.locator('.primary-nav-button[data-section="workspace"]').click();
+        // Bu kabul faz/zaman/açıklama akışınındır; gerçek import haritasının
+        // ölçülebilirliği ayrı bir kapıdır ve bu testi gereksiz yere bloke etmez.
+        await expect(page.locator('#phaseList .phase-filter[data-phase="Dilim-5.2"]')).toBeVisible({ timeout: 30_000 });
+
+        await page.locator('#tab-timeline').click();
+        const group52 = page.locator('#timelineContent .timeline-group').filter({ hasText: 'Dilim-5.2 ·' });
+        await expect(group52.locator('.acceptance-badge')).toContainText('Kabul açık');
+        await group52.locator('.timeline-item').first().click();
+
+        const explanation = page.locator('#inspectorBody [data-explain-card="plan-slice:Dilim-5.2"]');
+        await expect(explanation.locator('[data-explain-status="ready"]')).toBeVisible({ timeout: 30_000 });
+        await expect(explanation).toContainText('Ne oldu?');
+        await expect(explanation).toContainText('Bu neden önemli?');
+        await expect(explanation).toContainText('Önerilen ilk eylem');
+        await expect(explanation).toContainText('Doğrulama');
+        await expect(explanation).toContainText('Açık sınırlar');
+        await expect(page.locator('#inspectorBody .phase-acceptance')).toContainText('REAL_CORPUS_ACCEPTANCE_OPEN');
+
+        await page.locator('#tab-compliance').click();
+        await expect(page.locator('#inspectorBody .inspector-empty')).toHaveCount(1);
+        await expect(page.locator('#inspectorBody')).not.toContainText('Gerçek Korpus Karar Bütünlüğü');
     });
 
     test('S4 · ölçülebilir maddede delta gerçek yolları bildirir (uydurma yok)', async ({ request }) => {

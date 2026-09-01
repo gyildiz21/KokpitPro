@@ -331,6 +331,7 @@ describe('buildSliceEnvelope', () => {
         const envelope = buildSliceEnvelope({ ...context, openExternalLimits });
         expect(envelope.limitations[0]).toEqual(openExternalLimits[0]);
         expect(envelope.limitations.some((limit) => limit.tr.includes('engelli'))).toBe(true);
+        expect(envelope.limitations.some((limit) => limit.tr.includes('2 açık madde'))).toBe(true);
         expect(envelope.limitations.length).toBeLessThanOrEqual(8);
     });
 });

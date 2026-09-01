@@ -529,10 +529,14 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       dolması jenerik taşma olarak raporlanır; gerçek tarama salt okunur.
       — kanıt: entegrasyon dalları `6813be3`+`d672b97`; sentetik nöbetçiler
       `conflicts-integrity.test.ts` (11) + `corpus-report.test.ts`;
-      MethodLogos salt-okunur koşumu: 73 plan cümlesi × 20 KARAR, 1840 çift
-      → ham 0 aday, kırpma yok, red dağılımı: generic-token-only 590 ·
-      weak-topic-overlap 956 · unrelated-flow 235 · no-restrictive-direction
-      42 · no-expansive-direction 17 (`output/methodlogos-conflict-report.json`).
+      MethodLogos salt-okunur makbuzu (2026-09-01, temiz kaynak commit'i
+      `2b071c19d36e649b424feac46f0750b4a49eb9fe`): 73 plan cümlesi · 23
+      defter bölümü · 21 KARAR · 1953 çift → ham/korunan 0 aday, kırpma yok;
+      red dağılımı generic-token-only 617 · weak-topic-overlap 1018 ·
+      unrelated-flow 252 · no-restrictive-direction 49 ·
+      no-expansive-direction 17. Kalıcı köken/hash kanıtı:
+      `docs/analiz/dilim-5-2-methodlogos-corpus-receipt.json`, reportId
+      `c094598c882a88fad1496871052f74b4277db8abbca344622ae0fb0b3340d6ca`.
 - [x] **5.2.2 — Deterministik açıklama kataloğu (TR/EN):** hex-in-component,
       koşumsuz-commit, hardcode-metin, sahte-kapı, bayat-kutu,
       ks-band-delinmesi, sync near-miss kodları, no-mapping, stale-receipt,
@@ -572,8 +576,9 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       — kanıt: `76ddfc5`+`8cc0d49`+`bcb5e7f`; delta motorunda dürüstlük
       düzeltmesi (ne eşlemesi ne bildirilen yolu olan madde artık
       `unmeasurable/no-mapping`); `e2e/dilim-5-2-delta-timeline.spec.ts`
-      5/5 (S3–S5 maskesiz gerçek-sunucu: plan başlıkları, measured kart,
-      5.2 no-mapping sınırı).
+      6/6 (S3–S5 maskesiz gerçek-sunucu: plan başlıkları, plan-slice
+      açıklaması + çift yönlü denetçi sıfırlama, measured kart ve 5.2
+      no-mapping sınırı).
 - [ ] **5.2.6 — Gerçek korpus ölçümü ve kabul:** MethodLogos korpusunda
       salt-okunur sertleştirilmiş koşum; kapsam sayaçları + kırpma nedenleri
       + ham/filtrelenmiş aday + red nedeni dağılımı raporlanır; gerçek aday
@@ -581,12 +586,11 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       hermetik testler → `TECHNICALLY_HARDENED`; doğrulanmış gerçek
       karar/otorite çifti → `REAL_CORPUS_ACCEPTED`; gerçek aday yoksa
       `REAL_CORPUS_ACCEPTANCE_OPEN` (teknik başarısızlık DEĞİLDİR).
-      — **Durum (2026-08-31):** `TECHNICALLY_HARDENED` +
-      `REAL_CORPUS_ACCEPTANCE_OPEN`. Sertleştirilmiş motor güncel
-      MethodLogos korpusunda 0 aday üretir (red dağılımı: generic-token-only
-      590 · weak-topic-overlap 956 · unrelated-flow 235 ·
-      no-restrictive-direction 42 · no-expansive-direction 17; kırpma yok);
-      aday uydurulmadı. Bağımsız denetçi ilk turda plan-defteri kapanışının
+      — **Durum (2026-09-01):** `TECHNICALLY_HARDENED` +
+      `REAL_CORPUS_ACCEPTANCE_OPEN`. Kaynak commit'i, kaynak/motor hashleri,
+      ölçüm zamanı ve sabit reportId taşıyan kalıcı makbuzda 1953 çift
+      üzerinde 0 ham/korunan aday ve 0 kırpma ölçüldü; aday uydurulmadı.
+      Bağımsız denetçi ilk turda plan-defteri kapanışının
       kendi nöbetçisini kırmasını engelleyici bulgu olarak raporladı;
       5.2.6 kutusu bu nedenle ve gerçek-korpus kabulü insan doğrulamasına
       bağlı olduğu için AÇIK bırakıldı — kutu yalnız bir insanın
@@ -595,6 +599,19 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       (bayat-bilgi düzeltmesi) yarı-otomatik sezgiselin kasıtlı olarak
       yakalayamadığı anlam-düzeyi bir düzeltmedir; makine kanıtı DEĞİLDİR
       ve tek başına kabul sayılmaz.
+      — **2026-09-01 eksik-kapatma kanıtı:** Faz denetçisi gerçek
+      `ExplanationEnvelope plan-slice` zarfını ve açık kabul sınırını gösterir;
+      görünüm-denetçi sahipliği iki yönde sıfırlanır; korpus CLI kalıcı
+      revision/hash makbuzu üretir; UI-SPEC v1.2 otoritesi DESIGN/PLAN/
+      önizlemeyle uzlaştırıldı. Node 20 typecheck, 33 dosyada 405 Vitest
+      (1 opt-in skipped), Playwright 51 passed (2 opt-in gerçek GitHub turu
+      skipped), önizleme senkronu, `git diff --check` ve üretim bağımlılığı
+      auditi (0 açık) yeşildir.
+
+- **Kabul:** Teknik açıklama ve karar-bütünlüğü kapsamı
+  `TECHNICALLY_HARDENED` durumundadır; doğrulanmış gerçek karar/otorite çifti
+  bulunmadığı sürece 5.2.6 `REAL_CORPUS_ACCEPTANCE_OPEN` kalır ve yalnız insan
+  doğrulamasıyla `REAL_CORPUS_ACCEPTED` olabilir.
 
 ## Sabit kurallar (bu projede de geçerli)
 

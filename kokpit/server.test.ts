@@ -1,4 +1,6 @@
 import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ComplianceReport } from './check/schema';
 import { createExplainAiProvider, ExplanationEnvelope } from './explain';
@@ -157,6 +159,13 @@ describe('dilim 5.2 explain yüzeyi', () => {
         expect(sliceAcceptanceText(PLAN, 'Dilim 5.2 · Gerçek Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit')).toContain('insanca onaylanmalı');
         expect(sliceAcceptanceText(PLAN, 'Dilim 5 · Uyum Telemetrisi')).toBeNull();
         expect(sliceAcceptanceText(PLAN, 'Dilim 9 · Yok')).toBeNull();
+    });
+
+    it('canlı PLAN Dilim 5.2 için bağlayıcı kabul metni taşır', () => {
+        const livePlan = readFileSync(resolve('PLAN.md'), 'utf8');
+        const acceptance = sliceAcceptanceText(livePlan, 'Dilim 5.2 · Gerçek Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit');
+        expect(acceptance).toContain('TECHNICALLY_HARDENED');
+        expect(acceptance).toContain('REAL_CORPUS_ACCEPTANCE_OPEN');
     });
 
     it('ihlal zarfı dört soruyu dürüstçe taşır ve ölçülen raporu DEĞİŞTİRMEZ', async () => {

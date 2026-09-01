@@ -4,6 +4,7 @@
 // Modül saftır: I/O yok, ölçüm girdileri ConflictContext ile gelir ve
 // aynı girdi her zaman aynı raporu üretir.
 
+import { createHash } from 'node:crypto';
 import type { ConflictEntry } from './schema';
 import {
     CONFLICT_REJECTION_REASONS,
@@ -26,6 +27,70 @@ export interface ConflictCorpusReport {
         ledgerSections: number;
         ledgerDecisions: number;
         pairsEvaluated: number;
+    };
+}
+
+export type CorpusRevisionKind = 'commit' | 'working-tree' | 'unversioned';
+
+export interface CorpusRevisionReceipt {
+    commit: string | null;
+    revisionKind: CorpusRevisionKind;
+    /** Commit veya içerik parmak iziyle genişletilmiş çalışma-ağacı kimliği. */
+    revision: string;
+}
+
+export interface ConflictCorpusProvenance {
+    measuredAt: string;
+    fallbackDate: string;
+    /** Kişisel mutlak kök yazılmaz; yalnız korpus köküne göre yollar tutulur. */
+    planPath: string;
+    ledgerPath: string;
+    planSha256: string;
+    ledgerSha256: string | null;
+    /** Ölçüm motorunun ilgili kaynak dosyalarının birlikte SHA-256 kimliği. */
+    engineSha256: string;
+    source: CorpusRevisionReceipt;
+    engine: CorpusRevisionReceipt;
+    /** Zaman damgası hariç aynı girdi+motor+çıktıda sabit kalan makbuz kimliği. */
+    reportId: string;
+}
+
+export interface ConflictCorpusReceipt extends ConflictCorpusReport {
+    schemaVersion: 1;
+    provenance: ConflictCorpusProvenance;
+}
+
+export interface ConflictCorpusProvenanceInput extends Omit<ConflictCorpusProvenance, 'reportId'> {}
+
+export function sha256Text(text: string): string {
+    return createHash('sha256').update(text, 'utf8').digest('hex');
+}
+
+/**
+ * Ölçüm raporunu kaynak/motor revizyonu ve içerik hashleriyle bağlar. reportId,
+ * measuredAt'i kasıtlı olarak dışarıda bırakır: aynı kanıt başka zamanda tekrar
+ * ölçüldüğünde kimlik kararlı, koşum zamanı ise dürüstçe ayrı kalır.
+ */
+export function createConflictCorpusReceipt(
+    report: ConflictCorpusReport,
+    provenance: ConflictCorpusProvenanceInput,
+): ConflictCorpusReceipt {
+    const reportId = sha256Text(JSON.stringify({
+        schemaVersion: 1,
+        fallbackDate: provenance.fallbackDate,
+        planPath: provenance.planPath,
+        ledgerPath: provenance.ledgerPath,
+        planSha256: provenance.planSha256,
+        ledgerSha256: provenance.ledgerSha256,
+        engineSha256: provenance.engineSha256,
+        source: provenance.source,
+        engine: provenance.engine,
+        report,
+    }));
+    return {
+        schemaVersion: 1,
+        provenance: { ...provenance, reportId },
+        ...report,
     };
 }
 

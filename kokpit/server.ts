@@ -160,9 +160,15 @@ export function sliceAcceptanceText(planMarkdown: string, heading: string): stri
         // içeren checkbox maddeleri (ör. "- [ ] **Kabul:** ...") kabul DEĞİLDİR.
         const label = /^\s*(?:-\s*)?(?:\*\*)?\s*Kabul\s*:\s*(?:\*\*)?\s*(.*)$/i.exec(line);
         if (!label) continue;
-        const text = (label[1] ?? '').replace(/\*\*/g, '').trim();
+        const parts = [label[1] ?? ''];
+        for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+            const continuation = lines[cursor] ?? '';
+            if (!/^\s{2,}\S/.test(continuation) || /^\s*-\s/.test(continuation)) break;
+            parts.push(continuation.trim());
+        }
+        const text = parts.join(' ').replace(/\*\*/g, '').trim();
         if (!text) continue;
-        return text.length > 280 ? `${text.slice(0, 277)}…` : text;
+        return text.length > 600 ? `${text.slice(0, 597)}…` : text;
     }
     return null;
 }

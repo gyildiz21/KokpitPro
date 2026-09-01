@@ -430,6 +430,12 @@ export function buildSliceEnvelope(context: SliceEnvelopeContext): ExplanationEn
             en: `${counts.blocked} item(s) are blocked; phase acceptance cannot close until the blocks clear.`,
         });
     }
+    if (counts.open > 0) {
+        limitations = appendLimitation(limitations, {
+            tr: `${counts.open} açık madde var; fazın kabul kapısı henüz kapanmadı.`,
+            en: `${counts.open} item(s) remain open; the phase acceptance gate is not closed yet.`,
+        });
+    }
     return {
         schemaVersion: 1,
         projectId: context.projectId,

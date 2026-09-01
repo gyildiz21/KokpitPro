@@ -155,6 +155,11 @@ test('Dilim 2 gerçek harita, dil, klavye ve duyarlı yerleşim kabulü', async 
     await page.keyboard.press('Escape');
     await page.locator('#phaseList .phase-filter[data-phase="Dilim-5"]').click();
     await expect(page.locator('.map-flow-node.is-dimmed')).toHaveCount(0);
+    await expect(page.locator('#phaseList .phase-filter[data-phase="Dilim-5.2"]')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('body')).not.toHaveClass(/inspector-open/);
+    await page.locator('#phaseList .phase-filter[data-phase="Dilim-5.2"]').click();
+    await expect(page.locator('#inspectorBody')).toContainText('Gerçek Korpus Karar Bütünlüğü');
 });
 
 test('Dilim 2.3 tek güncellik gerçeği katalog ve diyagramda aynıdır', async ({ page, request }) => {
