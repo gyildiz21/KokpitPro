@@ -10,6 +10,14 @@ const spec = readFileSync(resolve(root, 'UI-SPEC.md'), 'utf8');
 const plan = readFileSync(resolve(root, 'PLAN.md'), 'utf8');
 
 describe('UI-SPEC v0.9 persistent project lifecycle', () => {
+    it('keeps the accepted v1.2 Dilim 5.2 contract and timeline identity visible', () => {
+        expect(spec).toContain('### §10.9 Dilim 5.2 — Gerçek Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit');
+        expect(spec).toContain('**tespit → anlama → eylem → yeniden ölçüm/doğrulama**');
+        expect(plan).toContain('## Dilim 5.2 · Gerçek Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit');
+        expect(preview).toContain('"Dilim-5.2": "Real-corpus decision integrity and explainable cockpit"');
+        expect(preview).toContain('UI-SPEC v1.2 · persistent');
+    });
+
     it('keeps the complete project lifecycle visible in the canonical spec and plan', () => {
         expect(spec).toContain('## §12 · Proje Merkezi, bağlantılar ve veri izolasyonu');
         expect(spec).toContain('Kaynak → Doğrula → İndeksle → Hazır');
@@ -35,6 +43,14 @@ describe('UI-SPEC v0.9 persistent project lifecycle', () => {
         expect(preview).toContain('Kayıtlar diskte kalıcıdır');
     });
 
+    it('discovers deployment mode and hides local-path onboarding in cloud review mode', () => {
+        expect(preview).toContain('const health = await apiRequest("/api/health")');
+        expect(preview).toContain('deploymentMode = health.mode === "cloud" ? "cloud" : "local"');
+        expect(preview).toContain('if (deploymentMode === "cloud") return');
+        expect(preview).toContain('Yerel bilgisayar yolları bulut sunucusuna gönderilmez.');
+        expect(preview).toContain('Local computer paths are never sent to the cloud service.');
+    });
+
     it('does not restore the old mixed-project shell', () => {
         expect(preview).not.toContain('MethodLogos_Pro / master');
         expect(preview).not.toContain('KARMA VERİ');
@@ -49,6 +65,17 @@ describe('UI-SPEC v0.9 persistent project lifecycle', () => {
         expect(activation.indexOf('resetInspector();')).toBeLessThan(activation.indexOf('await loadPlanData();'));
         expect(preview).toContain('function resetInspector()');
         expect(preview).toContain('function renderEmptyInspector()');
+    });
+
+    it('binds phase explanations and resets inspector context in both view directions', () => {
+        const phaseInspector = /function renderPhaseInspector\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
+        const viewSwitch = /function showView\([\s\S]+?\n    }/.exec(preview)?.[0] ?? '';
+        expect(phaseInspector).toContain('data-explain-card="plan-slice:${escapeHtml(group.id)}"');
+        expect(phaseInspector).toContain('startExplain("plan-slice", group.id)');
+        expect(preview).toContain('function inspectorSelectionBelongsToView(selection, view)');
+        expect(viewSwitch).toContain('!inspectorSelectionBelongsToView(selectedNode, view)');
+        expect(preview).toContain('explainLimitations: "Açık sınırlar"');
+        expect(preview).toContain('explainLimitations: "Open limitations"');
     });
 
     it('keeps the file-mode PLAN snapshot and status tokens synchronized', () => {

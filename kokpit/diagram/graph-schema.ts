@@ -112,7 +112,9 @@ export const DiagramGraphMetadata = z
 export type DiagramGraphMetadata = z.infer<typeof DiagramGraphMetadata>;
 
 /**
- * Saf diyagram grafı. D5.2: şema sürümlüdür — tüketici uyumsuz veriyi reddeder.
+ * Saf diyagram grafı. DESIGN D5 · sürümlü şema kararı (eski kod yorumundaki
+ * "D5.2" kısaltmasıdır; PLAN'daki Dilim 5.2 ürün dilimiyle ilişkisi yoktur) —
+ * tüketici uyumsuz veriyi reddeder.
  * `metadata`, grafiği üreten indeks koşumunu geri izlenebilir kılar.
  */
 export const diagramGraphSchema = z

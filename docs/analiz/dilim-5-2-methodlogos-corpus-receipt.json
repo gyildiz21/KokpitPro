@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "provenance": {
+    "measuredAt": "2026-09-01T07:57:59.399Z",
+    "fallbackDate": "2026-09-01",
+    "planPath": "ROADMAP.md",
+    "ledgerPath": ".agents/karar-defteri.md",
+    "planSha256": "12622d1dfd982c15b84757ddc7e1c212acc538d846cee9bf6a77f6563a4e23ba",
+    "ledgerSha256": "6056fa483838363b5f79ea9fd3deea25e6471b38c498ce172932d5a88e4fa859",
+    "engineSha256": "6228612437250e54e374e1b40b065d4229e2e57fbb4a7870b32ba04bed63c549",
+    "source": {
+      "commit": "2b071c19d36e649b424feac46f0750b4a49eb9fe",
+      "revisionKind": "commit",
+      "revision": "2b071c19d36e649b424feac46f0750b4a49eb9fe"
+    },
+    "engine": {
+      "commit": "f31922c1fd2ddc5c27d28cc374e7496f558ed1e2",
+      "revisionKind": "commit",
+      "revision": "f31922c1fd2ddc5c27d28cc374e7496f558ed1e2"
+    },
+    "reportId": "157d113a0df83a86bbbe6b057fc3e0c8e72df69dc73cea1d2077e7b45a3fb847"
+  },
+  "rawCandidateCount": 0,
+  "retainedCandidates": [],
+  "rejectionCounts": {
+    "generic-token-only": 617,
+    "no-restrictive-direction": 49,
+    "no-expansive-direction": 17,
+    "weak-topic-overlap": 1018,
+    "unrelated-flow": 252,
+    "repeated-restriction": 0,
+    "chronology-invalid": 0
+  },
+  "truncationReasons": [],
+  "scannedScope": {
+    "planStatements": 73,
+    "ledgerSections": 23,
+    "ledgerDecisions": 21,
+    "pairsEvaluated": 1953
+  }
+}

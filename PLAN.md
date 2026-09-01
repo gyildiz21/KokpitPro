@@ -499,6 +499,151 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `npm audit --omit=dev` (**0 açık**) doğrulandı. Bunlar dış GitHub App
       kurulumu veya gerçek çelişki korpusu kabulünün yerine geçmez.
 
+## Dilim 5.2 · Gerçek Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit
+
+> **Adlandırma (bağlayıcı):** Bu başlık ayrı bir ürün dilimidir. Kod
+> yorumlarındaki **"D5.2"** kısaltması DESIGN D5 altındaki **sürümlü şema**
+> kararını işaretler; bu ürün dilimiyle karıştırılmaz (UI-SPEC §0.1,
+> DESIGN D5 notu).
+>
+> **Sözleşme:** UI-SPEC §10.9 + DESIGN D8. Dilim 5'in açık gerçek-korpus
+> kabul kutusu uydurma adayla KAPATILMAZ; jenerik eşleşme taşması başarı
+> sayılmaz. Gerçek aday yoksa teknik sonuç dürüstçe 0 kalır ve kabul
+> `REAL_CORPUS_ACCEPTANCE_OPEN` olarak açık bırakılır.
+
+- [x] **5.2.0 — Sözleşme dondurma:** `ExplanationEnvelope v1` (Zod `.strict()`):
+      `schemaVersion/projectId/sourceRevision/subjectKind/subjectId/origin/
+      summary/whatItMeans/whyItMatters/recommendedActions/verificationSteps/
+      evidenceRefs/limitations/generatedAt`; `provider/model/confidence`
+      yalnız `origin:'ai'` iken. Ölçüm sözleşmeleri (ComplianceReport v1,
+      DiagramGraph v1, Delta) açıklama için sessizce DEĞİŞTİRİLMEZ.
+      — kanıt: `cfa58a2` (UI-SPEC §10.9 + DESIGN D8 + bu bölüm);
+      `kokpit/explain/schema.ts` strict refine nöbetçileri (origin/alan
+      uyuşmazlığı reddi); Adlandırma notu: DESIGN D5·"D5.2" ≠ Dilim 5.2.
+- [x] **5.2.1 — Karar bütünlüğü motoru sertliği (`kokpit/check/conflicts.ts`):**
+      genel/tek-başına ayırt edici olmayan tokenlar (tarih, yıl, "açık",
+      "adı", "backend"…) konu kesişimi sayılmaz; cümle/madde düzeyinde
+      gerçek kısıt→genişletme yönü ölçülür; ilgisiz karar akışları
+      eşleştirilemez; aday iki kaynak yolu + konum + tarih + yön + ayırt
+      edici ortak konu taşır; gerçek aday yoksa dürüst 0; 64 sınırının
+      dolması jenerik taşma olarak raporlanır; gerçek tarama salt okunur.
+      — kanıt: entegrasyon dalları `6813be3`+`d672b97`; sentetik nöbetçiler
+      `conflicts-integrity.test.ts` (11) + `corpus-report.test.ts`;
+      MethodLogos salt-okunur makbuzu (2026-09-01, temiz kaynak commit'i
+      `2b071c19d36e649b424feac46f0750b4a49eb9fe`): 73 plan cümlesi · 23
+      defter bölümü · 21 KARAR · 1953 çift → ham/korunan 0 aday, kırpma yok;
+      red dağılımı generic-token-only 617 · weak-topic-overlap 1018 ·
+      unrelated-flow 252 · no-restrictive-direction 49 ·
+      no-expansive-direction 17. Kalıcı köken/hash kanıtı:
+      `docs/analiz/dilim-5-2-methodlogos-corpus-receipt.json`, reportId
+      `157d113a0df83a86bbbe6b057fc3e0c8e72df69dc73cea1d2077e7b45a3fb847`.
+- [x] **5.2.2 — Deterministik açıklama kataloğu (TR/EN):** hex-in-component,
+      koşumsuz-commit, hardcode-metin, sahte-kapı, bayat-kutu,
+      ks-band-delinmesi, sync near-miss kodları, no-mapping, stale-receipt,
+      no-local-checkout, paths-not-measured, edges-not-measurable-yet,
+      comparison-baseline-unavailable, item-not-found ve partial/unmeasured
+      kapsam nedenleri — her biri sade anlam + kullanıcı etkisi + ilk güvenli
+      eylem + doğrulama adımı.
+      — kanıt: `7d2acca`+`83a67c9`; katalog 6 kural + 5 near-miss + 7 delta +
+      9 kapsam + 4 çelişki durumu; bilinmeyen kod jenerik dürüst zarf;
+      projection nöbetçileri girdi değişmezliğini sabitler.
+- [x] **5.2.3 — Opsiyonel AI açıklama altyapısı:** repo-bazlı opt-in/GO
+      olmadan çağrı yok; "AI YORUMU" etiketi + provider/model/generatedAt/
+      sourceRevision/limitations görünür; revizyon bayatlığı AI yorumunu
+      reddeder; sağlayıcı hatasında deterministik açıklamaya dönüş; AI
+      ölçülen hiçbir gerçeği değiştiremez; öneri yalnız ÖNERİ/PROPOSED.
+      Hermetik fixture + atlanan gerçek-provider koşumu yeterlidir; gerçek
+      API anahtarı ve ücretli çağrı YOKTUR.
+      — kanıt: `9237045`; hermetik fixture provider determinizmi, bayat
+      revizyon reddi, fail-closed yapılandırma ve hata-geri-dönüşü
+      `ai-guard` nöbetçileriyle; sunucu bağlantısı `f9c27e3` (explain
+      endpoint, sağlayıcı yalnız `KOKPIT_AI_EXPLAIN=fixture` opt-in'iyle).
+- [x] **5.2.4 — Uyum kuyruğu kullanıcı-öncelikli mimari:** sade bulgu adı →
+      etkilenen kayıt sayısı → neden önemli → önerilen eylem → ciddiyet;
+      "Teknik kanıt" açılır bölümü; kural+kapsam gruplaması (ölçülen sayı
+      korunur) ve tekil satıra iniş; near-miss/roadmapBox/handoff kodları
+      ilk katmanda kullanıcı diline çevrilir.
+      — kanıt: `a5d47e8`+`c9fb97e`+`1d35c4a`+`a9d605d`;
+      `e2e/dilim-5-2-explainable-ui.spec.ts` 11/11 (grup sayı nöbetçisi,
+      disclosure, açıklama kartı, AI katmanı, TR/EN, 1440/1024/768, klavye).
+- [x] **5.2.5 — Delta ve zaman davranışı:** ölçülemeyen deltada neden +
+      eksik veri + güvenli eylem (boş beyaz alan yok); `stale-receipt` →
+      Yeniden indeksle; `no-local-checkout` → yerel çalışma kopyası bağlama
+      (yeniden indeksleme olarak yanlış sunulmaz); görünüm değişiminde
+      ilgisiz denetçi sıfırlanır; zaman görünümünde "Dilim 5" ve "Dilim 5.2"
+      ayrı fazlar; "kabul açık" ≠ "motor yapılmadı"; parser kimlik
+      nöbetçisi.
+      — kanıt: `76ddfc5`+`8cc0d49`+`bcb5e7f`; delta motorunda dürüstlük
+      düzeltmesi (ne eşlemesi ne bildirilen yolu olan madde artık
+      `unmeasurable/no-mapping`); `e2e/dilim-5-2-delta-timeline.spec.ts`
+      6/6 (S3–S5 maskesiz gerçek-sunucu: plan başlıkları, plan-slice
+      açıklaması + çift yönlü denetçi sıfırlama, measured kart ve 5.2
+      no-mapping sınırı).
+- [ ] **5.2.6 — Gerçek korpus ölçümü ve kabul:** MethodLogos korpusunda
+      salt-okunur sertleştirilmiş koşum; kapsam sayaçları + kırpma nedenleri
+      + ham/filtrelenmiş aday + red nedeni dağılımı raporlanır; gerçek aday
+      insan doğrulamasına sunulur. **Kapanış kuralı:** teknik sertlik +
+      hermetik testler → `TECHNICALLY_HARDENED`; doğrulanmış gerçek
+      karar/otorite çifti → `REAL_CORPUS_ACCEPTED`; gerçek aday yoksa
+      `REAL_CORPUS_ACCEPTANCE_OPEN` (teknik başarısızlık DEĞİLDİR).
+      — **Durum (2026-09-01):** `TECHNICALLY_HARDENED` +
+      `REAL_CORPUS_ACCEPTANCE_OPEN`. Kaynak commit'i, kaynak/motor hashleri,
+      ölçüm zamanı ve sabit reportId taşıyan kalıcı makbuzda 1953 çift
+      üzerinde 0 ham/korunan aday ve 0 kırpma ölçüldü; aday uydurulmadı.
+      Bağımsız denetçi ilk turda plan-defteri kapanışının
+      kendi nöbetçisini kırmasını engelleyici bulgu olarak raporladı;
+      5.2.6 kutusu bu nedenle ve gerçek-korpus kabulü insan doğrulamasına
+      bağlı olduğu için AÇIK bırakıldı — kutu yalnız bir insanın
+      doğrulanmış karar/otorite çiftini onaylamasıyla kapanır. İnsan
+      gözcüsü için not: defterdeki D1 "Yıl aralığı politikası" kartı
+      (bayat-bilgi düzeltmesi) yarı-otomatik sezgiselin kasıtlı olarak
+      yakalayamadığı anlam-düzeyi bir düzeltmedir; makine kanıtı DEĞİLDİR
+      ve tek başına kabul sayılmaz.
+      — **2026-09-01 eksik-kapatma kanıtı:** Faz denetçisi gerçek
+      `ExplanationEnvelope plan-slice` zarfını ve açık kabul sınırını gösterir;
+      görünüm-denetçi sahipliği iki yönde sıfırlanır; korpus CLI kalıcı
+      revision/hash makbuzu üretir; UI-SPEC v1.2 otoritesi DESIGN/PLAN/
+      önizlemeyle uzlaştırıldı. Node 20 typecheck, 33 dosyada 405 Vitest
+      (1 opt-in skipped), Playwright 51 passed (2 opt-in gerçek GitHub turu
+      skipped), önizleme senkronu, `git diff --check` ve üretim bağımlılığı
+      auditi (0 açık) yeşildir.
+
+- **Kabul:** Teknik açıklama ve karar-bütünlüğü kapsamı
+  `TECHNICALLY_HARDENED` durumundadır; doğrulanmış gerçek karar/otorite çifti
+  bulunmadığı sürece 5.2.6 `REAL_CORPUS_ACCEPTANCE_OPEN` kalır ve yalnız insan
+  doğrulamasıyla `REAL_CORPUS_ACCEPTED` olabilir.
+
+## Dilim 6 · Özel İnceleme Yayını
+
+> **Sözleşme (Patron onayı 2026-09-01):** İlk bulut yayını kamuya açık SaaS
+> değildir. Arayüz + API aynı Node servisinde, Basic erişim kapısı arkasında ve
+> GitHub-only çalışır. Yerel checkout yolları buluta gönderilmez; kaynak ağacı
+> statik olarak yayımlanmaz. Otorite: DESIGN D5.5–D5.9 + UI-SPEC §12.9–§12.10.
+
+- [x] **6.0 — Üretim çalıştırma zinciri:** Node 20 engine sözleşmesi;
+      esbuild `dist/server.js`; ayrı `start:prod`; Docker çok-aşamalı image;
+      Railway Docker/health/restart tanımı; `dependency-cruiser` gerçek runtime
+      bağımlılığına taşındı.
+- [x] **6.1 — Bulut güvenlik ve veri sınırı:** zorunlu HTTPS public origin,
+      trusted-host allowlist, same-origin mutasyon koruması, en az 24 karakter
+      Basic erişim parolası, kimliksiz health; health yanıtında yerel dosya yolu
+      yok; cloud modunda yerel repo uçları 403, yerel kayıtlar süzülür ve yalnız
+      ürün HTML'i + derlenmiş UI asset'leri statik servis edilir.
+- [x] **6.2 — Görünür cloud davranışı ve nöbetçiler:** UI health modunu okur;
+      cloud bağlantı diyaloğunda yalnız GitHub seçeneği ve yerel yolların neden
+      kullanılamadığı görünür. Runtime config/registry nöbetçileri + gerçek
+      `dist/server.js` smoke koşumu; anonim 401, kimlikli 200, kaynak 404,
+      yerel-route 403 ve yabancı-origin 403 doğrulanır.
+- [ ] **6.3 — Railway staging canlı kabulü:** feature push → temiz release
+      worktree'sinde no-ff main merge → origin/main push → Railway `/data`
+      volume + secrets + generated domain → canlı health/auth/GitHub-only UI
+      kabulü. Bu kutu ancak gerçek Railway URL'si ve canlı HTTP kanıtıyla kapanır.
+
+- **Kabul:** staging URL'sinde kimliksiz ürün yüzeyi kapalı; yetkili kullanıcı
+  GitHub reposunu `Doğrula → İndeksle → Hazır` akışından geçirebilir; kalıcı
+  kayıt yeniden deploy sonrası korunur. Kamuya açık çok-kullanıcılı üretim bu
+  dilimin kapsamı değildir.
+
 ## Sabit kurallar (bu projede de geçerli)
 
 1. Sahte kapı yok: capability yoksa yüzey çizilmez.

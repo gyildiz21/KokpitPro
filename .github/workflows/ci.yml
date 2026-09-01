@@ -29,6 +29,8 @@ jobs:
         run: npm run typecheck
       - name: Testler
         run: npm test
+      - name: Üretim bundle ve cloud sınırı
+        run: npm run build && npm run smoke:prod
       # Not: markdown'dan beslenen parser testleri olduğu için paths-ignore
       # YOKTUR — her push koşar (MethodLogos dersi). Koşumsuz commit, CI'da
       # makinece yakalanır; "koşum disiplini" artık insan hatırası değildir.

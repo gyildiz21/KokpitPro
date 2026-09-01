@@ -18,7 +18,7 @@ KokpitPro'ya katkı kuralları. Kısa ve net: bu kapılar olmadan birleşme yok.
 
 ## Tasarım uyumu
 
-- Her değişiklik `DESIGN.md` içindeki **D1–D5** kararlarına uymak zorundadır.
+- Her değişiklik `DESIGN.md` içindeki **D1–D8** kararlarına uymak zorundadır.
   (D1 iki dillilik · D2 UX kalite barı · D3 render kararı · D4 ajan-native bağış · D5 dağıtım yolu)
 - Çelişki varsa önce DESIGN.md'de karar güncellenir, sonra kod yazılır.
 

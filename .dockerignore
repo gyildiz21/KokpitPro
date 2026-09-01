@@ -1,0 +1,15 @@
+.git
+.github
+.codex-tmp
+.codex-runtime
+.kokpit
+node_modules
+dist
+coverage
+output
+test-results
+playwright-report
+gitdiagram
+.env
+.env.*
+*.log

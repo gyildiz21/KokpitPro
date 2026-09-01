@@ -70,8 +70,8 @@ test('Dilim 2 gerçek harita, dil, klavye ve duyarlı yerleşim kabulü', async 
     const viewportBeforeZoom = await page.evaluate(() => (window as any).KokpitMapFlow?.getViewport?.());
     // Büyük graf fitView'i minZoom tabanına (0.25) indirebilir; tek adım tam
     // +0.05 ürettiği için artış iddiası iki gerçek zoomIn adımıyla kurulur.
-    await page.evaluate(() => (window as any).KokpitMapFlow?.zoomIn());
-    await page.evaluate(() => (window as any).KokpitMapFlow?.zoomIn());
+    await page.evaluate(async () => { await (window as any).KokpitMapFlow?.zoomIn(); });
+    await page.evaluate(async () => { await (window as any).KokpitMapFlow?.zoomIn(); });
     await expect.poll(() => page.evaluate(() => (window as any).KokpitMapFlow?.getViewport?.()?.zoom ?? 0))
         .toBeGreaterThan(viewportBeforeZoom?.zoom ?? 0);
     const viewportBeforeReload = await page.evaluate(() => (window as any).KokpitMapFlow?.getViewport());
@@ -155,6 +155,11 @@ test('Dilim 2 gerçek harita, dil, klavye ve duyarlı yerleşim kabulü', async 
     await page.keyboard.press('Escape');
     await page.locator('#phaseList .phase-filter[data-phase="Dilim-5"]').click();
     await expect(page.locator('.map-flow-node.is-dimmed')).toHaveCount(0);
+    await expect(page.locator('#phaseList .phase-filter[data-phase="Dilim-5.2"]')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('body')).not.toHaveClass(/inspector-open/);
+    await page.locator('#phaseList .phase-filter[data-phase="Dilim-5.2"]').click();
+    await expect(page.locator('#inspectorBody')).toContainText('Gerçek Korpus Karar Bütünlüğü');
 });
 
 test('Dilim 2.3 tek güncellik gerçeği katalog ve diyagramda aynıdır', async ({ page, request }) => {

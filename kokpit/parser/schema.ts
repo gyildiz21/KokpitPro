@@ -41,7 +41,7 @@ export type PhaseGroup = z.infer<typeof PhaseGroup>;
 
 /** scanRoadmapText çıktısı. */
 export const RoadmapScan = z.object({
-    /** D5.2: şema sürümü — tüketici (harita/delta) uyumsuz veriyi reddeder. */
+    /** DESIGN D5 · sürümlü şema kararı (eski kod yorumundaki "D5.2" kısaltmasıdır; PLAN'daki Dilim 5.2 ürün dilimiyle ilişkisi yoktur) — tüketici (harita/delta) uyumsuz veriyi reddeder. */
     schemaVersion: z.literal(1),
     sourceFile: z.string(),
     groups: z.array(PhaseGroup),

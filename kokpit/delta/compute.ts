@@ -4,7 +4,8 @@
 // gerçek ölçümlerle karşılaştırır ve dürüst bir DeltaResult üretir:
 // - 'measured'     : madde, makbuz eşlemesiyle gerçek düğüm/test yüzeyine bağlandı
 // - 'declared-only': yalnız metinden yol bildirimi var; ölçüm yok, kenar uydurulmaz
-// - 'unmeasurable' : madde yok / bayat makbuz / canlı Checkout yok — liste boş kalır
+// - 'unmeasurable' : madde yok / bayat makbuz / canlı Checkout yok / eşleme ve
+//                    bildirim yok — liste boş kalır
 // Nöbetçi ilkeler: bilinmeyen düğüm kimliği TypeError'la patlar; öneri
 // düğümlerine asla kenar eklenmez; karşılaştırma yalnız verilen baseline ile.
 // Modül saftır: I/O yok, global durum yok; aynı girdi (durationMs hariç)
@@ -247,8 +248,6 @@ export function computeDelta(input: DeltaComputeInput): DeltaResult {
     const mapping = diagram !== null ? diagram.itemMappings[itemId] : undefined;
 
     if (mapping !== undefined && diagram !== null) {
-        let evidenceKind: EvidenceKind;
-
         // Nöbetçi 5: makbuz eşlemesi grafa karşı doğrulanır; bozuk kimlik sessiz
         // yutulmaz, doğrudan patlar (fail-loud).
         const affectedNodeIds = uniqueSorted(mapping.nodeIds).slice(0, MAX_AFFECTED);
@@ -275,19 +274,23 @@ export function computeDelta(input: DeltaComputeInput): DeltaResult {
             .sort((left, right) => compare(left.path, right.path));
 
         const measuredSurfaceExists = affectedNodeIds.length > 0 || affectedTests.length > 0;
+        // Dilim 5.2 dürüstlük nöbetçisi: ne ölçülmüş yüzey ne bildirilen yol
+        // varsa sonuç 'declared-only' SANILMAZ; dürüst ölçülemez sonuç döner.
+        if (!measuredSurfaceExists && declaredPaths.length === 0) {
+            reasons.push({
+                code: 'no-mapping',
+                message: `The item mapping for "${itemId}" is empty and no path is declared.`,
+            });
+            return finalize('unmeasurable', 'none', reasons, unmeasurableLists);
+        }
+        let evidenceKind: EvidenceKind;
         if (measuredSurfaceExists) {
             evidenceKind = 'receipt-mapping';
-        } else if (declaredPaths.length > 0) {
+        } else {
             evidenceKind = 'declared-text-only';
             reasons.push({
                 code: 'paths-not-measured',
                 message: `The item mapping for "${itemId}" carries no measured node or test; the declared paths were not measured.`,
-            });
-        } else {
-            evidenceKind = 'none';
-            reasons.push({
-                code: 'no-mapping',
-                message: `The item mapping for "${itemId}" is empty and no path is declared.`,
             });
         }
         if (proposedNodes.length > 0) {
@@ -328,18 +331,21 @@ export function computeDelta(input: DeltaComputeInput): DeltaResult {
     }
 
     // Eşleme yoksa bildirim salt metindir: ölçüm illüzyonu yaratılmaz.
-    const evidenceKind: EvidenceKind = declaredPaths.length > 0 ? 'declared-text-only' : 'none';
-    if (declaredPaths.length > 0) {
-        reasons.push({
-            code: 'paths-not-measured',
-            message: `Declared paths have no receipt mapping; they have not been measured.`,
-        });
-    } else {
-        reasons.push({
-            code: 'no-mapping',
-            message: `The receipt diagram carries no mapping for item "${itemId}".`,
-        });
+    // Dilim 5.2 dürüstlük nöbetçisi: ne eşleme ne bildirilen yol varsa sonuç
+    // 'declared-only' SANILMAZ; dürüst 'unmeasurable' + no-mapping döner.
+    if (declaredPaths.length === 0) {
+        return finalize('unmeasurable', 'none', [
+            {
+                code: 'no-mapping',
+                message: `The receipt diagram carries no mapping for item "${itemId}".`,
+            },
+        ], unmeasurableLists);
     }
+    const evidenceKind: EvidenceKind = 'declared-text-only';
+    reasons.push({
+        code: 'paths-not-measured',
+        message: `Declared paths have no receipt mapping; they have not been measured.`,
+    });
     // Senaryo-2 nöbetçisi (2026-08-26): eşleme yoksa bile grafta karşılığı
     // bulunmayan BİLDİRİLEN yol için kesikli öneri düğümü üretilir; kenar
     // uydurma yasağı aynen geçerlidir.

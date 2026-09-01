@@ -300,6 +300,17 @@ function withDeltaOverlays(payload: MapFlowPayload): MapFlowPayload {
 
 let root: Root | null = null;
 let instance: ReactFlowInstance<FlowNode, FlowEdge> | null = null;
+let viewportOperation: Promise<void> = Promise.resolve();
+
+function enqueueViewportOperation(
+    operation: (current: ReactFlowInstance<FlowNode, FlowEdge>) => Promise<boolean>,
+): Promise<void> {
+    viewportOperation = viewportOperation.then(async () => {
+        const current = instance;
+        if (current) await operation(current);
+    });
+    return viewportOperation;
+}
 
 function mountRoot(): Root {
     const host = document.querySelector<HTMLElement>('#graphNodes');
@@ -322,11 +333,12 @@ const api = {
     },
     clear() {
         instance = null;
+        viewportOperation = Promise.resolve();
         root?.render(null);
     },
-    zoomIn() { void instance?.zoomIn({ duration: 180 }); },
-    zoomOut() { void instance?.zoomOut({ duration: 180 }); },
-    fitView() { void instance?.fitView({ padding: 0.18, duration: 220 }); },
+    zoomIn() { return enqueueViewportOperation((current) => current.zoomIn({ duration: 180 })); },
+    zoomOut() { return enqueueViewportOperation((current) => current.zoomOut({ duration: 180 })); },
+    fitView() { return enqueueViewportOperation((current) => current.fitView({ padding: 0.18, duration: 220 })); },
     getViewport() { return instance?.getViewport() ?? null; },
     focusNode(nodeId: string) {
         document.querySelector<HTMLElement>(`[data-map-node-id="${nodeId}"]`)?.focus();
