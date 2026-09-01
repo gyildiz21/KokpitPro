@@ -26,13 +26,22 @@ import {
 import { GithubVerificationError, githubAuthConfiguration, indexGithubProject, type GithubProjectInput } from './projects/github';
 import { indexLocalProject, refreshProjectFreshness, type LocalProjectInput } from './projects/local';
 import { ProjectRegistry } from './projects/registry';
-import type { ProjectRecord } from './projects/schema';
+import type { ProjectRecord, RegistryFile } from './projects/schema';
 import { buildRemapReport } from './remap/service';
+import {
+    isCloudLocalRoute,
+    isCloudStaticPathAllowed,
+    isRequestAuthorized,
+    isTrustedHost,
+    isTrustedMutationOrigin,
+    resolveRuntimeConfig,
+} from './runtime/config';
 import { buildUiAssets, type UiAssets } from './ui/assets';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const PORT = Number.parseInt(process.env.PORT || '4173', 10);
-const HOST = process.env.HOST || '127.0.0.1';
+const RUNTIME = resolveRuntimeConfig();
+const PORT = RUNTIME.port;
+const HOST = RUNTIME.host;
 const KEEP_ALIVE_TIMEOUT_MS = 65_000;
 const HEADERS_TIMEOUT_MS = 66_000;
 const registry = new ProjectRegistry();
@@ -86,7 +95,11 @@ export function isAllowedHostHeader(
     hostHeader: string | undefined,
     configuredHost = HOST,
     configuredPort = PORT,
+    trustedHosts?: ReadonlySet<string>,
 ): boolean {
+    if (trustedHosts) {
+        return isTrustedHost(hostHeader, { ...RUNTIME, trustedHosts });
+    }
     const normalized = (hostHeader || '').trim().toLowerCase();
     const allowed = new Set([
         `${configuredHost.toLowerCase()}:${configuredPort}`,
@@ -285,15 +298,16 @@ async function body<T>(request: IncomingMessage): Promise<T> {
 }
 
 function assertSameOrigin(request: IncomingMessage): void {
-    const origin = request.headers.origin;
-    if (!origin) return;
-    const allowed = new Set([`http://${HOST}:${PORT}`, `http://127.0.0.1:${PORT}`, `http://localhost:${PORT}`]);
-    if (!allowed.has(origin)) throw new HttpError(403, 'Cross-origin mutations are not allowed.');
+    if (!isTrustedMutationOrigin(request.headers.origin, RUNTIME)) {
+        throw new HttpError(403, 'Cross-origin mutations are not allowed.');
+    }
 }
 
 function findProject(id: string): ProjectRecord {
     const project = registry.read().projects.find((candidate) => candidate.id === id);
-    if (!project) throw new HttpError(404, `Project not found: ${id}`);
+    if (!project || (RUNTIME.mode === 'cloud' && project.source.type === 'local')) {
+        throw new HttpError(404, `Project not found: ${id}`);
+    }
     return project;
 }
 
@@ -320,11 +334,22 @@ function receiptBaseRevision(project: ProjectRecord): BaseRevision {
     return { kind, revision, commit: project.index.commit, branch: project.index.branch };
 }
 
+export function visibleRegistry(current: RegistryFile, mode = RUNTIME.mode): RegistryFile {
+    if (mode !== 'cloud') return current;
+    const projects = current.projects.filter((project) => project.source.type === 'github');
+    const activeProjectId = projects.some((project) => project.id === current.activeProjectId)
+        ? current.activeProjectId
+        : projects[0]?.id ?? null;
+    return { ...current, activeProjectId, projects };
+}
+
 async function registryWithLiveFreshness() {
-    const current = registry.read();
+    const current = visibleRegistry(registry.read());
     return {
         ...current,
-        projects: await Promise.all(current.projects.map(refreshProjectFreshness)),
+        projects: await Promise.all(current.projects.map((project) => (
+            project.source.type === 'local' ? refreshProjectFreshness(project) : project
+        ))),
     };
 }
 
@@ -418,9 +443,12 @@ async function reindex(project: ProjectRecord): Promise<ProjectRecord> {
 async function api(request: IncomingMessage, response: ServerResponse, url: URL): Promise<boolean> {
     if (!url.pathname.startsWith('/api/')) return false;
     if (request.method !== 'GET' && request.method !== 'HEAD') assertSameOrigin(request);
+    if (RUNTIME.mode === 'cloud' && isCloudLocalRoute(url.pathname, request.method)) {
+        throw new HttpError(403, 'Local repository paths are disabled in cloud mode.');
+    }
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
-        json(response, 200, { ok: true, persistence: registry.filePath, github: githubAuthConfiguration() });
+        json(response, 200, { ok: true, mode: RUNTIME.mode, github: githubAuthConfiguration() });
         return true;
     }
     if (request.method === 'GET' && url.pathname === '/api/projects') {
@@ -540,13 +568,14 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
     }
     if (request.method === 'POST' && url.pathname === '/api/projects/github') {
         const project = await indexGithubProject(await body<GithubProjectInput>(request));
-        json(response, 201, registry.upsert(project, !registry.read().activeProjectId));
+        json(response, 201, visibleRegistry(registry.upsert(project, !visibleRegistry(registry.read()).activeProjectId)));
         return true;
     }
     if (request.method === 'PUT' && url.pathname === '/api/projects/active') {
         const input = await body<{ projectId?: string }>(request);
         if (!input.projectId) throw new HttpError(400, 'projectId is required.');
-        json(response, 200, registry.setActive(input.projectId));
+        findProject(input.projectId);
+        json(response, 200, visibleRegistry(registry.setActive(input.projectId)));
         return true;
     }
     const reindexMatch = /^\/api\/projects\/([^/]+)\/reindex$/.exec(url.pathname);
@@ -557,10 +586,11 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
     const deleteMatch = /^\/api\/projects\/([^/]+)$/.exec(url.pathname);
     if (request.method === 'DELETE' && deleteMatch?.[1]) {
         const projectId = decodeURIComponent(deleteMatch[1]);
+        findProject(projectId);
         const updated = registry.remove(projectId);
         deltaHistory.remove(projectId);
         complianceClosures.remove(projectId);
-        json(response, 200, updated);
+        json(response, 200, visibleRegistry(updated));
         return true;
     }
     throw new HttpError(404, 'API route not found.');
@@ -568,6 +598,9 @@ async function api(request: IncomingMessage, response: ServerResponse, url: URL)
 
 function serveStatic(request: IncomingMessage, response: ServerResponse, url: URL): void {
     const pathname = decodeURIComponent(url.pathname === '/' ? '/arayuz-onizleme.html' : url.pathname);
+    if (RUNTIME.mode === 'cloud' && !isCloudStaticPathAllowed(pathname)) {
+        throw new HttpError(404, 'Not found.');
+    }
     if (pathname === '/assets/map-flow.js' || pathname === '/assets/map-flow.css') {
         if (!uiAssets) throw new HttpError(503, 'UI assets are not ready.');
         const javascript = pathname.endsWith('.js');
@@ -591,6 +624,7 @@ function serveStatic(request: IncomingMessage, response: ServerResponse, url: UR
 }
 
 async function bootstrap(): Promise<void> {
+    if (RUNTIME.mode === 'cloud') return;
     if (registry.read().projects.length) return;
     const current = await indexLocalProject({ path: ROOT, planPath: 'PLAN.md', name: 'KokpitPro' });
     registry.upsert(current, true);
@@ -604,10 +638,14 @@ export async function startServer(): Promise<void> {
     const server = configureHttpTransport(createServer(async (request, response) => {
         try {
             const hostHeader = (request.headers.host || '').trim().toLowerCase();
-            if (!isAllowedHostHeader(hostHeader)) {
+            if (!isAllowedHostHeader(hostHeader, HOST, PORT, RUNTIME.trustedHosts)) {
                 throw new HttpError(403, 'Forbidden host.');
             }
             const url = new URL(request.url || '/', `http://${hostHeader}`);
+            if (url.pathname !== '/api/health' && !isRequestAuthorized(request.headers, RUNTIME)) {
+                response.setHeader('WWW-Authenticate', 'Basic realm="KokpitPro staging", charset="UTF-8"');
+                throw new HttpError(401, 'Authentication required.');
+            }
             if (await api(request, response, url)) return;
             if (request.method !== 'GET' && request.method !== 'HEAD') throw new HttpError(405, 'Method not allowed.');
             serveStatic(request, response, url);
@@ -625,7 +663,7 @@ export async function startServer(): Promise<void> {
     }));
     server.listen(PORT, HOST, () => {
         console.log(`KokpitPro ready: http://${HOST}:${PORT}/arayuz-onizleme.html`);
-        console.log(`Registry: ${registry.filePath}`);
+        if (RUNTIME.mode === 'local') console.log(`Registry: ${registry.filePath}`);
     });
 }
 

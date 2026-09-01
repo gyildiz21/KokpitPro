@@ -6,7 +6,8 @@ import { ComplianceReport } from './check/schema';
 import { createExplainAiProvider, ExplanationEnvelope } from './explain';
 import { GithubVerificationError } from './projects/github';
 import type { ProjectRecord } from './projects/schema';
-import { buildProjectExplain, configureHttpTransport, explainRouteQuery, githubVerificationHttpStatus, isAllowedHostHeader, isStaticPathBlocked, remapRouteProjectId, sliceAcceptanceText } from './server';
+import { buildProjectExplain, configureHttpTransport, explainRouteQuery, githubVerificationHttpStatus, isAllowedHostHeader, isStaticPathBlocked, remapRouteProjectId, sliceAcceptanceText, visibleRegistry } from './server';
+import type { RegistryFile } from './projects/schema';
 
 describe('local server security boundaries', () => {
     it('blocks secret, registry, dependency, and reference-engine paths', () => {
@@ -159,6 +160,35 @@ describe('dilim 5.2 explain yüzeyi', () => {
         expect(sliceAcceptanceText(PLAN, 'Dilim 5.2 · Gerçek Korpus Karar Bütünlüğü ve Açıklanabilir Kokpit')).toContain('insanca onaylanmalı');
         expect(sliceAcceptanceText(PLAN, 'Dilim 5 · Uyum Telemetrisi')).toBeNull();
         expect(sliceAcceptanceText(PLAN, 'Dilim 9 · Yok')).toBeNull();
+    });
+
+    it('cloud registry projection never exposes local checkout paths', () => {
+        const now = '2026-09-01T00:00:00.000Z';
+        const summary = { phaseCount: 0, itemCount: 0, doneCount: 0, partialCount: 0, openCount: 0 };
+        const registry = {
+            version: 1,
+            activeProjectId: 'local-one',
+            projects: [
+                {
+                    id: 'local-one', name: 'Local', source: { type: 'local', root: 'C:/private/repo' },
+                    branch: 'main', authMode: 'local', connectionState: 'ready', lastError: null,
+                    index: { indexedAt: now, commit: 'a', branch: 'main', planPath: 'PLAN.md', planMarkdown: '', groups: [], summary, nodes: [] },
+                    createdAt: now, updatedAt: now,
+                },
+                {
+                    id: 'github-one', name: 'Remote', source: { type: 'github', owner: 'o', repo: 'r', htmlUrl: 'https://github.com/o/r', private: true },
+                    branch: 'main', authMode: 'github-app', connectionState: 'ready', lastError: null,
+                    index: { indexedAt: now, commit: 'b', branch: 'main', planPath: 'PLAN.md', planMarkdown: '', groups: [], summary, nodes: [] },
+                    createdAt: now, updatedAt: now,
+                },
+            ],
+        } satisfies RegistryFile;
+        expect(visibleRegistry(registry, 'cloud')).toMatchObject({
+            activeProjectId: 'github-one',
+            projects: [{ id: 'github-one' }],
+        });
+        expect(JSON.stringify(visibleRegistry(registry, 'cloud'))).not.toContain('C:/private/repo');
+        expect(visibleRegistry(registry, 'local')).toBe(registry);
     });
 
     it('canlı PLAN Dilim 5.2 için bağlayıcı kabul metni taşır', () => {

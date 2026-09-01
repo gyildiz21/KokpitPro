@@ -613,6 +613,37 @@ KAPANMIŞ sayılmaz (koşum disiplini).
   bulunmadığı sürece 5.2.6 `REAL_CORPUS_ACCEPTANCE_OPEN` kalır ve yalnız insan
   doğrulamasıyla `REAL_CORPUS_ACCEPTED` olabilir.
 
+## Dilim 6 · Özel İnceleme Yayını
+
+> **Sözleşme (Patron onayı 2026-09-01):** İlk bulut yayını kamuya açık SaaS
+> değildir. Arayüz + API aynı Node servisinde, Basic erişim kapısı arkasında ve
+> GitHub-only çalışır. Yerel checkout yolları buluta gönderilmez; kaynak ağacı
+> statik olarak yayımlanmaz. Otorite: DESIGN D5.5–D5.9 + UI-SPEC §12.9–§12.10.
+
+- [x] **6.0 — Üretim çalıştırma zinciri:** Node 20 engine sözleşmesi;
+      esbuild `dist/server.js`; ayrı `start:prod`; Docker çok-aşamalı image;
+      Railway Docker/health/restart tanımı; `dependency-cruiser` gerçek runtime
+      bağımlılığına taşındı.
+- [x] **6.1 — Bulut güvenlik ve veri sınırı:** zorunlu HTTPS public origin,
+      trusted-host allowlist, same-origin mutasyon koruması, en az 24 karakter
+      Basic erişim parolası, kimliksiz health; health yanıtında yerel dosya yolu
+      yok; cloud modunda yerel repo uçları 403, yerel kayıtlar süzülür ve yalnız
+      ürün HTML'i + derlenmiş UI asset'leri statik servis edilir.
+- [x] **6.2 — Görünür cloud davranışı ve nöbetçiler:** UI health modunu okur;
+      cloud bağlantı diyaloğunda yalnız GitHub seçeneği ve yerel yolların neden
+      kullanılamadığı görünür. Runtime config/registry nöbetçileri + gerçek
+      `dist/server.js` smoke koşumu; anonim 401, kimlikli 200, kaynak 404,
+      yerel-route 403 ve yabancı-origin 403 doğrulanır.
+- [ ] **6.3 — Railway staging canlı kabulü:** feature push → temiz release
+      worktree'sinde no-ff main merge → origin/main push → Railway `/data`
+      volume + secrets + generated domain → canlı health/auth/GitHub-only UI
+      kabulü. Bu kutu ancak gerçek Railway URL'si ve canlı HTTP kanıtıyla kapanır.
+
+- **Kabul:** staging URL'sinde kimliksiz ürün yüzeyi kapalı; yetkili kullanıcı
+  GitHub reposunu `Doğrula → İndeksle → Hazır` akışından geçirebilir; kalıcı
+  kayıt yeniden deploy sonrası korunur. Kamuya açık çok-kullanıcılı üretim bu
+  dilimin kapsamı değildir.
+
 ## Sabit kurallar (bu projede de geçerli)
 
 1. Sahte kapı yok: capability yoksa yüzey çizilmez.

@@ -43,6 +43,25 @@ Uygulama `http://127.0.0.1:4173/arayuz-onizleme.html` adresinde açılır.
 Statik dosya sunucusu kullanmayın; Proje Merkezi `/api/projects` ve kalıcı
 kayıt defteri olmadan çalışmaz.
 
+Üretim adayını yerelde doğrulamak için:
+
+```powershell
+npm run build
+npm run smoke:prod
+```
+
+## Özel inceleme yayını
+
+İlk bulut hedefi **Railway üzerinde tek Node servisi**dir; frontend ve backend
+ayrı dağıtılmaz. `Dockerfile` üretim image'ını, `railway.json` health/restart
+kapısını tanımlar. `/data` volume `KOKPIT_DATA_DIR=/data` olarak bağlanır.
+
+Cloud modu yalnız GitHub repolarını kabul eder. Yerel repo yolları devre dışı,
+kaynak dosyaları statik erişime kapalı ve tüm ürün yüzeyi Basic erişim kapısı
+arkasındadır. Gerekli değişkenler `.env.example`, işletim sırası
+`docs/deployment/railway-staging.md` içindedir. Bu staging, çok-kullanıcılı
+SaaS veya yerel checkout ölçümünün buluta taşındığı anlamına gelmez.
+
 ## Kalıcı proje bağlantıları
 
 - Proje kayıtları ve son başarılı indeks makbuzları
@@ -86,5 +105,6 @@ HTML'e, API yanıtına, `localStorage`'a veya proje kayıt dosyasına yazılmaz.
       *(koşum Windows terminalinde — bkz. PLAN.md Dilim 1 uyarısı)*
 - [x] Dilim 2.1: kalıcı ProjectRecord kayıt defteri, yerel Git doğrulama,
       GitHub Contents/GitHub App adaptörü ve proje-bazlı indeks makbuzları
-- [ ] Dilim 0: GitDiagram motorunu yerelde ayağa kaldırma (Windows terminal)
-- [ ] Dilim 2: Harita + Durum Boyaması (+ D1 i18n disipliniyle ilk bileşenler)
+- [x] Dilim 2–4: ölçülmüş mimari harita, Delta ve kanıta dayalı Remap önerileri
+- [x] Dilim 5.2 teknik sertlik: açıklanabilir Uyum/Delta ve gerçek-korpus makbuzu
+- [ ] Dilim 6.3: Railway staging canlı kabulü

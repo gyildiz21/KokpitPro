@@ -7,6 +7,9 @@
   "scripts": {
     "dev": "tsx watch --include \"kokpit/ui/**/*\" kokpit/server.ts",
     "start": "tsx kokpit/server.ts",
+    "build": "node scripts/build.mjs",
+    "start:prod": "node dist/server.js",
+    "smoke:prod": "node scripts/production-smoke.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:watch": "vitest",
@@ -18,6 +21,7 @@
   "dependencies": {
     "@dagrejs/dagre": "^3.1.1",
     "@xyflow/react": "^12.11.5",
+    "dependency-cruiser": "^18.2.0",
     "esbuild": "^0.28.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -28,9 +32,11 @@
     "@types/node": "^20.14.15",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
-    "dependency-cruiser": "^18.2.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4",
     "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }

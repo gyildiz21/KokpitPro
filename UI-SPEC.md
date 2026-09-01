@@ -965,6 +965,14 @@ halka açık repoları anonim salt-okur; özel repolar yalnız sunucu tarafı Gi
 App kurulumu veya sunucu tokenı varsa açılır. App kurulumu yokken özel repo
 404/izin hatası hazır proje gibi kaydedilmez.
 
+**Özel inceleme yayını varyantı:** `/api/health` `mode:'cloud'` döndürdüğünde
+bağlantı diyaloğu yalnız GitHub seçeneğini gösterir ve nedenini sade dille
+açıklar; yerel yol alanı çizilmez. Bu varyant mevcut yerel-önce ürünün yerine
+geçmez. Bulutta Basic erişim kapısı aşılmadan ürün yüzeyi/API açılmaz; sağlık
+ucu sır veya sunucu dosya yolu göstermez. GitHub-only kayıtlar plan/zaman/uyum
+yüzeylerini besler; yerel checkout gerektiren harita/remap/delta ölçümleri
+`no-local-checkout` sınırını dürüstçe korur.
+
 ### §12.10 Kabul senaryoları
 
 1. Kullanıcı Projeler ekranından `Proje ekle` → `Yerel repo` → doğrula →
@@ -980,3 +988,6 @@ App kurulumu veya sunucu tokenı varsa açılır. App kurulumu yokken özel repo
    `ölçülemiyor` gösterir.
 7. 1440×900, 1024×768 ve 768×1024 görünümünde yatay gövde taşması, alt boş bant,
    isimsiz kontrol veya erişilemeyen temel eylem yoktur.
+8. Cloud modunda anonim ürün isteği 401 + Basic challenge, kimlikli ürün isteği
+   200; `/PLAN.md` ve `/kokpit/server.ts` 404; yerel repo POST'u 403; yabancı
+   origin mutasyonu 403; health 200 ve yerel dosya yolu içermeyen yanıt verir.

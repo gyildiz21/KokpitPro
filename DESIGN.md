@@ -58,6 +58,26 @@ açacak şekilde tasarlanır (yazma izni ayrı GO konusu).
    (`personalEmailYasak` deseninin genellemesi).
 4. Bu karar tek-başına SaaS taahhüdü DEĞİLDİR — yalnızca bugünkü seçimlerin
    o kapıyı kapatmamasıdır.
+5. **Özel inceleme yayını tek servistir (Patron kararı 2026-09-01):** arayüz
+   ve `/api/*` aynı Node sürecinde ve aynı origin altında yayımlanır. Statik
+   frontend + ayrı backend bölünmesi bugün yapılmaz; mevcut güvenlik ve kalıcı
+   kayıt sınırı tek serviste daha açık ve doğrulanabilirdir.
+6. **Bulut modu GitHub-only'dir:** `KOKPIT_DEPLOYMENT_MODE=cloud` yerel repo
+   doğrulama/kayıt uçlarını kapatır, yerel kayıtları API'den süzer ve kaynak
+   ağacı dosyalarını statik olarak servis etmez. Kullanıcının Windows checkout'u
+   bulut sunucusunca görülemez; bunun gelecekteki yolu ayrı, açıkça yetkilendirilmiş
+   yerel yardımcı/masaüstü köprüsüdür.
+7. **Fail-closed erişim:** bulut başlangıcı HTTPS `KOKPIT_PUBLIC_ORIGIN` ve en
+   az 24 karakterlik inceleme parolası olmadan başarısız olur. Host allowlist,
+   same-origin mutasyon denetimi ve HTTP Basic erişim kapısı birlikte çalışır;
+   health ucu kimlik istemez fakat dosya yolu veya sır döndürmez.
+8. **Kalıcılık:** Railway staging tek instance + `/data` volume kullanır;
+   `KOKPIT_DATA_DIR=/data`. JSON kayıt defteri bu özel inceleme için kabul
+   edilir; çok-kullanıcılı SaaS için kimlik/tenant yetkilendirmesi ve yönetilen
+   veritabanı ayrıca tasarlanmadan kamuya açık üretim ilan edilemez.
+9. **Üretim zinciri:** Node 20, deterministik `npm ci`, esbuild sunucu bundle'ı,
+   Docker runtime ve `/api/health` kapısı zorunludur. GitHub App private key
+   yalnız Railway secret olarak sunucuya verilir; image'a veya Git'e girmez.
 
 > **Adlandırma notu (2026-08-31):** Kod yorumlarında geçen **"D5.2"**
 > kısaltması, yalnızca bu maddedeki (D5) **sürümlü şema** kararını işaretler.

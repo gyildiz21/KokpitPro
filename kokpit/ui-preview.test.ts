@@ -43,6 +43,14 @@ describe('UI-SPEC v0.9 persistent project lifecycle', () => {
         expect(preview).toContain('Kayıtlar diskte kalıcıdır');
     });
 
+    it('discovers deployment mode and hides local-path onboarding in cloud review mode', () => {
+        expect(preview).toContain('const health = await apiRequest("/api/health")');
+        expect(preview).toContain('deploymentMode = health.mode === "cloud" ? "cloud" : "local"');
+        expect(preview).toContain('if (deploymentMode === "cloud") return');
+        expect(preview).toContain('Yerel bilgisayar yolları bulut sunucusuna gönderilmez.');
+        expect(preview).toContain('Local computer paths are never sent to the cloud service.');
+    });
+
     it('does not restore the old mixed-project shell', () => {
         expect(preview).not.toContain('MethodLogos_Pro / master');
         expect(preview).not.toContain('KARMA VERİ');
