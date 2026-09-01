@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "provenance": {
-    "measuredAt": "2026-09-01T07:55:23.791Z",
+    "measuredAt": "2026-09-01T07:57:59.399Z",
     "fallbackDate": "2026-09-01",
     "planPath": "ROADMAP.md",
     "ledgerPath": ".agents/karar-defteri.md",
@@ -14,11 +14,11 @@
       "revision": "2b071c19d36e649b424feac46f0750b4a49eb9fe"
     },
     "engine": {
-      "commit": "4b0dac8b516efc22edfac161409b9169838881f1",
-      "revisionKind": "working-tree",
-      "revision": "4b0dac8b516efc22edfac161409b9169838881f1+working-tree:6228612437250e54"
+      "commit": "f31922c1fd2ddc5c27d28cc374e7496f558ed1e2",
+      "revisionKind": "commit",
+      "revision": "f31922c1fd2ddc5c27d28cc374e7496f558ed1e2"
     },
-    "reportId": "c094598c882a88fad1496871052f74b4277db8abbca344622ae0fb0b3340d6ca"
+    "reportId": "157d113a0df83a86bbbe6b057fc3e0c8e72df69dc73cea1d2077e7b45a3fb847"
   },
   "rawCandidateCount": 0,
   "retainedCandidates": [],
