@@ -30,3 +30,21 @@ Frontend ve API aynı Node servisi ve aynı origin altında çalışır.
 
 Bu maddelerin tamamı gerçek staging URL'sinde ölçülmeden PLAN Dilim 6.3
 kapatılmaz.
+
+## 2026-09-02 kabul kaydı
+
+Canlı ortam: `https://kokpitpro-production.up.railway.app`.
+
+- Kimliksiz ürün yüzeyi `401 + Basic challenge`; kimlikli yüzey ve health
+  `200` verdi.
+- Kaynak dosya yolları `404`; yerel-repo ve yabancı-origin mutasyonları `403`
+  verdi.
+- `gyildiz21/KokpitPro` özel reposu GitHub App üzerinden
+  `Doğrula → İndeksle → Hazır` turunu tamamladı.
+- `github-app` kimlik modu, `main` dalı ve commit makbuzu yeniden deploy
+  sonrasında `/data` üzerinde korundu.
+
+`railway.json`, Railway'nin 2026-12-01 kaldırma takviminden önce kod-tabanlı
+yapılandırmaya geçirilecektir. Railway CLI 5 ikilisi bu kabul makinesindeki
+Windows Uygulama Denetimi tarafından engellendiğinden doğrulanamayan geçiş
+uygulanmamış, çalışan dosya-tabanlı ayar korunmuştur.

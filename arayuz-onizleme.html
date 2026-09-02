@@ -1472,10 +1472,23 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       kullanılamadığı görünür. Runtime config/registry nöbetçileri + gerçek
       `dist/server.js` smoke koşumu; anonim 401, kimlikli 200, kaynak 404,
       yerel-route 403 ve yabancı-origin 403 doğrulanır.
-- [ ] **6.3 — Railway staging canlı kabulü:** feature push → temiz release
+- [x] **6.3 — Railway staging canlı kabulü:** feature push → temiz release
       worktree'sinde no-ff main merge → origin/main push → Railway `/data`
       volume + secrets + generated domain → canlı health/auth/GitHub-only UI
       kabulü. Bu kutu ancak gerçek Railway URL'si ve canlı HTTP kanıtıyla kapanır.
+      **2026-09-02 canlı kanıtı:**
+      `https://kokpitpro-production.up.railway.app` üzerinde kimliksiz ürün
+      yüzeyi `401 + Basic challenge`, kimlikli yüzey ve `/api/health` `200`,
+      kaynak yolları `404`, yerel-repo ve yabancı-origin mutasyonları `403`
+      verdi. `gyildiz21/KokpitPro` özel reposu GitHub App ile
+      `Doğrula → İndeksle → Hazır` turunu tamamladı; `github-app` kimlik modu,
+      `main` dalı ve commit makbuzu yeniden deploy sonrasında `/data` üzerinden
+      korundu. Railway volume ilk-bağlantı sahipliği `99425e5`, dürüst bulut
+      ilk-açılış durumu `3d1d3b6` ile nöbetçi test eşliğinde düzeltildi.
+      `railway.json` 2026-12-01 kaldırma takviminden önce kod-tabanlı
+      yapılandırmaya geçirilecek; Railway CLI 5 ikilisi bu Windows makinesinde
+      Uygulama Denetimi tarafından engellendiği için doğrulanamayan geçiş bu
+      kapanışa dahil edilmedi.
 
 - **Kabul:** staging URL'sinde kimliksiz ürün yüzeyi kapalı; yetkili kullanıcı
   GitHub reposunu `Doğrula → İndeksle → Hazır` akışından geçirebilir; kalıcı

@@ -107,4 +107,4 @@ HTML'e, API yanıtına, `localStorage`'a veya proje kayıt dosyasına yazılmaz.
       GitHub Contents/GitHub App adaptörü ve proje-bazlı indeks makbuzları
 - [x] Dilim 2–4: ölçülmüş mimari harita, Delta ve kanıta dayalı Remap önerileri
 - [x] Dilim 5.2 teknik sertlik: açıklanabilir Uyum/Delta ve gerçek-korpus makbuzu
-- [ ] Dilim 6.3: Railway staging canlı kabulü
+- [x] Dilim 6.3: Railway staging canlı kabulü (2026-09-02)
