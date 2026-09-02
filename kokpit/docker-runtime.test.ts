@@ -12,6 +12,7 @@ describe('Railway volume runtime boundary', () => {
         expect(dockerfile).toContain('apt-get install -y --no-install-recommends gosu');
         expect(dockerfile).toContain('ENTRYPOINT ["./scripts/docker-entrypoint.sh"]');
         expect(dockerfile).not.toMatch(/^USER node$/mu);
+        expect(entrypoint).not.toContain('\r');
         expect(entrypoint).toContain('chown -R node:node "${KOKPIT_DATA_DIR:-/data}"');
         expect(entrypoint).toContain('exec gosu node "$@"');
     });
