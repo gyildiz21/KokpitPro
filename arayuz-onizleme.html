@@ -175,6 +175,9 @@
     .project-field strong { display: block; margin-top: 4px; overflow: hidden; color: var(--text-2); font-size: 10.5px; font-weight: 610; text-overflow: ellipsis; white-space: nowrap; }
     .project-row-actions { display: flex; gap: 6px; }
     .project-row-actions .text-button { min-height: 34px; white-space: nowrap; }
+    .project-empty { display: grid; justify-items: start; gap: 8px; padding: 24px 18px; border-bottom: 1px solid var(--line); color: var(--text-2); }
+    .project-empty strong { color: var(--text); font-size: 14px; }
+    .project-empty p { max-width: 620px; margin: 0; color: var(--text-3); font-size: 12px; line-height: 1.6; }
     .project-context-panel { position: sticky; top: 130px; padding: 22px; }
     .project-context-panel h2 { margin: 0; font-family: "Segoe UI Variable Display", sans-serif; font-size: 20px; font-weight: 690; letter-spacing: -.03em; }
     .project-context-panel > p { margin: 8px 0 0; color: var(--text-3); font-size: 11.5px; line-height: 1.6; }
@@ -1801,7 +1804,11 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       const registry = await apiRequest("/api/projects");
       PROJECTS = Object.fromEntries(registry.projects.map((record, index) => { const project = normalizeProject(record, index); return [project.id, project]; }));
       const ids = Object.keys(PROJECTS);
-      if (!ids.length) throw new Error(language === "tr" ? "Kayıtlı proje bulunamadı." : "No registered projects found.");
+      if (!ids.length) {
+        compareSelection.clear();
+        renderEmptyProjectRegistry();
+        return registry;
+      }
       const preferred = options.preferredId && PROJECTS[options.preferredId] ? options.preferredId : registry.activeProjectId && PROJECTS[registry.activeProjectId] ? registry.activeProjectId : ids[0];
       compareSelection = new Set([...compareSelection].filter(id => PROJECTS[id]));
       ids.slice(0, 2).forEach(id => compareSelection.add(id));
@@ -1813,6 +1820,29 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     function connectionLabel(project) { return localized(project.connection); }
     function projectStateClass(project) { return project.connectionState === "ready" ? "" : project.connectionState === "error" ? "locked" : "preview"; }
     function projectActionLabel() { return t("openProject"); }
+    function renderEmptyProjectRegistry() {
+      const cloud = deploymentMode === "cloud";
+      activeProjectId = null;
+      $('#projectMenuCount').textContent = "0";
+      $('#projectMenuList').innerHTML = "";
+      $('#catalogCount').textContent = language === "tr" ? " · 0 kayıt" : " · 0 records";
+      $('#projectList').innerHTML = `<div class="project-empty" role="status"><strong>${language === "tr" ? "Henüz proje yok" : "No projects yet"}</strong><p>${language === "tr" ? (cloud ? "İlk GitHub reposunu ekleyin. Repo doğrulandıktan ve indekslendikten sonra çalışma alanı açılır." : "İlk yerel klasörü veya GitHub reposunu ekleyin. Doğrulanmayan kaynak çalışma alanına açılmaz.") : (cloud ? "Add the first GitHub repository. The workspace opens after verification and indexing." : "Add the first local folder or GitHub repository. Unverified sources are not opened in the workspace.")}</p><button class="text-button primary" type="button" data-empty-add-project>${language === "tr" ? (cloud ? "GitHub reposu ekle" : "Proje ekle") : (cloud ? "Add GitHub repository" : "Add project")}</button></div>`;
+      $('#activeProjectName').textContent = "KokpitPro";
+      $('#activeProjectMeta').textContent = language === "tr" ? (cloud ? "Bulut · GitHub" : "Proje seçilmedi") : (cloud ? "Cloud · GitHub" : "No project selected");
+      $('#activeSourceLabel').textContent = language === "tr" ? "Proje seçilmedi" : "No project selected";
+      $('#activeSourceState').textContent = language === "tr" ? "Repo ekleyin" : "Add a repository";
+      $('#activeSourceState').className = "source-state preview";
+      $('#modeBadge').textContent = language === "tr" ? "Kurulum hazır" : "Setup ready";
+      $('#projectContextTitle').textContent = language === "tr" ? "Henüz proje yok" : "No projects yet";
+      $('#projectContextDescription').textContent = language === "tr" ? (cloud ? "Bu özel inceleme yayını yalnız GitHub repolarını bağlar; yerel bilgisayar yolu sunucuya gönderilmez." : "Bir kaynak ekleyin; KokpitPro doğrulama ve indeks makbuzu olmadan çalışma alanı üretmez.") : (cloud ? "This private review deployment connects GitHub repositories only; local computer paths are never sent to the server." : "Add a source; KokpitPro does not build a workspace without a verification and index receipt.");
+      $('#contextSource').textContent = cloud ? "GitHub App · Contents: read" : "—";
+      $('#contextBranch').textContent = "—";
+      $('#contextPlan').textContent = "—";
+      $('#contextIndex').textContent = "—";
+      $('#compareControls').innerHTML = "";
+      $('#compareBodyRows').innerHTML = `<tr><td colspan="6">${language === "tr" ? "Karşılaştırma için önce en az iki proje ekleyin." : "Add at least two projects before comparing."}</td></tr>`;
+      $('#openActiveWorkspace').disabled = true;
+    }
     function renderProjectMenu() {
       const projects = Object.values(PROJECTS);
       $('#projectMenuCount').textContent = String(projects.length);
@@ -1840,6 +1870,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
     }
     function renderProjectChrome() {
       const project = activeProject();
+      $('#openActiveWorkspace').disabled = false;
       $('#activeProjectName').textContent = project.name;
       $('#activeProjectMeta').textContent = `${sourceModeLabel(project)} · ${project.branch}`;
       $('#activeSourceLabel').textContent = `${project.name} · ${project.planFile}`;
@@ -1852,6 +1883,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       $('#timelineContent').innerHTML = phaseGroups.map(group => { const counts = phaseCounts(group.items); const acceptanceOpen = Boolean(group.acceptance) && group.items.some(item => item.status !== "done"); const items = group.items.map(item => `<button class="timeline-item" type="button" data-timeline-phase="${escapeHtml(group.id)}"><span class="status-mark ${statusClass(item.status)}"></span><span>${escapeHtml(item.title)}</span></button>`).join(""); return `<article class="timeline-group"><div class="timeline-head"><span class="timeline-name">${escapeHtml(phaseDisplayName(group))}</span>${acceptanceOpen ? `<span class="acceptance-badge">${escapeHtml(t("acceptanceOpenBadge"))}</span>` : ""}<progress class="phase-progress" max="${Math.max(counts.total, 1)}" value="${counts.done}" aria-label="${escapeHtml(phaseDisplayName(group))}"></progress><span class="timeline-count">${counts.done} / ${counts.total}</span></div><div class="timeline-items">${items}</div></article>`; }).join("");
     }
     function showSection(section) {
+      if (!activeProject() && section !== "projects") { showToast(language === "tr" ? "Önce bir repo ekleyip doğrulayın." : "Add and verify a repository first."); section = "projects"; }
       if (section === "workspace" && activeProject().locked) { section = "projects"; showToast(language === "tr" ? "Bu proje için GitHub yetkisi doğrulanmadan çalışma alanı açılamaz." : "Verify GitHub access before opening this workspace."); }
       activeSection = section;
       $('#projectsScreen').hidden = section !== "projects";
@@ -2110,6 +2142,13 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       $$('[data-i18n-placeholder]').forEach(element => { const value = I18N[language][element.dataset.i18nPlaceholder]; if (value !== undefined) element.placeholder = value; });
       $('#langTr').setAttribute("aria-pressed", String(language === "tr"));
       $('#langEn').setAttribute("aria-pressed", String(language === "en"));
+      if (!activeProject()) {
+        renderEmptyProjectRegistry();
+        updateViewCopy();
+        renderEmptyInspector();
+        if ($('#connectDialog').open) renderConnectDialog();
+        return;
+      }
       renderProjectChrome(); renderProjectMenu(); renderProjectCatalog(); renderProjectContext(); renderCompare();
       updateViewCopy();
       renderGraph();
@@ -3142,6 +3181,7 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       } catch (error) { showToast(error.message); }
     }
     async function handleProjectAction(event) {
+      if (event.target.closest('[data-empty-add-project]')) { openConnectDialog(); return; }
       const reindexButton = event.target.closest('[data-project-reindex]');
       if (reindexButton) {
         await reindexProject(reindexButton.dataset.projectReindex, reindexButton);

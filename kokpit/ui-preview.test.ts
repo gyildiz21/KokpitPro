@@ -51,6 +51,14 @@ describe('UI-SPEC v0.9 persistent project lifecycle', () => {
         expect(preview).toContain('Local computer paths are never sent to the cloud service.');
     });
 
+    it('treats an empty persistent registry as first-run onboarding, not a service failure', () => {
+        expect(preview).toContain('function renderEmptyProjectRegistry()');
+        expect(preview).toContain('Henüz proje yok');
+        expect(preview).toContain('GitHub reposu ekle');
+        expect(preview).toContain("if (!activeProject() && section !== \"projects\")");
+        expect(preview).not.toContain('if (!ids.length) throw new Error');
+    });
+
     it('does not restore the old mixed-project shell', () => {
         expect(preview).not.toContain('MethodLogos_Pro / master');
         expect(preview).not.toContain('KARMA VERİ');
