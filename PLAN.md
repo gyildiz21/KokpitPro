@@ -647,6 +647,12 @@ KAPANMIŞ sayılmaz (koşum disiplini).
       `main` dalı ve commit makbuzu yeniden deploy sonrasında `/data` üzerinden
       korundu. Railway volume ilk-bağlantı sahipliği `99425e5`, dürüst bulut
       ilk-açılış durumu `3d1d3b6` ile nöbetçi test eşliğinde düzeltildi.
+      Windows checkout'unda container giriş betiğinin CRLF'e dönme riski
+      `.gitattributes` ve bayt-seviyesi nöbetçiyle `ae1dc90` commitinde
+      kapatıldı. Final image'ın yeniden dağıtımı `9389065e` kimliğiyle
+      `SUCCESS`; etkin Railway servis manifestinde healthcheck yolu
+      `/api/health` olarak doğrulandı ve final `main` makbuzu yeniden deploy
+      sonrasında korundu.
       `railway.json` 2026-12-01 kaldırma takviminden önce kod-tabanlı
       yapılandırmaya geçirilecek; Railway CLI 5 ikilisi bu Windows makinesinde
       Uygulama Denetimi tarafından engellendiği için doğrulanamayan geçiş bu

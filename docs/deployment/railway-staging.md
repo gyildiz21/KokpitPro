@@ -43,6 +43,9 @@ Canlı ortam: `https://kokpitpro-production.up.railway.app`.
   `Doğrula → İndeksle → Hazır` turunu tamamladı.
 - `github-app` kimlik modu, `main` dalı ve commit makbuzu yeniden deploy
   sonrasında `/data` üzerinde korundu.
+- Windows checkout kaynaklı CRLF riski `.gitattributes` ve bayt-seviyesi
+  nöbetçiyle kapatıldı. `9389065e` Railway dağıtımı `SUCCESS` oldu; etkin servis
+  manifesti `/api/health` healthcheck yolunu taşıdı.
 
 `railway.json`, Railway'nin 2026-12-01 kaldırma takviminden önce kod-tabanlı
 yapılandırmaya geçirilecektir. Railway CLI 5 ikilisi bu kabul makinesindeki
